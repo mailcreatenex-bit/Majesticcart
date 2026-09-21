@@ -7,6 +7,10 @@
 FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 ENV PUPPETEER_SKIP_DOWNLOAD=true
+# argon2 and a couple of other deps ship native addons that node-gyp has to
+# compile on install — the slim image has no compiler at all otherwise.
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 COPY package*.json ./
 COPY prisma ./prisma
 RUN npm ci
@@ -20,7 +24,7 @@ ENV NODE_ENV=production \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    chromium ca-certificates \
+    chromium ca-certificates python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
