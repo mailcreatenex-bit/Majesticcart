@@ -18,9 +18,18 @@ export const revalidate = 3600;
 interface CatalogEntry { slug: string; updatedAt?: string }
 
 async function fetchEntries(path: string): Promise<CatalogEntry[]> {
-  const res = await fetch(`${process.env.API_ORIGIN}/api${path}`, { next: { revalidate: 3600 } });
-  if (!res.ok) return [];
-  return res.json();
+  const origin = process.env.API_ORIGIN;
+  // No origin configured (e.g. the frontend deployed before the backend
+  // exists) and a network failure both mean the same thing here: skip these
+  // entries rather than take the whole sitemap route down with a build error.
+  if (!origin) return [];
+  try {
+    const res = await fetch(`${origin}/api${path}`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
