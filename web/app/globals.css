@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Design tokens.
+ *
+ * Every colour in the storefront resolves through a variable here rather than
+ * a literal hex in a component, which is what makes the Royal Night theme a
+ * single attribute on <html> instead of a second copy of every component.
+ *
+ * The palette is taken from the logo itself: the gold of the monogram and
+ * crown, the dusty rose of the lotus and the mandala border, and a warm
+ * near-black for text that sits in the same family as the rose rather than
+ * fighting it with a cool grey.
+ *
+ * The admin console is deliberately excluded — it uses Tailwind's neutral
+ * scale directly, because a back-office tool that reads as a tool is easier
+ * to work in for eight hours than one dressed in brand colours.
+ */
+
+:root {
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-body: 'Jost', ui-sans-serif, system-ui, sans-serif;
+
+  /* text */
+  --ink: #341316;         /* headings, primary text */
+  --body: #624144;        /* paragraphs */
+  --muted: #93767B;       /* secondary, captions */
+  --faint: #C4ABB1;       /* timestamps, disabled */
+
+  /* brand */
+  --accent: #B84654;      /* links, active states */
+  --accent-soft: #FCEFF2; /* accent-tinted panels */
+
+  /* gold: the one place the logo's metal is reproduced */
+  --gold-deep: #9E7322;
+  --gold: #D9B25A;
+  --gold-mid: #A87C26;
+  --gold-pale: #FBE9C6;   /* gold text on dark fills */
+
+  /* surfaces */
+  --page: #FBF8F9;
+  --surface: #FFFFFF;
+  --surface-tint: #FDF2F4;
+  --line: rgba(253, 228, 233, 0.7);
+  --line-strong: #F6D9DF;
+
+  /* pending/waiting callouts ("a request is being checked") */
+  --notice-bg: #FDF6E7;
+  --notice-border: rgba(228, 179, 99, 0.5);
+}
+
+/**
+ * Royal Night.
+ *
+ * The logo has a crown, a crescent moon and stars in it — a dark theme is the
+ * brand's own imagery rather than a checkbox. Kept warm (browns and golds, no
+ * blue-black) so the gold still reads as metal; on a cool grey ground the same
+ * gold goes muddy.
+ *
+ * Text and accent are lifted, not inverted: the light theme's accent at 45%
+ * lightness is unreadable on a dark ground, so the dark theme uses a lighter
+ * rose that keeps its contrast ratio rather than reusing the same hex.
+ */
+:root[data-theme='night'] {
+  --ink: #F7EBEC;
+  --body: #DCC6C9;
+  --muted: #AD9296;
+  --faint: #7E676B;
+
+  --accent: #E88B97;
+  --accent-soft: #2E1A1D;
+
+  --gold-deep: #B8862B;
+  --gold: #E4C878;
+  --gold-mid: #C79B3D;
+  --gold-pale: #2A1416;
+
+  --page: #1A0E10;
+  --surface: #231518;
+  --surface-tint: #2E1A1D;
+  --line: rgba(120, 82, 88, 0.32);
+  --line-strong: #4A3034;
+
+  --notice-bg: #2E1A1D;
+  --notice-border: rgba(196, 155, 61, 0.4);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-body);
+    background-color: var(--page);
+    color: var(--ink);
+  }
+  .font-serif, h1, h2 { font-family: var(--font-display); letter-spacing: 0.02em; }
+  /* Never remove focus outlines. Members will use this on cheap Android
+     keyboards and screen readers. */
+  :focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 2px; }
+}
+
+@layer components {
+  /**
+   * Mandala rule.
+   *
+   * Taken from the dotted diamond border of the logo's seal. It is the one
+   * ornamental device in the storefront and it appears only between major
+   * sections — spread across every card it would stop reading as a signature
+   * and start reading as wallpaper.
+   */
+  .mandala-rule {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: var(--gold-mid);
+  }
+  .mandala-rule::before,
+  .mandala-rule::after {
+    content: '';
+    height: 1px;
+    flex: 1 1 0%;
+    max-width: 7rem;
+    background: linear-gradient(to right, transparent, currentColor);
+    opacity: 0.45;
+  }
+  .mandala-rule::after { background: linear-gradient(to left, transparent, currentColor); }
+
+  /**
+   * Gold foil.
+   *
+   * One sweep of light across the fill on hover, and only on the primary call
+   * to action of a page. The shimmer is a `background-position` transition
+   * rather than a looping animation on purpose: something that glints once
+   * when you reach for it reads as material; something that pulses on its own
+   * reads as an advertisement.
+   */
+  .gold-foil {
+    background-image: linear-gradient(
+      110deg,
+      var(--gold-deep) 0%,
+      var(--gold) 38%,
+      #F3E0A8 48%,
+      var(--gold) 58%,
+      var(--gold-mid) 100%
+    );
+    background-size: 280% 100%;
+    background-position: 82% 0;
+    transition: background-position 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .gold-foil:hover,
+  .gold-foil:focus-visible { background-position: 6% 0; }
+  .gold-foil:disabled { background-image: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  /* The foil's resting position is mid-gradient, so with the transition
+     disabled it still looks like gold rather than freezing mid-sweep. */
+  .gold-foil { background-position: 50% 0 !important; }
+}

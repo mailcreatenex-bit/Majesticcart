@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: majestic-cart-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: TZ
+        value: Asia/Kolkata
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        sync: false
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: REDIS_TLS
+        value: "true"
+      - key: JWT_SECRET
+        sync: false
+      - key: OTP_PEPPER
+        sync: false
+      - key: FIELD_ENCRYPTION_KEY
+        sync: false
+      - key: FIELD_ENCRYPTION_KEY_VERSION
+        value: "1"
+      - key: SMS_PROVIDER
+        value: console
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: NEXT_PUBLIC_ORIGIN
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

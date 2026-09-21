@@ -1,0 +1,44 @@
+# Local development. Production runs managed Postgres and Redis — this file is
+# for getting a working system on a laptop in one command.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: majestic
+      POSTGRES_PASSWORD: majestic
+      POSTGRES_DB: majestic
+      # The monthly repurchase gate depends on the calendar month in IST.
+      # A container on UTC silently mis-buckets orders placed after 6:30pm.
+      TZ: Asia/Kolkata
+    ports: ['5432:5432']
+    volumes: ['pgdata:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U majestic']
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    # Commission jobs must survive a restart: a lost job is unpaid income.
+    command: redis-server --appendonly yes
+    ports: ['6379:6379']
+    volumes: ['redisdata:/data']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      retries: 10
+
+  minio:
+    # Stands in for S3/R2 so screenshot uploads work locally.
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: majestic
+      MINIO_ROOT_PASSWORD: majestic123
+    ports: ['9000:9000', '9001:9001']
+    volumes: ['miniodata:/data']
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

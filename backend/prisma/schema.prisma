@@ -1,0 +1,814 @@
+// Majestic Cart — PostgreSQL schema
+//
+// MONEY AND VOLUME ARE INTEGERS EVERYWHERE. Never float.
+//   amountPaise  BigInt  money in paise        (₹599.50 -> 59950n)
+//   bvCenti      Int     business volume x 100 (300 BV  -> 30000)
+//   pctBp        Int     percent in basis pts  (19%     -> 1900)
+// Because the plan treats 1 BV as ₹1, bvCenti and paise share a scale,
+// so commission = bvCenti * pctBp / 10000 lands directly in paise.
+// See src/common/money.ts — that file is the only place these convert.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- identity
+
+enum MemberStatus {
+  ACTIVE
+  ON_HOLD
+  CLOSED
+}
+
+model Member {
+  id           String       @id @default(cuid())
+  memberCode   String       @unique // MC100002 — the sponsor ID members share
+  name         String
+  phone        String       @unique
+  email        String?      @unique
+  passwordHash String // argon2id, never sha256
+  status       MemberStatus @default(ACTIVE)
+  isCompany    Boolean      @default(false)
+
+  // Genealogy. sponsorId never changes after signup — it is the spine of every
+  // payout, so treat it as immutable and audit any correction.
+  sponsorId    String?
+  sponsor      Member?  @relation("Downline", fields: [sponsorId], references: [id], onDelete: Restrict)
+  downline     Member[] @relation("Downline")
+  // Materialised ancestor path, root first and slash delimited: "/idA/idB/".
+  // An upline walk is then one indexed read instead of N recursive round trips,
+  // and the whole downline of X is a prefix match on X.ancestorPath + X.id + "/"
+  // which uses the btree. Written once at signup; sponsorId never changes.
+  ancestorPath String   @default("/")
+  depth        Int      @default(0)
+
+  rankIndex    Int    @default(0)
+  selfBvCenti  BigInt @default(0)
+  groupBvCenti BigInt @default(0)
+
+  addressLine String?
+  city        String?
+  state       String?
+  pincode     String?
+
+  payoutUpi          String?
+  payoutHolder       String?
+  payoutBank         String?
+  // Encrypted at rest with AES-256-GCM, bound to this member's id so a value
+  // cannot be moved into another member's row to redirect their payouts.
+  payoutAccount      String?
+  payoutIfsc         String?
+  // Keyed HMACs of the same values. Encrypted columns cannot be searched — the
+  // same input produces different ciphertext every time, which is the point —
+  // so these carry the "is this account shared with another member" lookup.
+  // Keyed rather than a plain hash: Indian UPI IDs are mostly phone-derived and
+  // would fall to a rainbow table in minutes otherwise.
+  payoutUpiIndex     String?
+  payoutAccountIndex String?
+
+  lastDeviceId String?
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  lastLoginAt  DateTime?
+  joinedAt     DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  wallets                Wallet[]
+  ledgerEntries          LedgerEntry[]
+  orders                 Order[]
+  recharges              Recharge[]
+  withdrawals            Withdrawal[]
+  couponRedemptions      CouponRedemption[]
+  mobileRechargeRequests MobileRechargeRequest[]
+  commissions            Commission[]
+  notifications          Notification[]
+  notes                  MemberNote[]
+  devices                DeviceLink[]
+  rankHistory            RankChange[]
+  monthlyVolume          MonthlyVolume[]
+
+  @@index([sponsorId])
+  @@index([ancestorPath])
+  @@index([payoutUpiIndex])
+  @@index([payoutAccountIndex])
+  @@index([rankIndex])
+  @@index([status])
+}
+
+model DeviceLink {
+  id        String   @id @default(cuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  deviceId  String
+  firstSeen DateTime @default(now())
+  lastSeen  DateTime @updatedAt
+
+  @@unique([memberId, deviceId])
+  @@index([deviceId]) // "how many accounts share this device" — the fraud query
+}
+
+model MemberNote {
+  id        String   @id @default(cuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  body      String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  @@index([memberId, createdAt])
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String // argon2id
+  name         String
+  role         String    @default("ADMIN") // ADMIN | FINANCE | SUPPORT
+  totpSecret   String? // encrypt at rest; 2FA is a contractual promise
+  totpEnabled  Boolean   @default(false)
+  // Highest TOTP time-step already accepted. A code is valid for 30 seconds,
+  // so without this a shoulder-surfed code could be replayed within its window.
+  lastTotpStep Int?
+  lastLoginAt  DateTime?
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+// Refresh tokens, stored only as hashes and rotated on every use.
+//
+// Rotation turns token theft into something detectable: each refresh issues a
+// new token in the same family and marks the old one used. If a used token is
+// ever presented again, either the legitimate client or an attacker is
+// replaying it — and since we cannot tell which, the whole family is revoked
+// and both are forced to log in again.
+model RefreshToken {
+  id            String    @id @default(cuid())
+  familyId      String
+  tokenHash     String    @unique // sha256 of the opaque token
+  subjectType   String // MEMBER | ADMIN
+  subjectId     String
+  issuedAt      DateTime  @default(now())
+  expiresAt     DateTime
+  usedAt        DateTime? // set on rotation; a second use means replay
+  revokedAt     DateTime?
+  revokedReason String?
+  ipAddress     String?
+  userAgent     String?
+  deviceId      String?
+
+  @@index([subjectType, subjectId])
+  @@index([familyId])
+  @@index([expiresAt])
+}
+
+// ---------------------------------------------------------------- catalogue
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  sortkey  Int       @default(0)
+  products Product[]
+}
+
+// A multi-brand catalogue: products from more than one supplier sold through
+// the same storefront. Nullable on Product rather than a required FK — every
+// product seeded before this feature existed has no brand to backfill it
+// with, and "unbranded" has to be a real, displayable state rather than a
+// migration blocker.
+model Brand {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  logoUrl     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  // The public URL. Never regenerated on a rename: it is what members have
+  // already shared, and changing it 404s every one of those links.
+  slug        String   @unique
+  name        String
+  description String?
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  brandId     String?
+  brand       Brand?   @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
+  mrpPaise        BigInt
+  pricePaise      BigInt
+  bvCenti         Int
+  gstBp           Int    @default(1800)
+  // A GST invoice is invalid without the HSN of each line item. Required at
+  // creation rather than backfilled, because discovering it at the first audit
+  // means reissuing every invoice already raised.
+  hsnCode         String
+  // Required on the product page by the Consumer Protection (E-Commerce)
+  // Rules, 2020.
+  countryOfOrigin String @default("India")
+
+  stock       Int @default(0)
+  sold        Int @default(0)
+  ratingBp    Int @default(0) // 4.5 stars -> 4500
+  reviewCount Int @default(0)
+
+  imageUrl  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([categoryId, isActive])
+  @@index([isActive, sold])
+  @@index([slug])
+  @@index([brandId, isActive])
+}
+
+// ---------------------------------------------------------------- plan config
+
+// The whole compensation plan is one versioned JSON document. Nothing about
+// ranks or percentages is a column, because the client changes these from the
+// admin console and every historical payout must still explain itself against
+// the exact rules that were live when it was paid.
+model PlanVersion {
+  id          String   @id @default(cuid())
+  version     Int      @unique @default(autoincrement())
+  config      Json // validated by PlanConfigSchema (src/plan/plan.config.ts)
+  note        String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  activeFrom  DateTime @default(now())
+
+  commissions Commission[]
+  orders      Order[]
+
+  @@index([activeFrom])
+}
+
+// Gapless counters. A Postgres sequence is unique but not gapless: a rolled
+// back transaction burns its number forever. GST invoice series must have no
+// holes within a financial year, so allocation takes a row lock instead.
+// Serialising here is acceptable because it happens once per order.
+model NumberSeries {
+  key       String   @id // "order" | "invoice:2026-27"
+  prefix    String
+  nextValue Int      @default(1)
+  updatedAt DateTime @updatedAt
+}
+
+// Saved report definitions. A row here shadows the shipped preset with the
+// same key, so "edit a built-in report" works without mutating shipped code.
+// The definition is JSON validated by ReportDefinitionSchema — it contains
+// catalog KEYS, never SQL.
+model ReportDefinition {
+  key         String   @id
+  name        String
+  definition  Json
+  createdById String?
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  runs ReportRun[]
+
+  @@index([updatedAt])
+}
+
+// Scheduled and ad-hoc executions, for the "who pulled this number" question
+// that always follows a disputed figure.
+model ReportRun {
+  id           String            @id @default(cuid())
+  reportKey    String
+  report       ReportDefinition? @relation(fields: [reportKey], references: [key], onDelete: SetNull)
+  ranById      String?
+  callerType   String // ADMIN | MEMBER | SCHEDULER
+  scopeApplied String
+  rowCount     Int
+  elapsedMs    Int
+  createdAt    DateTime          @default(now())
+
+  @@index([reportKey, createdAt])
+}
+
+model StoreSetting {
+  key       String   @id // "payment", "store", "security"
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------- wallets
+
+enum WalletKind {
+  SHOPPING // funded by verified UPI payments; spends on orders and in-app services (e.g. mobile recharge); never redeemable as cash to a bank account or UPI
+  INCOME // funded by commission; withdrawable; can move into SHOPPING
+}
+
+model Wallet {
+  id           String     @id @default(cuid())
+  memberId     String
+  member       Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  kind         WalletKind
+  balancePaise BigInt     @default(0)
+  version      Int        @default(0) // optimistic-lock guard; see LedgerService
+  updatedAt    DateTime   @updatedAt
+
+  entries LedgerEntry[]
+
+  @@unique([memberId, kind])
+}
+
+enum EntryDirection {
+  CREDIT
+  DEBIT
+}
+
+enum LedgerCategory {
+  RECHARGE
+  ORDER_PAYMENT
+  ORDER_REFUND
+  SELF_INCOME
+  DIRECT_INCOME
+  TEAM_INCOME
+  GENERATION_BONUS
+  ROYALTY
+  WITHDRAWAL_HOLD
+  WITHDRAWAL_REVERSAL
+  WALLET_TRANSFER
+  ADMIN_ADJUSTMENT
+  // Debited the instant a member requests a mobile top-up, reversed if the
+  // admin can't complete it — same hold-then-settle shape as a withdrawal,
+  // not a new way to leave the wallet: see MobileRechargeRequest below.
+  MOBILE_RECHARGE_HOLD
+  MOBILE_RECHARGE_REVERSAL
+}
+
+// Append only. Never UPDATE, never DELETE. A wrong entry is corrected by
+// posting its reverse, so the history stays auditable.
+model LedgerEntry {
+  id        String @id @default(cuid())
+  journalId String // groups both legs of a transfer into one event
+  memberId  String
+  member    Member @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  walletId  String
+  wallet    Wallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
+
+  direction    EntryDirection
+  amountPaise  BigInt
+  category     LedgerCategory
+  balanceAfter BigInt // running balance, so statements need no recomputation
+
+  refType String? // "order" | "recharge" | "withdrawal" | "royalty"
+  refId   String?
+  note    String?
+
+  // Every write passes a key. Replaying a queue job or a double-tapped button
+  // hits this unique index and becomes a no-op instead of paying twice.
+  idempotencyKey String   @unique
+  planVersionId  String?
+  createdAt      DateTime @default(now())
+
+  @@index([memberId, createdAt])
+  @@index([walletId, createdAt])
+  @@index([refType, refId])
+  @@index([journalId])
+}
+
+// ---------------------------------------------------------------- orders
+
+enum OrderStatus {
+  PLACED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id       String @id @default(cuid())
+  orderNo  String @unique // OD24088
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Restrict)
+
+  status        OrderStatus @default(PLACED)
+  subtotalPaise BigInt
+  gstPaise      BigInt
+  totalPaise    BigInt
+  totalBvCenti  Int
+
+  // The coupon, if any, is kept even if it's later deleted or deactivated —
+  // an order already placed has to keep explaining its own total. `onDelete:
+  // SetNull` lets the Coupon row go while couponCode/discountPaise (already
+  // captured at checkout) still tell the story on this order.
+  couponId      String?
+  coupon        Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponCode    String?
+  discountPaise BigInt  @default(0)
+
+  isFirstPurchase Boolean @default(false)
+
+  shipName    String
+  shipPhone   String
+  shipLine    String
+  shipCity    String
+  shipState   String
+  shipPincode String
+
+  // Pinned when the order is DELIVERED, so a later plan edit can never
+  // retroactively change what this order paid out.
+  planVersionId String?
+  planVersion   PlanVersion? @relation(fields: [planVersionId], references: [id])
+
+  // Assigned at delivery, when the supply actually happens. Kept apart from
+  // orderNo so a cancelled order never consumes an invoice number.
+  invoiceNo  String?   @unique
+  invoicedAt DateTime?
+
+  commissionRunAt DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  items       OrderItem[]
+  events      OrderEvent[]
+  commissions Commission[]
+
+  @@index([memberId, createdAt])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  // Copied, not joined. A price, BV or HSN edit next month must not rewrite
+  // history — an invoice already issued has to keep reproducing exactly.
+  nameSnapshot String
+  pricePaise   BigInt
+  mrpPaise     BigInt
+  bvCenti      Int
+  gstBp        Int
+  hsnSnapshot  String @default("")
+  quantity     Int
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model OrderEvent {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  note      String?
+  actorId   String?
+  createdAt DateTime    @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+// ------------------------------------------------------------------ coupons
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id               String     @id @default(cuid())
+  // Always the code a member types in — uppercased on write so "SAVE10" and
+  // "save10" are one coupon, not a silent miss at checkout.
+  code             String     @unique
+  description      String?
+  type             CouponType
+  // PERCENT: basis points off the payable total (500 = 5%).
+  // FIXED: paise off the payable total, direct.
+  value            Int
+  // Caps how much a PERCENT coupon can take off one order — without this, a
+  // "10% off" meant for a ₹500 basket also fires at full strength on a
+  // ₹50,000 one. Ignored for FIXED, where the value is already the ceiling.
+  maxDiscountPaise BigInt?
+  minOrderPaise    BigInt     @default(0)
+  // Total redemptions across every member; null is uncapped. Enforced against
+  // usedCount inside the same transaction that creates the redemption, so two
+  // members racing for the last use cannot both win.
+  usageLimit       Int?
+  usedCount        Int        @default(0)
+  // Per member, separately — a usageLimit of 100 does not mean one member can
+  // take all 100.
+  perMemberLimit   Int        @default(1)
+  isActive         Boolean    @default(true)
+  startsAt         DateTime?
+  expiresAt        DateTime?
+  createdById      String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  redemptions CouponRedemption[]
+  orders      Order[]
+
+  @@index([isActive])
+}
+
+// One row per order a coupon was actually used on — the enforcement record
+// for perMemberLimit, and the audit trail for "who used this and when" that
+// a plain usedCount counter can't answer.
+model CouponRedemption {
+  id            String   @id @default(cuid())
+  couponId      String
+  coupon        Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  memberId      String
+  member        Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  orderId       String   @unique
+  discountPaise BigInt
+  createdAt     DateTime @default(now())
+
+  @@index([couponId, memberId])
+}
+
+// ---------------------------------------------------------------- commission
+
+enum CommissionType {
+  SELF
+  DIRECT
+  TEAM
+  GENERATION
+  ROYALTY
+}
+
+// One row per (order, earner, type). The unique constraint is what makes the
+// commission run safe to retry — a replayed job collides instead of paying again.
+model Commission {
+  id           String      @id @default(cuid())
+  orderId      String?
+  order        Order?      @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  royaltyRunId String?
+  royaltyRun   RoyaltyRun? @relation(fields: [royaltyRunId], references: [id])
+
+  memberId String
+  member   Member         @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  type     CommissionType
+
+  sourceBvCenti  Int
+  pctBp          Int
+  amountPaise    BigInt
+  remainderPaise BigInt @default(0) // rounding dust, for reconciliation
+
+  generationLevel Int? // 1,2,3 for GENERATION
+  uplineDepth     Int? // how far above the buyer this earner sat
+  planVersionId   String
+  planVersion     PlanVersion @relation(fields: [planVersionId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  // An app-computed key, because a composite unique index would not work here:
+  // generationLevel is NULL on SELF/DIRECT/TEAM rows and orderId is NULL on
+  // royalty rows, and Postgres never treats two NULLs as equal — so the rows
+  // that most need deduping are exactly the ones such an index would miss.
+  dedupeKey String @unique
+
+  @@index([memberId, createdAt])
+  @@index([type, createdAt])
+}
+
+model RankChange {
+  id            String   @id @default(cuid())
+  memberId      String
+  member        Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromIndex     Int
+  toIndex       Int
+  atBvCenti     BigInt
+  planVersionId String
+  createdAt     DateTime @default(now())
+
+  @@index([memberId, createdAt])
+}
+
+// Monthly repurchase target: the plan can require a member to buy N BV each
+// month before withdrawals unlock. Aggregated on order delivery so the check
+// is one indexed read, not a scan over every order.
+model MonthlyVolume {
+  id           String @id @default(cuid())
+  memberId     String
+  member       Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  period       String // "2026-09"
+  selfBvCenti  Int    @default(0)
+  groupBvCenti Int    @default(0)
+
+  @@unique([memberId, period])
+  @@index([period])
+}
+
+model RoyaltyRun {
+  id             String   @id @default(cuid())
+  fundKey        String
+  poolBvCenti    Int
+  poolPaise      BigInt
+  perHeadPaise   BigInt
+  qualifierCount Int
+  planVersionId  String
+  runById        String?
+  createdAt      DateTime @default(now())
+
+  commissions Commission[]
+
+  @@index([fundKey, createdAt])
+}
+
+// Running accumulator per fund. Incremented on every delivered order, zeroed
+// on distribution.
+model RoyaltyPool {
+  fundKey    String   @id
+  accBvCenti Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------- recharge
+
+enum RechargeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Recharge {
+  id       String @id @default(cuid())
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Restrict)
+
+  claimedPaise     BigInt
+  creditedPaise    BigInt?
+  utr              String
+  screenshotKey    String // S3/R2 object key, not the image itself
+  screenshotSha256 String? // catches a screenshot reused across accounts
+
+  status       RechargeStatus @default(PENDING)
+  flags        String[]       @default([])
+  reviewNote   String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime       @default(now())
+
+  // Partial unique index enforcing "one approved credit per UTR" lives in a
+  // migration — Prisma cannot express WHERE clauses here. See ARCHITECTURE.md.
+  @@index([utr])
+  @@index([status, createdAt])
+  @@index([memberId, createdAt])
+  @@index([screenshotSha256])
+}
+
+// ---------------------------------------------------------------- withdrawal
+
+enum WithdrawalStatus {
+  PENDING
+  PAID
+  REJECTED
+}
+
+model Withdrawal {
+  id       String @id @default(cuid())
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Restrict)
+
+  requestedPaise BigInt
+  deductionPaise BigInt
+  netPaise       BigInt
+  deductionBp    Int
+
+  payoutSnapshot Json // bank details as they were at request time
+  status         WithdrawalStatus @default(PENDING)
+  transferRef    String?
+  reviewNote     String?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  createdAt      DateTime         @default(now())
+
+  @@index([status, createdAt])
+  @@index([memberId, createdAt])
+}
+
+// ---------------------------------------------------------------- ops
+
+enum RechargeOperator {
+  JIO
+  AIRTEL
+  VI
+  BSNL
+  OTHER
+}
+
+enum MobileRechargeStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+/**
+ * A member's shopping wallet, spent on a mobile top-up instead of a product.
+ * Deliberately not a withdrawal and not paid out to a bank or UPI handle:
+ * this is Majestic Cart fulfilling a recharge as a service it sells, the same
+ * way it fulfils a physical order, which is what keeps the shopping wallet a
+ * closed-loop store balance rather than a general-purpose payment instrument.
+ * See WalletKind.SHOPPING above.
+ * The amount is held the instant the request is made (MOBILE_RECHARGE_HOLD)
+ * so a member can't request twice against the same balance, then either
+ * completed once the admin has actually topped up the number with the
+ * operator, or reversed back into the wallet if it can't be done
+ * (MOBILE_RECHARGE_REVERSAL) — the same shape as Withdrawal, not Recharge.
+ */
+model MobileRechargeRequest {
+  id       String @id @default(cuid())
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Restrict)
+
+  mobileNumber String // 10-digit Indian mobile number, validated at the service layer
+  operator     RechargeOperator
+  amountPaise  BigInt
+
+  status        MobileRechargeStatus @default(PENDING)
+  // Whatever the admin's own recharge dashboard/API gave back as proof it went through.
+  operatorRef   String?
+  failureReason String?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime             @default(now())
+
+  @@index([status, createdAt])
+  @@index([memberId, createdAt])
+}
+
+model SecurityAlert {
+  id         String    @id @default(cuid())
+  severity   String // LOW | MEDIUM | HIGH
+  type       String // DUPLICATE_UTR | REUSED_SCREENSHOT | ...
+  message    String
+  memberId   String?
+  refType    String?
+  refId      String?
+  resolved   Boolean   @default(false)
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([resolved, createdAt])
+  @@index([memberId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorType String // ADMIN | MEMBER | SYSTEM
+  actorId   String?
+  action    String // "recharge.approve"
+  detail    Json
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([action, createdAt])
+  @@index([actorId, createdAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  memberId  String
+  member    Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  kind      String    @default("INFO")
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([memberId, createdAt])
+  @@index([memberId, readAt])
+}
+
+model OtpChallenge {
+  id        String   @id @default(cuid())
+  phone     String
+  codeHash  String // sha256(pepper + code); never the code itself
+  purpose   String // LOGIN | SIGNUP | RESET
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([phone, purpose, createdAt])
+  @@index([expiresAt])
+}
