@@ -38,6 +38,11 @@ export function AdminLogin() {
       await api('/admin/auth/login', {
         method: 'POST',
         body: { email: email.trim().toLowerCase(), password, ...(totpCode ? { totpCode } : {}) },
+        // A wrong password here is a 401 too, but it means "try again," not
+        // "your session ended" — the api() client's default 401 handling
+        // would otherwise bounce this straight back to a blank login page
+        // before this catch block ever saw the real message.
+        skipAuthRedirect: true,
       });
       // Only a path from this site, never an absolute URL from the query
       // string: `?next=https://evil.example` would otherwise turn the login
