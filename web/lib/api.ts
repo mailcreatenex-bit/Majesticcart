@@ -12,7 +12,11 @@ import { paiseReviver } from './paise';
  *     server reads it from there. A client that passes its own id invites a
  *     client that passes someone else's.
  *   • **A 401 means the session ended**, not that the call failed. It redirects
- *     to login rather than surfacing an error the member cannot act on.
+ *     to login rather than surfacing an error the member cannot act on — unless
+ *     the caller passes `skipAuthRedirect`, which the login calls themselves
+ *     do, since a login endpoint's own 401 means "wrong credentials," not
+ *     "your session ended," and redirecting there would swallow that message
+ *     before the form ever sees it.
  *   • **Double-submit protection is per-endpoint, not a header.** There is no
  *     `Idempotency-Key` interceptor on this API, so a header would look like
  *     protection while doing nothing. Each write path dedupes in its own way
@@ -52,10 +56,16 @@ interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   signal?: AbortSignal;
+  /**
+   * A 401 from this call means "wrong credentials," not "session expired" —
+   * true only for the login endpoints themselves. Skips the redirect-to-login
+   * side effect so the caller's own catch block gets to show the real error.
+   */
+  skipAuthRedirect?: boolean;
 }
 
 export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, signal } = opts;
+  const { method = 'GET', body, signal, skipAuthRedirect } = opts;
 
   let res: Response;
   try {
@@ -75,7 +85,7 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
     throw new ApiError('Could not reach the server. Check your connection and try again.', 0);
   }
 
-  if (res.status === 401) {
+  if (res.status === 401 && !skipAuthRedirect) {
     toLogin(path);
     throw new ApiError('Your session has ended. Please log in again.', 401);
   }
