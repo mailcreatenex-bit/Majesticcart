@@ -52,7 +52,7 @@ export class StorageService {
    * open invitation to host arbitrary files in your bucket.
    */
   async createUploadTicket(args: {
-    purpose: 'recharge-screenshot' | 'product-image' | 'payment-qr';
+    purpose: 'recharge-screenshot' | 'product-image' | 'payment-qr' | 'brand-logo' | 'blog-cover' | 'page-image' | 'theme-asset';
     memberId?: string;
     contentType: string;
     contentLength: number;
@@ -87,6 +87,26 @@ export class StorageService {
   /** Short-lived read URL. Screenshots are never public. */
   async signedReadUrl(objectKey: string, expiresIn = 600): Promise<string> {
     return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: this.bucket, Key: objectKey }), { expiresIn });
+  }
+
+  /**
+   * The permanent URL for an object meant to be public — product images, a
+   * blog cover, a logo. Unlike a recharge screenshot, these are embedded
+   * directly as `<img src>` on a page a crawler and every visitor hits, so a
+   * signed URL (expires, defeats CDN caching) is the wrong shape here; the
+   * bucket for `product-image`/`blog-cover`/`page-image`/`theme-asset`
+   * purposes needs a public-read policy for this to actually resolve.
+   *
+   * `S3_PUBLIC_URL_BASE` covers providers with their own public domain (a
+   * Cloudflare R2 bucket's public bucket URL, a CDN in front of S3); without
+   * it, this falls back to path-style against the configured endpoint, which
+   * is what a local MinIO / S3_FORCE_PATH_STYLE setup actually serves on.
+   */
+  publicUrl(objectKey: string): string {
+    const base = process.env.S3_PUBLIC_URL_BASE?.replace(/\/$/, '');
+    if (base) return `${base}/${objectKey}`;
+    const endpoint = (process.env.S3_ENDPOINT ?? '').replace(/\/$/, '');
+    return `${endpoint}/${this.bucket}/${objectKey}`;
   }
 
   /**

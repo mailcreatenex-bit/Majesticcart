@@ -4,6 +4,7 @@ import * as argon2 from 'argon2';
 import { CLIENT_DEFAULT_PLAN, rankIndexFor, rankAt } from '../src/plan/plan.config';
 import { rupeesToPaise, bvToCenti, commissionOn, formatInr } from '../src/common/money';
 import { isoPeriod } from '../src/common/period';
+import { ALL_PERMISSIONS, FINANCE_PERMISSIONS, SUPPORT_PERMISSIONS } from '../src/auth/permissions';
 
 /**
  * Seed.
@@ -144,12 +145,31 @@ async function bootstrap() {
     update: {},
   });
 
+  console.log('→ roles');
+  const [adminRole] = await Promise.all([
+    prisma.role.upsert({
+      where: { name: 'ADMIN' },
+      create: { name: 'ADMIN', description: 'Full access to everything.', permissions: ALL_PERMISSIONS, isSystem: true },
+      update: { permissions: ALL_PERMISSIONS },
+    }),
+    prisma.role.upsert({
+      where: { name: 'FINANCE' },
+      create: { name: 'FINANCE', description: 'Recharges, withdrawals, coupons, reports.', permissions: FINANCE_PERMISSIONS, isSystem: true },
+      update: { permissions: FINANCE_PERMISSIONS },
+    }),
+    prisma.role.upsert({
+      where: { name: 'SUPPORT' },
+      create: { name: 'SUPPORT', description: 'Orders, dashboard, security alerts.', permissions: SUPPORT_PERMISSIONS, isSystem: true },
+      update: { permissions: SUPPORT_PERMISSIONS },
+    }),
+  ]);
+
   console.log('→ admin user');
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? 'admin@majesticcart.in';
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? (DEMO ? 'admin-demo-2026!' : randomSecret());
   const admin = await prisma.adminUser.upsert({
     where: { email: adminEmail },
-    create: { email: adminEmail, name: 'Owner', role: 'ADMIN', passwordHash: await argon2.hash(adminPassword) },
+    create: { email: adminEmail, name: 'Owner', roleId: adminRole.id, passwordHash: await argon2.hash(adminPassword) },
     update: {},
   });
   if (!process.env.SEED_ADMIN_PASSWORD && !DEMO) {

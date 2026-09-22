@@ -18,13 +18,13 @@ import { api, ApiError } from '@/lib/api';
  * browser is a console whose permissions can be turned off with devtools.
  */
 
-export type AdminRole = 'ADMIN' | 'FINANCE' | 'SUPPORT';
-
 export interface AdminUser {
   id: string;
   email: string;
   name: string;
-  role: AdminRole;
+  /** Display name of the admin's role — could be a built-in (ADMIN/FINANCE/SUPPORT) or a custom one an admin created. Never used for access control here — see the file doc comment. */
+  role: string;
+  permissions: string[];
   totpEnabled: boolean;
   lastLoginAt: string | null;
 }
@@ -37,18 +37,22 @@ export function useAdmin(): AdminUser {
   return admin;
 }
 
-/** Which roles the server will accept for each area, mirrored for the nav. */
-const NAV: { href: string; label: string; roles: AdminRole[] }[] = [
-  { href: '/admin', label: 'Dashboard', roles: ['ADMIN', 'FINANCE', 'SUPPORT'] },
-  { href: '/admin/recharges', label: 'Recharges', roles: ['ADMIN', 'FINANCE'] },
-  { href: '/admin/orders', label: 'Orders', roles: ['ADMIN', 'SUPPORT'] },
-  { href: '/admin/withdrawals', label: 'Withdrawals', roles: ['ADMIN', 'FINANCE'] },
-  { href: '/admin/mobile-recharges', label: 'Mobile recharges', roles: ['ADMIN', 'FINANCE'] },
-  { href: '/admin/security-alerts', label: 'Security alerts', roles: ['ADMIN', 'FINANCE', 'SUPPORT'] },
-  { href: '/admin/catalog', label: 'Catalogue', roles: ['ADMIN'] },
-  { href: '/admin/coupons', label: 'Coupons', roles: ['ADMIN', 'FINANCE'] },
-  { href: '/admin/plan', label: 'Plan', roles: ['ADMIN'] },
-  { href: '/admin/settings', label: 'Settings', roles: ['ADMIN'] },
+/** Which permission the server requires for each area, mirrored for the nav. */
+const NAV: { href: string; label: string; permission: string }[] = [
+  { href: '/admin', label: 'Dashboard', permission: 'dashboard.view' },
+  { href: '/admin/recharges', label: 'Recharges', permission: 'finance.recharges' },
+  { href: '/admin/orders', label: 'Orders', permission: 'orders.manage' },
+  { href: '/admin/withdrawals', label: 'Withdrawals', permission: 'finance.withdrawals' },
+  { href: '/admin/mobile-recharges', label: 'Mobile recharges', permission: 'finance.mobile_recharges' },
+  { href: '/admin/security-alerts', label: 'Security alerts', permission: 'security.view' },
+  { href: '/admin/catalog', label: 'Catalogue', permission: 'catalog.manage' },
+  { href: '/admin/coupons', label: 'Coupons', permission: 'coupons.manage' },
+  { href: '/admin/blog', label: 'Blog', permission: 'blog.manage' },
+  { href: '/admin/pages', label: 'Pages', permission: 'pages.manage' },
+  { href: '/admin/theme', label: 'Theme', permission: 'theme.manage' },
+  { href: '/admin/plan', label: 'Plan', permission: 'plan.manage' },
+  { href: '/admin/roles', label: 'Roles & admins', permission: 'roles.manage' },
+  { href: '/admin/settings', label: 'Settings', permission: 'settings.manage' },
   // Still no 'Reports' link: the API's ReportController (GET /reports/:key)
   // is a general ad-hoc query/aggregation tool (see reporting/catalog.ts) —
   // the old prototype/ReportBuilder.jsx was the only UI that ever called it,
@@ -62,13 +66,13 @@ const NAV: { href: string; label: string; roles: AdminRole[] }[] = [
 export function AdminShell({
   title,
   subtitle,
-  /** Roles this page needs. The server checks too; this avoids a dead render. */
-  roles,
+  /** Permission this page needs. The server checks too; this avoids a dead render. */
+  permission,
   children,
 }: {
   title: string;
   subtitle?: string;
-  roles?: AdminRole[];
+  permission?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -118,8 +122,8 @@ export function AdminShell({
     );
   }
 
-  const allowed = !roles || roles.includes(admin.role);
-  const visibleNav = NAV.filter((n) => n.roles.includes(admin.role));
+  const allowed = !permission || admin.permissions.includes(permission);
+  const visibleNav = NAV.filter((n) => admin.permissions.includes(n.permission));
 
   return (
     <AdminContext.Provider value={admin}>

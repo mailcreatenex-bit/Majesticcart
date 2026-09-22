@@ -128,7 +128,8 @@ model AdminUser {
   email        String    @unique
   passwordHash String // argon2id
   name         String
-  role         String    @default("ADMIN") // ADMIN | FINANCE | SUPPORT
+  roleId       String
+  role         Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
   totpSecret   String? // encrypt at rest; 2FA is a contractual promise
   totpEnabled  Boolean   @default(false)
   // Highest TOTP time-step already accepted. A code is valid for 30 seconds,
@@ -138,6 +139,32 @@ model AdminUser {
   failedLogins Int       @default(0)
   lockedUntil  DateTime?
   createdAt    DateTime  @default(now())
+
+  blogPosts BlogPost[]
+  pages     Page[]
+
+  @@index([roleId])
+}
+
+// RBAC. `permissions` is a flat list of keys from src/auth/permissions.ts —
+// deliberately a String[] rather than a joined permissions table, since the
+// permission set is defined in code (it gates actual routes) while only the
+// *assignment* of permissions to a named role is data an admin edits.
+//
+// `isSystem` marks the three roles the app seeds itself (ADMIN, FINANCE,
+// SUPPORT): they can be assigned but not edited or deleted, so there is
+// always at least one role (ADMIN) that can undo any RBAC mistake — a custom
+// role that locks itself out of role management would otherwise be
+// unrecoverable without a database console.
+model Role {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String?
+  permissions String[]
+  isSystem    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  admins      AdminUser[]
 }
 
 // Refresh tokens, stored only as hashes and rotated on every use.
@@ -224,10 +251,16 @@ model Product {
   ratingBp    Int @default(0) // 4.5 stars -> 4500
   reviewCount Int @default(0)
 
-  imageUrl  String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // The thumbnail — shown on cards, the first thing rendered on the product
+  // page. `galleryImages` are the additional shots (angles, packaging, in
+  // use); kept as a plain array rather than a child table because they carry
+  // no state of their own beyond order — nothing else ever queries "products
+  // by image".
+  imageUrl      String?
+  galleryImages String[] @default([])
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   orderItems OrderItem[]
 
@@ -235,6 +268,49 @@ model Product {
   @@index([isActive, sold])
   @@index([slug])
   @@index([brandId, isActive])
+}
+
+// ------------------------------------------------------------------- content
+
+// Editorial content, separate from the catalogue: a blog post never blocks an
+// order the way a missing HSN code does, so it gets its own lightweight model
+// rather than being shoehorned into Product.
+model BlogPost {
+  id            String     @id @default(cuid())
+  slug          String     @unique
+  title         String
+  excerpt       String?
+  // Markdown, not HTML: an admin-authored post still comes from a browser
+  // form, and Markdown can't carry a <script> tag, so rendering it needs no
+  // sanitiser to get right. Rendered to HTML on read — see blog.service.ts.
+  contentMd     String
+  coverImageUrl String?
+  isPublished   Boolean    @default(false)
+  publishedAt   DateTime?
+  authorId      String?
+  author        AdminUser? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([isPublished, publishedAt])
+}
+
+// A handful of freeform pages (About, Press, Careers, ...) an admin can add
+// without a deploy. Distinct from the hand-built marketing pages
+// (app/(shop)/about, /faq, ...) — those stay real code because they carry
+// structured content (FAQs, legal text) this model isn't shaped for.
+model Page {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  title       String
+  contentMd   String
+  isPublished Boolean    @default(false)
+  updatedById String?
+  updatedBy   AdminUser? @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([isPublished])
 }
 
 // ---------------------------------------------------------------- plan config

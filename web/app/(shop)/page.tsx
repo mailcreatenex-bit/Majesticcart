@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { buildMetadata, metaDescription, SITE } from '@/lib/seo';
 import { listProducts, listCategories, categoryCopy } from '@/lib/catalog';
+import { getTheme } from '@/lib/content';
 import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
 
@@ -29,10 +30,12 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function HomePage() {
-  const [featured, categories] = await Promise.all([
+  const [featured, categories, theme] = await Promise.all([
     listProducts({ limit: 8 }),
     listCategories(),
+    getTheme(),
   ]);
+  const hero = theme.hero;
 
   // WebSite markup enables the sitelinks search box, and ItemList tells a
   // crawler these are products rather than an unlabelled set of links.
@@ -58,35 +61,42 @@ export default async function HomePage() {
 
       {/* ------------------------------------------------------------ hero */}
       <section className="relative overflow-hidden border-b border-[var(--line)] bg-gradient-to-b from-[var(--accent-soft)] via-[var(--page)] to-[var(--page)]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-24">
+        <div className={`mx-auto max-w-6xl px-4 py-16 sm:py-24 ${hero.imageUrl ? 'grid gap-10 md:grid-cols-2 md:items-center' : ''}`}>
           <div className="max-w-2xl">
-            <p className="text-xs uppercase tracking-[0.2em] text-[var(--accent)]">Made in India</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--accent)]">{hero.eyebrow}</p>
             {/* The only h1 on the page. It carries the brand and what is sold,
-                because that is the query it has to answer. */}
+                because that is the query it has to answer. Editable from the
+                console's Theme page — see lib/content.ts's getTheme(). */}
             <h1 className="mt-3 font-serif text-4xl leading-[1.1] text-[var(--ink)] sm:text-6xl">
-              Luxury beauty,
-              <br />
-              formulated for Indian skin
+              {hero.title.split('\n').map((line, i) => (
+                <span key={i}>
+                  {i > 0 && <br />}
+                  {line}
+                </span>
+              ))}
             </h1>
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--body)]">
-              Colour cosmetics, skin care, body care and fragrance — developed for Indian
-              undertones and Indian weather, and delivered direct to your door.
-            </p>
+            <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--body)]">{hero.subtitle}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                href="/shop"
+                href={hero.primaryCtaHref}
                 className="rounded-xl gold-foil px-7 py-3.5 font-semibold text-white shadow-lg shadow-amber-900/20"
               >
-                Shop the range
+                {hero.primaryCtaLabel}
               </Link>
               <Link
-                href="/join"
+                href={hero.secondaryCtaHref}
                 className="rounded-xl border border-[var(--ink)]/15 bg-[var(--surface)] px-7 py-3.5 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]"
               >
-                Become a member
+                {hero.secondaryCtaLabel}
               </Link>
             </div>
           </div>
+          {hero.imageUrl && (
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={hero.imageUrl} alt="" className="h-full w-full object-cover" />
+            </div>
+          )}
         </div>
       </section>
 

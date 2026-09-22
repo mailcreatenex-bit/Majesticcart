@@ -355,7 +355,10 @@ export class AuthService {
    * never reveals that the password alone was correct.
    */
   async loginAdmin(email: string, password: string, totpCode: string | undefined, ctx: SessionContext = {}): Promise<IssuedSession> {
-    const admin = await this.prisma.adminUser.findUnique({ where: { email: (email ?? '').trim().toLowerCase() } });
+    const admin = await this.prisma.adminUser.findUnique({
+      where: { email: (email ?? '').trim().toLowerCase() },
+      include: { role: true },
+    });
 
     if (!admin) {
       await verifyPassword('$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHQ$0000000000000000000000000000000000000000000', password);
@@ -422,7 +425,7 @@ export class AuthService {
       data: { actorType: 'ADMIN', actorId: admin.id, action: 'admin.login', detail: { email: admin.email }, ipAddress: ctx.ipAddress, userAgent: ctx.userAgent },
     });
 
-    return this.tokens.issue({ sub: admin.id, typ: 'ADMIN', role: admin.role }, ctx);
+    return this.tokens.issue({ sub: admin.id, typ: 'ADMIN', role: admin.role.name, permissions: admin.role.permissions }, ctx);
   }
 
   /**

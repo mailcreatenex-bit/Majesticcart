@@ -32,7 +32,7 @@ interface AdminCoupon {
 
 export function CouponAdminView() {
   return (
-    <AdminShell title="Coupons" subtitle="Discount codes members apply at checkout." roles={['ADMIN', 'FINANCE']}>
+    <AdminShell title="Coupons" subtitle="Discount codes members apply at checkout." permission="coupons.manage">
       <Coupons />
     </AdminShell>
   );

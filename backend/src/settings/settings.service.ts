@@ -19,6 +19,7 @@ import { upiQrSvg, VPA_RE } from '../recharge/upi-qr';
 
 const SETTING_KEY = 'ai';
 const PAYMENT_SETTING_KEY = 'payment';
+const THEME_SETTING_KEY = 'theme';
 
 interface AiSettingValue {
   geminiKeyEncrypted: string;
@@ -48,6 +49,48 @@ const DEFAULT_PAYMENT: PaymentSettingValue = {
   maxRechargePaise: '10000000',
   note: 'Scan the QR with any UPI app and pay the exact amount. Then enter the 12-digit UTR and upload the payment screenshot.',
 };
+
+/**
+ * What "edit any colour, text or image on the frontend" actually is: a fixed
+ * set of the site's own brand colours and its homepage hero copy/image,
+ * editable from the console and read by the storefront at request time —
+ * not a live WYSIWYG overlay on the page itself. That would mean tracking
+ * arbitrary DOM edits back to source, which is a different (and much
+ * larger) project; this gets an owner real control over the handful of
+ * things that actually vary between "look at our site" conversations
+ * (colours, the hero, the logo) without it.
+ */
+export interface ThemeSettingValue {
+  colors: { ink: string; accent: string; gold: string };
+  logoUrl: string;
+  hero: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    primaryCtaLabel: string;
+    primaryCtaHref: string;
+    secondaryCtaLabel: string;
+    secondaryCtaHref: string;
+    imageUrl: string;
+  };
+}
+
+const DEFAULT_THEME: ThemeSettingValue = {
+  colors: { ink: '#341316', accent: '#B84654', gold: '#D9B25A' },
+  logoUrl: '',
+  hero: {
+    eyebrow: 'Made in India',
+    title: 'Luxury beauty,\nformulated for Indian skin',
+    subtitle: 'Colour cosmetics, skin care, body care and fragrance — developed for Indian undertones and Indian weather, and delivered direct to your door.',
+    primaryCtaLabel: 'Shop the range',
+    primaryCtaHref: '/shop',
+    secondaryCtaLabel: 'Become a member',
+    secondaryCtaHref: '/join',
+    imageUrl: '',
+  },
+};
+
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 @Injectable()
 export class SettingsService {
@@ -151,6 +194,35 @@ export class SettingsService {
     });
     await this.prisma.auditLog.create({
       data: { actorType: 'ADMIN', actorId: adminId, action: 'settings.payment.set', detail: { upiId, payeeName } },
+    });
+  }
+
+  /* --------------------------------------------------------------- theme */
+
+  /** Deep-merged over the default so a partial save (or a setting added after this row was first written) never loses the rest. */
+  async theme(): Promise<ThemeSettingValue> {
+    const row = await this.prisma.storeSetting.findUnique({ where: { key: THEME_SETTING_KEY } });
+    const stored = row?.value as Partial<ThemeSettingValue> | undefined;
+    return {
+      colors: { ...DEFAULT_THEME.colors, ...stored?.colors },
+      logoUrl: stored?.logoUrl ?? DEFAULT_THEME.logoUrl,
+      hero: { ...DEFAULT_THEME.hero, ...stored?.hero },
+    };
+  }
+
+  async setTheme(input: ThemeSettingValue, adminId: string): Promise<void> {
+    for (const [name, hex] of Object.entries(input.colors)) {
+      if (!HEX_RE.test(hex)) throw new BadRequestException(`"${name}" needs a hex colour like #B84654.`);
+    }
+    if (!input.hero.title.trim()) throw new BadRequestException('The homepage headline cannot be empty.');
+
+    await this.prisma.storeSetting.upsert({
+      where: { key: THEME_SETTING_KEY },
+      create: { key: THEME_SETTING_KEY, value: input as never },
+      update: { value: input as never },
+    });
+    await this.prisma.auditLog.create({
+      data: { actorType: 'ADMIN', actorId: adminId, action: 'settings.theme.set', detail: {} },
     });
   }
 }

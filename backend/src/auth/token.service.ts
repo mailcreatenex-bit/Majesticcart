@@ -19,7 +19,8 @@ export interface AccessClaims {
   sub: string;
   typ: SubjectType;
   code?: string; // memberCode, handy in logs
-  role?: string; // admin only
+  role?: string; // admin only — the role's display name
+  permissions?: string[]; // admin only — see permissions.ts; this is what guards actually check
 }
 
 export interface IssuedSession {
@@ -121,9 +122,9 @@ export class TokenService {
 
   private async claimsFor(typ: SubjectType, id: string): Promise<AccessClaims> {
     if (typ === 'ADMIN') {
-      const admin = await this.prisma.adminUser.findUnique({ where: { id } });
+      const admin = await this.prisma.adminUser.findUnique({ where: { id }, include: { role: true } });
       if (!admin) throw new UnauthorizedException('This account no longer exists.');
-      return { sub: admin.id, typ: 'ADMIN', role: admin.role };
+      return { sub: admin.id, typ: 'ADMIN', role: admin.role.name, permissions: admin.role.permissions };
     }
     const member = await this.prisma.member.findUnique({ where: { id } });
     if (!member) throw new UnauthorizedException('This account no longer exists.');

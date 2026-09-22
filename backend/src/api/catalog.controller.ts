@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { Controller, Get, Post, Put, Patch, Body, Param, Query, Res, HttpCode, NotFoundException } from '@nestjs/common';
 import type { Response } from 'express';
 import { zodBody } from '../common/zod.pipe';
-import { Public, AdminOnly, MemberOnly, CurrentUser } from '../auth/guards';
+import { Public, RequirePermission, MemberOnly, CurrentUser } from '../auth/guards';
 import { CatalogService, ProductInputSchema, StockAdjustSchema, COSMETICS_HSN } from '../catalog/catalog.service';
 import { InvoiceService } from '../invoice/invoice.service';
 import { money, volume } from '../common/serialization';
@@ -89,7 +89,7 @@ const BrandInputSchema = z.object({
   logoUrl: z.string().trim().max(500).optional(),
 });
 
-@AdminOnly('ADMIN')
+@RequirePermission('catalog.manage')
 @Controller('admin/catalog')
 export class AdminCatalogController {
   constructor(private readonly catalog: CatalogService) {}
@@ -161,6 +161,28 @@ export class AdminCatalogController {
   @Get('low-stock')
   lowStock(@Query('threshold') threshold = '10') {
     return this.catalog.lowStock(Math.max(0, Number(threshold) || 10));
+  }
+
+  /* ---------------------------------------------------------------- csv */
+
+  @Get('products/export')
+  async exportCsv(@Res() res: Response) {
+    const csv = await this.catalog.exportCsv();
+    res.type('text/csv').set('Content-Disposition', 'attachment; filename="products.csv"').send(csv);
+  }
+
+  @Get('products/import-template')
+  importTemplate(@Res() res: Response) {
+    res.type('text/csv').set('Content-Disposition', 'attachment; filename="product-import-template.csv"').send(this.catalog.csvTemplate());
+  }
+
+  @Post('products/import')
+  @HttpCode(200)
+  importCsv(
+    @Body(zodBody(z.object({ csv: z.string().min(1, 'Choose a CSV file first') }))) body: { csv: string },
+    @CurrentUser('sub') adminId: string,
+  ) {
+    return this.catalog.importCsv(body.csv, adminId);
   }
 
   @Post('categories')
@@ -238,7 +260,7 @@ export class InvoiceController {
     res.type('html').send(await this.invoices.renderHtml(orderId));
   }
 
-  @AdminOnly('ADMIN', 'FINANCE', 'SUPPORT')
+  @RequirePermission('dashboard.view')
   @Get('admin/order/:orderId/html')
   async adminHtml(@Param('orderId') orderId: string, @Res() res: Response) {
     res.type('html').send(await this.invoices.renderHtml(orderId));
@@ -261,7 +283,12 @@ function publicProduct(p: any) {
     slug: p.slug,
     sku: p.sku,
     name: p.name,
-    description: p.description,
+    // The frontend's CatalogProduct types this as a plain string (every
+    // description shown on the storefront reads fine as ""), but the schema
+    // itself allows null — a product saved without one crashed
+    // generateMetadata's `text.replace(...)` at build time before this
+    // fell back here instead of at every call site.
+    description: p.description ?? '',
     category: p.category?.name ?? null,
     // The slug the storefront links and breadcrumbs with.
     categorySlug: p.category?.slug ?? null,
@@ -279,5 +306,6 @@ function publicProduct(p: any) {
     // the sell-through rate. "Only a few left" is enough for a buyer.
     lowStock: p.stock > 0 && p.stock <= 5,
     imageUrl: p.imageUrl,
+    galleryImages: p.galleryImages ?? [],
   };
 }

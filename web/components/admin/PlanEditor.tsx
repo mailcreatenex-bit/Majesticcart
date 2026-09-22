@@ -58,7 +58,7 @@ export function PlanEditorView() {
     <AdminShell
       title="Compensation plan"
       subtitle="Every change publishes a new version. Nothing is edited in place."
-      roles={['ADMIN']}
+      permission="plan.manage"
     >
       <Editor />
     </AdminShell>

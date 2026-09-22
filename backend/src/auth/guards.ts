@@ -17,13 +17,25 @@ import { AccessClaims, SubjectType } from './token.service';
 
 export const IS_PUBLIC = 'auth:public';
 export const REQUIRED_SUBJECT = 'auth:subject';
-export const REQUIRED_ROLES = 'auth:roles';
+export const REQUIRED_PERMISSIONS = 'auth:permissions';
 
 export const Public = () => SetMetadata(IS_PUBLIC, true);
 export const MemberOnly = () => SetMetadata(REQUIRED_SUBJECT, 'MEMBER' as SubjectType);
-export const AdminOnly = (...roles: string[]) => {
-  const decorators = [SetMetadata(REQUIRED_SUBJECT, 'ADMIN' as SubjectType)];
-  if (roles.length) decorators.push(SetMetadata(REQUIRED_ROLES, roles));
+
+/** Any signed-in admin, regardless of role — for self-service routes (own login, own 2FA, "who am I"). */
+export const AdminOnly = () => SetMetadata(REQUIRED_SUBJECT, 'ADMIN' as SubjectType);
+
+/**
+ * An admin whose role carries every one of these permission keys (see
+ * `permissions.ts`). This is the real access-control point — everything
+ * `AdminShell` hides or shows client-side is a convenience, never the
+ * enforcement.
+ */
+export const RequirePermission = (...permissions: string[]) => {
+  const decorators = [
+    SetMetadata(REQUIRED_SUBJECT, 'ADMIN' as SubjectType),
+    SetMetadata(REQUIRED_PERMISSIONS, permissions),
+  ];
   return (target: any, key?: any, descriptor?: any) => {
     for (const d of decorators) d(target, key, descriptor);
   };
@@ -67,9 +79,12 @@ export class AuthGuard implements CanActivate {
       throw new ForbiddenException('You do not have access to this.');
     }
 
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(REQUIRED_ROLES, targets);
-    if (requiredRoles?.length && !requiredRoles.includes(claims.role ?? '')) {
-      throw new ForbiddenException('Your role does not allow this action.');
+    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(REQUIRED_PERMISSIONS, targets);
+    if (requiredPermissions?.length) {
+      const granted = claims.permissions ?? [];
+      if (!requiredPermissions.every((p) => granted.includes(p))) {
+        throw new ForbiddenException('Your role does not allow this action.');
+      }
     }
 
     req.auth = claims;

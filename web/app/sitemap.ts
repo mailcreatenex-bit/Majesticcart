@@ -32,10 +32,26 @@ async function fetchEntries(path: string): Promise<CatalogEntry[]> {
   }
 }
 
+async function fetchBlogSlugs(): Promise<CatalogEntry[]> {
+  const origin = process.env.API_ORIGIN;
+  if (!origin) return [];
+  try {
+    const res = await fetch(`${origin}/api/blog`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { items: { slug: string; publishedAt: string }[] };
+    return data.items.map((p) => ({ slug: p.slug, updatedAt: p.publishedAt }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, categories] = await Promise.all([
+  const [products, categories, brands, posts, pages] = await Promise.all([
     fetchEntries('/catalog/sitemap'),
     fetchEntries('/catalog/categories'),
+    fetchEntries('/catalog/brands'),
+    fetchBlogSlugs(),
+    fetchEntries('/pages/sitemap'),
   ]);
   const now = new Date();
 
@@ -47,6 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl('/contact', SITE.origin), lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: absoluteUrl('/join', SITE.origin), lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: absoluteUrl('/shade-finder', SITE.origin), lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: absoluteUrl('/blog', SITE.origin), lastModified: now, changeFrequency: 'weekly', priority: 0.6 },
     // Indexable per robotsFor() (they're not in PRIVATE_PREFIXES — a member
     // searching "majestic cart login" is meant to find this), but nothing
     // was pointing a crawler at them beyond the footer link.
@@ -71,6 +88,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...products.map((p) => ({
       url: absoluteUrl(`/product/${p.slug}`, SITE.origin),
       lastModified: p.updatedAt ? new Date(p.updatedAt) : now, changeFrequency: 'weekly' as const, priority: 0.7,
+    })),
+    ...brands.map((b) => ({
+      url: absoluteUrl(`/brand/${b.slug}`, SITE.origin),
+      lastModified: now, changeFrequency: 'weekly' as const, priority: 0.6,
+    })),
+    ...posts.map((p) => ({
+      url: absoluteUrl(`/blog/${p.slug}`, SITE.origin),
+      lastModified: p.updatedAt ? new Date(p.updatedAt) : now, changeFrequency: 'monthly' as const, priority: 0.5,
+    })),
+    ...pages.map((p) => ({
+      url: absoluteUrl(`/p/${p.slug}`, SITE.origin),
+      lastModified: p.updatedAt ? new Date(p.updatedAt) : now, changeFrequency: 'monthly' as const, priority: 0.4,
     })),
   ];
 }

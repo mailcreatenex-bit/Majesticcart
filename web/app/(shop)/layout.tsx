@@ -7,6 +7,7 @@ import { CartProvider } from '@/components/CartProvider';
 import { themeBootScript } from '@/components/ThemeToggle';
 import { SITE, organizationJsonLd } from '@/lib/seo';
 import { ENTITY } from '@/lib/legal';
+import { getTheme } from '@/lib/content';
 import '@/app/globals.css';
 
 /**
@@ -43,8 +44,9 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const org = organizationJsonLd({ phone: ENTITY.supportPhone, email: ENTITY.supportEmail });
+  const theme = await getTheme();
 
   return (
     <html lang="en-IN" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
@@ -74,6 +76,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Royal Night, which looks worse than having no dark theme at all.
         */}
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+
+        {/*
+          Admin-editable brand colours from the console's Theme page.
+          Light theme only: `:root[data-theme='night']` in globals.css has
+          higher specificity than a plain `:root` rule regardless of source
+          order, so Royal Night keeps its own hand-tuned palette no matter
+          what an admin picks here.
+        */}
+        <style dangerouslySetInnerHTML={{ __html: `:root { --ink: ${theme.colors.ink}; --accent: ${theme.colors.accent}; --gold: ${theme.colors.gold}; }` }} />
 
         {/* iOS ignores the manifest for these two. */}
         <meta name="apple-mobile-web-app-capable" content="yes" />

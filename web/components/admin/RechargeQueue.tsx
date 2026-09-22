@@ -83,7 +83,7 @@ export function RechargeQueueView() {
     <AdminShell
       title="Recharges"
       subtitle="Match each payment to the bank statement before crediting it."
-      roles={['ADMIN', 'FINANCE']}
+      permission="finance.recharges"
     >
       <Queue />
     </AdminShell>

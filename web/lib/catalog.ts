@@ -32,6 +32,7 @@ export interface CatalogProduct {
   countryOfOrigin: string;
   inStock: boolean;
   imageUrl?: string;
+  galleryImages?: string[];
 }
 
 export interface CatalogCategory {

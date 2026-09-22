@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import type { Metadata } from 'next';
 import {
   buildMetadata, pageTitle, metaDescription, productJsonLd, breadcrumbJsonLd,
@@ -9,6 +8,7 @@ import { getProduct, listProducts, categoryCopy } from '@/lib/catalog';
 import { showMoney, showVolume, discountPercent } from '@/lib/money';
 import { AddToBag } from '@/components/AddToBag';
 import { ProductCard } from '@/components/ProductCard';
+import { ProductGallery } from '@/components/ProductGallery';
 
 /**
  * Product page — the template every other indexable page follows.
@@ -121,22 +121,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </nav>
 
         <article className="mt-6 grid gap-10 md:grid-cols-2">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[var(--surface)]">
-            {product.imageUrl ? (
-              // priority: this is the LCP element on the page, and Core Web
-              // Vitals is a ranking input.
-              <Image src={product.imageUrl} alt={product.name} fill priority sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
-            ) : (
-              <div className="flex h-full items-center justify-center px-8 text-center font-serif text-xl text-[#C9B8C2]">
-                {product.name}
-              </div>
-            )}
-            {off !== null && (
-              <span className="absolute left-4 top-4 rounded-full bg-[var(--ink)] px-3 py-1.5 text-xs font-semibold text-[var(--gold-pale)]">
-                {off}% off
-              </span>
-            )}
-          </div>
+          <ProductGallery
+            images={[...(product.imageUrl ? [product.imageUrl] : []), ...(product.galleryImages ?? [])]}
+            name={product.name}
+            discountBadge={off}
+          />
 
           <div>
             <p className="text-[11px] uppercase tracking-wider text-[var(--faint)]">

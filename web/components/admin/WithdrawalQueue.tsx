@@ -52,7 +52,7 @@ export function WithdrawalQueueView() {
     <AdminShell
       title="Withdrawals"
       subtitle="The amount is already held from the member's wallet. Record the transfer, or return it."
-      roles={['ADMIN', 'FINANCE']}
+      permission="finance.withdrawals"
     >
       <Queue />
     </AdminShell>

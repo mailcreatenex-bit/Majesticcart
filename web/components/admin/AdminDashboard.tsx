@@ -49,7 +49,7 @@ interface Earner { id: string; memberCode: string; name: string; rankIndex: numb
 
 export function AdminDashboardView() {
   return (
-    <AdminShell title="Dashboard" subtitle="What needs a decision, and how the plan is holding up.">
+    <AdminShell title="Dashboard" subtitle="What needs a decision, and how the plan is holding up." permission="dashboard.view">
       <Dashboard />
     </AdminShell>
   );

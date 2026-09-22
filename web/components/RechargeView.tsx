@@ -132,7 +132,7 @@ function RechargeForm({
       // The image goes straight to object storage on a one-time ticket. A 4 MB
       // screenshot through the API process is memory pressure for no benefit,
       // and members on patchy data would upload it twice.
-      const ticket = await api<{ url: string; key: string; headers?: Record<string, string> }>(
+      const ticket = await api<{ uploadUrl: string; objectKey: string }>(
         '/wallet/upload-ticket',
         {
           method: 'POST',
@@ -140,16 +140,16 @@ function RechargeForm({
         },
       );
 
-      const put = await fetch(ticket.url, {
+      const put = await fetch(ticket.uploadUrl, {
         method: 'PUT',
         body: screenshot,
-        headers: { 'Content-Type': screenshot!.type, ...(ticket.headers ?? {}) },
+        headers: { 'Content-Type': screenshot!.type },
       });
       if (!put.ok) throw new ApiError('The screenshot could not be uploaded. Try again.', put.status);
 
       await api('/wallet/recharge', {
         method: 'POST',
-        body: { amount: (amountPaise / 100).toFixed(2), utr: utr.trim().toUpperCase(), screenshotKey: ticket.key },
+        body: { amount: (amountPaise / 100).toFixed(2), utr: utr.trim().toUpperCase(), screenshotKey: ticket.objectKey },
         // No client key: the UTR is the dedupe key: one bank payment, one credit.
       });
 

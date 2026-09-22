@@ -27,7 +27,7 @@ export function SecurityAlertQueueView() {
     <AdminShell
       title="Security alerts"
       subtitle="Fraud and abuse signals the platform raised on its own. Resolve once you've reviewed and acted on one."
-      roles={['ADMIN', 'FINANCE', 'SUPPORT']}
+      permission="security.view"
     >
       <Queue />
     </AdminShell>

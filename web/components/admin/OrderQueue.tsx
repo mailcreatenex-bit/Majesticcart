@@ -54,7 +54,7 @@ export function OrderQueueView() {
     <AdminShell
       title="Orders"
       subtitle="Pack, ship, and mark delivered. Delivery is what pays commission."
-      roles={['ADMIN', 'SUPPORT']}
+      permission="orders.manage"
     >
       <Queue />
     </AdminShell>

@@ -28,7 +28,7 @@ interface PaymentStatus {
 
 export function SettingsView() {
   return (
-    <AdminShell title="Settings" subtitle="Store-level configuration." roles={['ADMIN']}>
+    <AdminShell title="Settings" subtitle="Store-level configuration." permission="settings.manage">
       <div className="space-y-6">
         <TwoFactorSettings />
         <PaymentSettings />

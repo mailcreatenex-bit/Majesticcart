@@ -5,6 +5,7 @@ import { api, ApiError } from '@/lib/api';
 import { formatRupees } from '@/lib/money';
 import { centiToBv } from '@/lib/plan';
 import { AdminShell, Panel, AdminEmpty, AdminError, TableSkeleton } from './AdminShell';
+import { ImageUploadField, ImageGalleryField } from './ImageUploadField';
 
 /**
  * The catalogue.
@@ -47,6 +48,7 @@ interface AdminProduct {
   sold: number;
   isActive: boolean;
   imageUrl: string | null;
+  galleryImages: string[];
 }
 
 interface Category { id: string; name: string; slug: string }
@@ -59,7 +61,7 @@ export function CatalogAdminView() {
     <AdminShell
       title="Catalogue"
       subtitle="Products, prices and the business volume the plan multiplies."
-      roles={['ADMIN']}
+      permission="catalog.manage"
     >
       <Catalog />
     </AdminShell>
@@ -123,7 +125,8 @@ function Catalog() {
         />
       ) : (
         <>
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CsvImportExport onImported={load} />
             <button
               type="button"
               onClick={() => setEditing('new')}
@@ -161,6 +164,88 @@ function Catalog() {
           <BrandPanel brands={brands} onChanged={load} />
           <CategoryPanel categories={categories} onChanged={load} />
         </>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------- csv */
+
+interface CsvRowResult { row: number; sku?: string; status: 'created' | 'updated' | 'error'; message?: string }
+
+/**
+ * Bulk product import/export.
+ *
+ * Export and the import template are plain links rather than fetched with
+ * `api()` on purpose: `api()` always JSON-parses the response, which a CSV
+ * download is not. The admin session cookie travels with a normal browser
+ * navigation the same way it does with a `fetch` call, so a link is enough
+ * — no client-side blob assembly needed.
+ */
+function CsvImportExport({ onImported }: { onImported: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<CsvRowResult[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const upload = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    setResults(null);
+    try {
+      const csv = await file.text();
+      const rows = await api<CsvRowResult[]>('/admin/catalog/products/import', { method: 'POST', body: { csv } });
+      setResults(rows);
+      await onImported();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not import that file.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const created = results?.filter((r) => r.status === 'created').length ?? 0;
+  const updated = results?.filter((r) => r.status === 'updated').length ?? 0;
+  const failed = results?.filter((r) => r.status === 'error') ?? [];
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        <a href="/api/admin/catalog/products/export" className="font-semibold text-neutral-700 hover:underline">
+          Export CSV
+        </a>
+        <span className="text-neutral-300">·</span>
+        <a href="/api/admin/catalog/products/import-template" className="font-semibold text-neutral-700 hover:underline">
+          Download template
+        </a>
+        <span className="text-neutral-300">·</span>
+        <label className="cursor-pointer font-semibold text-neutral-700 hover:underline">
+          {busy ? 'Importing…' : 'Import CSV'}
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(e) => upload(e.target.files?.[0])}
+            disabled={busy}
+            className="hidden"
+          />
+        </label>
+      </div>
+
+      {error && <p className="mt-2 text-xs text-red-700">{error}</p>}
+
+      {results && (
+        <div className="mt-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs">
+          <p className="font-semibold text-neutral-800">
+            {created} created, {updated} updated{failed.length > 0 ? `, ${failed.length} failed` : ''}
+          </p>
+          {failed.length > 0 && (
+            <ul className="mt-1.5 space-y-0.5 text-red-700">
+              {failed.map((r) => (
+                <li key={r.row}>Row {r.row}{r.sku ? ` (${r.sku})` : ''}: {r.message}</li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );
@@ -322,6 +407,7 @@ function ProductForm({
     stock: product?.stock ?? 0,
     isActive: product?.isActive ?? true,
     imageUrl: product?.imageUrl ?? '',
+    galleryImages: product?.galleryImages ?? [],
   });
 
   const [warnings, setWarnings] = useState<PricingWarning[]>([]);
@@ -379,6 +465,7 @@ function ProductForm({
       stock: form.stock,
       isActive: form.isActive,
       imageUrl: form.imageUrl.trim() || undefined,
+      galleryImages: form.galleryImages,
     };
 
     try {
@@ -474,7 +561,22 @@ function ProductForm({
         )}
 
         <div className="sm:col-span-2">
-          <Field label="Image URL" value={form.imageUrl} onChange={(v) => set('imageUrl', v)} error={fieldErrors.imageUrl} />
+          <ImageUploadField
+            label="Thumbnail"
+            value={form.imageUrl}
+            onChange={(url) => set('imageUrl', url)}
+            purpose="product-image"
+            hint="Shown on cards and first on the product page."
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <ImageGalleryField
+            label="Gallery"
+            values={form.galleryImages}
+            onChange={(urls) => set('galleryImages', urls)}
+            purpose="product-image"
+          />
         </div>
       </div>
 

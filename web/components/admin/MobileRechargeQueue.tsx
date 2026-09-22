@@ -30,7 +30,7 @@ export function MobileRechargeQueueView() {
     <AdminShell
       title="Mobile recharges"
       subtitle="The amount is already held from the member's shopping wallet. Complete the top-up with the operator, then record it here — or return it."
-      roles={['ADMIN', 'FINANCE']}
+      permission="finance.mobile_recharges"
     >
       <Queue />
     </AdminShell>

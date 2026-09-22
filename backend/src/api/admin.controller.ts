@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, BadRequestException, UseGuards } from '@nestjs/common';
 import { zodBody } from '../common/zod.pipe';
 import { money, volume, parseMoneyInput } from '../common/serialization';
-import { AdminOnly, CurrentUser, Public, ClientContext } from '../auth/guards';
+import { AdminOnly, RequirePermission, CurrentUser, Public, ClientContext } from '../auth/guards';
+import { ThemeSettingValue } from '../settings/settings.service';
 import { RateLimit, RateLimitGuard } from '../common/rate-limit.guard';
 import { AuthService } from '../auth/auth.service';
 import { TokenService } from '../auth/token.service';
@@ -36,7 +37,7 @@ const DecisionSchema = z.object({
 
 /* ------------------------------------------------------- recharge review */
 
-@AdminOnly('ADMIN', 'FINANCE')
+@RequirePermission('finance.recharges')
 @Controller('admin/recharges')
 export class AdminRechargeController {
   constructor(
@@ -168,9 +169,12 @@ export class AdminAuthController {
   async me(@CurrentUser('sub') adminId: string) {
     const admin = await this.prisma.adminUser.findUniqueOrThrow({
       where: { id: adminId },
-      select: { id: true, email: true, name: true, role: true, totpEnabled: true, lastLoginAt: true },
+      select: {
+        id: true, email: true, name: true, totpEnabled: true, lastLoginAt: true,
+        role: { select: { name: true, permissions: true } },
+      },
     });
-    return admin;
+    return { ...admin, role: admin.role.name, permissions: admin.role.permissions };
   }
 
   /** Issues a fresh secret and its QR. Self-service, own account only — there is no admin-for-admin override. */
@@ -204,7 +208,7 @@ export class AdminAuthController {
 
 /* ---------------------------------------------------------- order admin */
 
-@AdminOnly('ADMIN', 'SUPPORT')
+@RequirePermission('orders.manage')
 @Controller('admin/orders')
 export class AdminOrderController {
   constructor(
@@ -281,7 +285,7 @@ export class AdminOrderController {
    * withdrawn, so it is deliberately a separate route from the status machine
    * and is restricted to ADMIN.
    */
-  @AdminOnly('ADMIN')
+  @RequirePermission('orders.return')
   @Post(':id/return')
   @HttpCode(200)
   returnOrder(
@@ -295,7 +299,7 @@ export class AdminOrderController {
 
 /* --------------------------------------------------------------- coupons */
 
-@AdminOnly('ADMIN', 'FINANCE')
+@RequirePermission('coupons.manage')
 @Controller('admin/coupons')
 export class AdminCouponController {
   constructor(private readonly coupons: CouponService) {}
@@ -323,7 +327,7 @@ export class AdminCouponController {
 
 /* -------------------------------------------------------- payout admin */
 
-@AdminOnly('ADMIN', 'FINANCE')
+@RequirePermission('finance.withdrawals')
 @Controller('admin/withdrawals')
 export class AdminWithdrawalController {
   constructor(
@@ -395,7 +399,7 @@ export class AdminWithdrawalController {
 
 /* ---------------------------------------------------- mobile recharge admin */
 
-@AdminOnly('ADMIN', 'FINANCE')
+@RequirePermission('finance.mobile_recharges')
 @Controller('admin/mobile-recharges')
 export class AdminMobileRechargeController {
   constructor(private readonly mobileRecharges: MobileRechargeService) {}
@@ -440,7 +444,7 @@ export class AdminMobileRechargeController {
  * Plan edits are ADMIN only. FINANCE approving a payment is a recoverable
  * mistake; FINANCE setting self income to 90% is not.
  */
-@AdminOnly('ADMIN')
+@RequirePermission('plan.manage')
 @Controller('admin/plan')
 export class AdminPlanController {
   constructor(
@@ -538,7 +542,7 @@ export class AdminPlanController {
 
 /* --------------------------------------------------------- dashboard */
 
-@AdminOnly('ADMIN', 'FINANCE', 'SUPPORT')
+@RequirePermission('dashboard.view')
 @Controller('admin/dashboard')
 export class AdminDashboardController {
   constructor(private readonly dashboard: DashboardService) {}
@@ -567,7 +571,7 @@ export class AdminDashboardController {
    * Should always return an empty list. Anything else means something wrote to
    * Wallet outside LedgerService, which is an incident rather than a report.
    */
-  @AdminOnly('ADMIN', 'FINANCE')
+  @RequirePermission('finance.ledger_drift')
   @Get('ledger-drift')
   drift() {
     return this.dashboard.ledgerDrift();
@@ -581,7 +585,7 @@ export class ReportController {
   constructor(private readonly reports: ReportService, private readonly prisma: PrismaClient) {}
 
   /** The field picker for the report builder. Carries no SQL. */
-  @AdminOnly('ADMIN', 'FINANCE', 'SUPPORT')
+  @RequirePermission('reports.view')
   @Get('catalog')
   catalog() {
     return this.reports.catalog();
@@ -602,20 +606,20 @@ export class ReportController {
     return this.reports.run(key, caller);
   }
 
-  @AdminOnly('ADMIN', 'FINANCE')
+  @RequirePermission('reports.manage')
   @Post('preview')
   @HttpCode(200)
   async preview(@Body() definition: unknown, @CurrentUser() user: { sub: string; role?: string }) {
     return this.reports.preview(definition, { type: 'ADMIN', id: user.sub, role: user.role });
   }
 
-  @AdminOnly('ADMIN')
+  @RequirePermission('reports.manage')
   @Put(':key')
   save(@Param('key') key: string, @Body() definition: unknown, @CurrentUser('sub') adminId: string) {
     return this.reports.save({ ...(definition as object), key }, adminId);
   }
 
-  @AdminOnly('ADMIN')
+  @RequirePermission('reports.manage')
   @Delete(':key')
   @HttpCode(204)
   async remove(@Param('key') key: string, @CurrentUser('sub') adminId: string) {
@@ -657,7 +661,7 @@ const PaymentSettingsSchema = z.object({
   note: z.string().max(500).optional(),
 });
 
-@AdminOnly('ADMIN')
+@RequirePermission('settings.manage')
 @Controller('admin/settings')
 export class AdminSettingsController {
   constructor(private readonly settings: SettingsService) {}
@@ -715,7 +719,54 @@ export class AdminSettingsController {
   }
 }
 
-@AdminOnly('ADMIN', 'FINANCE', 'SUPPORT')
+/* ---------------------------------------------------------------- theme */
+
+const ThemeSettingSchema = z.object({
+  colors: z.object({ ink: z.string(), accent: z.string(), gold: z.string() }),
+  logoUrl: z.string().trim().max(500).default(''),
+  hero: z.object({
+    eyebrow: z.string().trim().max(60),
+    title: z.string().trim().max(200),
+    subtitle: z.string().trim().max(400),
+    primaryCtaLabel: z.string().trim().max(40),
+    primaryCtaHref: z.string().trim().max(200),
+    secondaryCtaLabel: z.string().trim().max(40),
+    secondaryCtaHref: z.string().trim().max(200),
+    imageUrl: z.string().trim().max(500).default(''),
+  }),
+});
+
+/** Read by the storefront on every homepage render — public, since it's exactly what the page already shows every visitor. */
+@Controller('theme')
+export class ThemeController {
+  constructor(private readonly settings: SettingsService) {}
+
+  @Public()
+  @Get()
+  get() {
+    return this.settings.theme();
+  }
+}
+
+@RequirePermission('theme.manage')
+@Controller('admin/theme')
+export class AdminThemeController {
+  constructor(private readonly settings: SettingsService) {}
+
+  @Get()
+  get() {
+    return this.settings.theme();
+  }
+
+  @Post()
+  @HttpCode(200)
+  async set(@Body(zodBody(ThemeSettingSchema)) body: ThemeSettingValue, @CurrentUser('sub') adminId: string) {
+    await this.settings.setTheme(body, adminId);
+    return { ok: true as const };
+  }
+}
+
+@RequirePermission('security.view')
 @Controller('admin/security-alerts')
 export class AdminSecurityController {
   constructor(private readonly alerts: SecurityAlertService) {}

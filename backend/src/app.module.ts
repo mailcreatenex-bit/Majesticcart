@@ -35,7 +35,15 @@ import {
   AdminAuthController, AdminRechargeController, AdminOrderController, AdminWithdrawalController,
   AdminMobileRechargeController, AdminPlanController, AdminDashboardController, ReportController,
   AdminSecurityController, AdminSettingsController, AdminCouponController,
+  ThemeController, AdminThemeController,
 } from './api/admin.controller';
+import { RbacService } from './rbac/rbac.service';
+import { RoleController, AdminUserController } from './rbac/rbac.controller';
+import { AdminMediaController } from './media/media.controller';
+import { BlogService } from './blog/blog.service';
+import { BlogController, AdminBlogController } from './blog/blog.controller';
+import { PageService } from './pages/page.service';
+import { PageController, AdminPageController } from './pages/page.controller';
 
 /**
  * Wiring.
@@ -84,10 +92,29 @@ export class PrismaModule {}
 export class AuthModule {}
 
 @Module({
+  controllers: [AdminMediaController],
   providers: [StorageService],
   exports: [StorageService],
 })
 export class MediaModule {}
+
+@Module({
+  controllers: [RoleController, AdminUserController],
+  providers: [RbacService],
+})
+export class RbacModule {}
+
+@Module({
+  controllers: [BlogController, AdminBlogController],
+  providers: [BlogService],
+})
+export class BlogModule {}
+
+@Module({
+  controllers: [PageController, AdminPageController],
+  providers: [PageService],
+})
+export class PagesModule {}
 
 /**
  * Split out from AdminModule specifically so MemberModule can depend on it
@@ -170,7 +197,10 @@ export class WalletOpsModule {}
 
 @Module({
   imports: [CommissionModule, SettingsModule],
-  controllers: [AdminPlanController, AdminDashboardController, ReportController, AdminSecurityController, AdminSettingsController],
+  controllers: [
+    AdminPlanController, AdminDashboardController, ReportController, AdminSecurityController,
+    AdminSettingsController, ThemeController, AdminThemeController,
+  ],
   providers: [DashboardService, ReportService, SecurityAlertService],
   exports: [DashboardService, ReportService, SecurityAlertService],
 })
@@ -207,6 +237,9 @@ export class AdminModule {}
     InvoiceModule,
     WalletOpsModule,
     AdminModule,
+    RbacModule,
+    BlogModule,
+    PagesModule,
   ],
   providers: [
     // Global: a new route is protected and BigInt-safe by default. Opting out

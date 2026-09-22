@@ -1,7 +1,9 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { parse as parseCsv } from 'csv-parse/sync';
 import { rupeesToPaise, bvToCenti, formatInr, centiToBvString, Paise } from '../common/money';
+import { toCsvRow } from '../common/csv';
 
 /**
  * Product catalogue.
@@ -52,8 +54,34 @@ export const ProductInputSchema = z.object({
   stock: z.number().int().min(0),
   isActive: z.boolean().default(true),
   imageUrl: z.string().trim().max(500).optional(),
+  galleryImages: z.array(z.string().trim().max(500)).max(12, 'Up to 12 gallery images').default([]),
 });
 export type ProductInput = z.infer<typeof ProductInputSchema>;
+
+/** One row of a product CSV — the same fields as ProductInputSchema, but category/brand are names (what a spreadsheet actually holds), not ids. */
+const CsvRowSchema = z.object({
+  sku: z.string().trim().toUpperCase().regex(/^[A-Z0-9][A-Z0-9-]{2,23}$/, 'SKU: 3 to 24 letters, digits or hyphens'),
+  name: z.string().trim().min(3, 'Name is too short').max(120),
+  description: z.string().trim().max(2000).optional(),
+  category: z.string().trim().min(1, 'Category is required'),
+  brand: z.string().trim().optional(),
+  mrp: rupees,
+  price: rupees,
+  bv: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Enter a BV value'),
+  gstBp: z.coerce.number().int().min(0).max(4000),
+  hsnCode: z.string().trim().regex(/^\d{4,8}$/, 'HSN must be 4 to 8 digits'),
+  countryOfOrigin: z.string().trim().min(2).max(60).default('India'),
+  stock: z.coerce.number().int().min(0),
+  isActive: z.preprocess((v) => (typeof v === 'string' ? v.trim().toLowerCase() !== 'false' && v.trim() !== '0' : v), z.boolean()).default(true),
+  imageUrl: z.string().trim().max(500).optional(),
+});
+
+export interface CsvImportRowResult {
+  row: number;
+  sku?: string;
+  status: 'created' | 'updated' | 'error';
+  message?: string;
+}
 
 export const StockAdjustSchema = z.object({
   delta: z.number().int().refine((n) => n !== 0, 'Enter a non-zero adjustment'),
@@ -249,6 +277,7 @@ export class CatalogService {
           stock: input.stock,
           isActive: input.isActive,
           imageUrl: input.imageUrl ?? null,
+          galleryImages: input.galleryImages ?? [],
         },
       });
       await this.audit(actorId, 'product.create', { sku: product.sku, name: product.name, price: input.price, bv: input.bv });
@@ -287,6 +316,7 @@ export class CatalogService {
         categoryId: input.categoryId, brandId: input.brandId ?? null, mrpPaise, pricePaise, bvCenti,
         gstBp: input.gstBp, hsnCode: input.hsnCode, countryOfOrigin: input.countryOfOrigin,
         stock: input.stock, isActive: input.isActive, imageUrl: input.imageUrl ?? null,
+        galleryImages: input.galleryImages ?? [],
       },
     });
 
@@ -441,6 +471,105 @@ export class CatalogService {
     const brand = await this.prisma.brand.delete({ where: { id } });
     await this.audit(actorId, 'brand.delete', { name: brand.name });
     return { ok: true as const };
+  }
+
+  /* ------------------------------------------------------------------ csv */
+
+  /** The header row + one example, so an admin's spreadsheet starts from something that already parses. */
+  csvTemplate(): string {
+    const header = ['sku', 'name', 'description', 'category', 'brand', 'mrp', 'price', 'bv', 'gstBp', 'hsnCode', 'countryOfOrigin', 'stock', 'isActive', 'imageUrl'];
+    const example = ['MC-EX01', 'Example Product', 'Optional description', 'Skin Care', '', '599.00', '499.00', '250.00', '1800', '3304', 'India', '50', 'true', ''];
+    return [toCsvRow(header), toCsvRow(example)].join('\r\n');
+  }
+
+  /** Every visible product, in the same column shape `importCsv` reads — export, edit, re-import round-trips. */
+  async exportCsv(): Promise<string> {
+    const products = await this.prisma.product.findMany({
+      include: { category: true, brand: true },
+      orderBy: { sku: 'asc' },
+    });
+    const header = ['sku', 'name', 'description', 'category', 'brand', 'mrp', 'price', 'bv', 'gstBp', 'hsnCode', 'countryOfOrigin', 'stock', 'isActive', 'imageUrl'];
+    const lines = products.map((p) =>
+      toCsvRow([
+        p.sku, p.name, p.description ?? '', p.category.name, p.brand?.name ?? '',
+        (Number(p.mrpPaise) / 100).toFixed(2), (Number(p.pricePaise) / 100).toFixed(2), (p.bvCenti / 100).toFixed(2),
+        p.gstBp, p.hsnCode, p.countryOfOrigin, p.stock, p.isActive, p.imageUrl ?? '',
+      ]),
+    );
+    return [toCsvRow(header), ...lines].join('\r\n');
+  }
+
+  /**
+   * Bulk create/update by SKU.
+   *
+   * One row failing (a typo'd category, a BV that fails the commission
+   * check) does not abort the rows around it — a 40-row spreadsheet with one
+   * bad line should not need re-uploading 39 correct ones, so every row is
+   * its own attempt and the whole set of results comes back for the admin to
+   * read as a report.
+   */
+  async importCsv(csvText: string, actorId: string): Promise<CsvImportRowResult[]> {
+    let records: Record<string, string>[];
+    try {
+      records = parseCsv(csvText, { columns: true, skip_empty_lines: true, trim: true, bom: true });
+    } catch (e) {
+      throw new BadRequestException(`Could not read that CSV: ${(e as Error).message}`);
+    }
+    if (records.length === 0) throw new BadRequestException('That CSV has no data rows.');
+    if (records.length > 500) throw new BadRequestException('Import at most 500 rows at a time.');
+
+    const [categories, brands] = await Promise.all([this.prisma.category.findMany(), this.prisma.brand.findMany()]);
+    const categoryByName = new Map(categories.map((c) => [c.name.toLowerCase(), c]));
+    const brandByName = new Map(brands.map((b) => [b.name.toLowerCase(), b]));
+
+    const results: CsvImportRowResult[] = [];
+    for (const [i, raw] of records.entries()) {
+      const rowNumber = i + 2; // header is row 1, so the first data row reads as 2 — matching what a spreadsheet shows
+      const parsed = CsvRowSchema.safeParse(raw);
+      if (!parsed.success) {
+        results.push({ row: rowNumber, sku: raw.sku, status: 'error', message: parsed.error.issues[0]?.message ?? 'Invalid row' });
+        continue;
+      }
+      const row = parsed.data;
+      try {
+        const category = categoryByName.get(row.category.toLowerCase());
+        if (!category) throw new BadRequestException(`Category "${row.category}" does not exist.`);
+        const brand = row.brand ? brandByName.get(row.brand.toLowerCase()) : undefined;
+        if (row.brand && !brand) throw new BadRequestException(`Brand "${row.brand}" does not exist.`);
+
+        const pricePaise = rupeesToPaise(row.price);
+        const mrpPaise = rupeesToPaise(row.mrp);
+        const bvCenti = bvToCenti(row.bv);
+        if (pricePaise > mrpPaise) throw new BadRequestException('Selling price cannot be above MRP.');
+        const problems = (await this.priceCheck(pricePaise, bvCenti)).filter((p) => p.level === 'error');
+        if (problems.length) throw new BadRequestException(problems[0].message);
+
+        const data = {
+          name: row.name, description: row.description ?? null,
+          categoryId: category.id, brandId: brand?.id ?? null,
+          mrpPaise, pricePaise, bvCenti, gstBp: row.gstBp, hsnCode: row.hsnCode,
+          countryOfOrigin: row.countryOfOrigin, stock: row.stock, isActive: row.isActive,
+          imageUrl: row.imageUrl || null,
+        };
+
+        const existing = await this.prisma.product.findUnique({ where: { sku: row.sku } });
+        if (existing) {
+          await this.prisma.product.update({ where: { id: existing.id }, data });
+          results.push({ row: rowNumber, sku: row.sku, status: 'updated' });
+        } else {
+          await this.prisma.product.create({ data: { sku: row.sku, slug: await this.uniqueSlug(row.name), ...data } });
+          results.push({ row: rowNumber, sku: row.sku, status: 'created' });
+        }
+      } catch (e) {
+        results.push({ row: rowNumber, sku: row.sku, status: 'error', message: e instanceof Error ? e.message : 'Could not save this row.' });
+      }
+    }
+
+    const created = results.filter((r) => r.status === 'created').length;
+    const updated = results.filter((r) => r.status === 'updated').length;
+    const failed = results.filter((r) => r.status === 'error').length;
+    await this.audit(actorId, 'product.csv_import', { created, updated, failed, total: records.length });
+    return results;
   }
 
   /* -------------------------------------------------------------- helpers */
