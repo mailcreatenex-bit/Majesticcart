@@ -106,7 +106,7 @@ async function bootstrap() {
   }
 
   console.log('→ number series');
-  for (const [key, prefix, next] of [['member', 'MC', 100001], ['order', 'OD', 24001]] as const) {
+  for (const [key, prefix, next] of [['member', 'MC', 100002], ['order', 'OD', 24001]] as const) {
     await prisma.numberSeries.upsert({
       where: { key }, create: { key, prefix, nextValue: next }, update: {},
     });
