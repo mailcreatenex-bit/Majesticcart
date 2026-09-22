@@ -3,13 +3,12 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { TokenService, IssuedSession, SessionContext } from './token.service';
 import { SMS_SENDER } from '../notifications/sms.service';
 import {
-  hashPassword, verifyPassword, passwordNeedsRehash, checkPasswordPolicy,
-  generateOtpCode, hashOtpCode, otpMatches, nextLockout, isLockedOut, lockoutMessage,
+hashPassword, verifyPassword, passwordNeedsRehash, checkPasswordPolicy,
+generateOtpCode, hashOtpCode, otpMatches, nextLockout, isLockedOut, lockoutMessage,
 } from './credentials';
 import { verifyTotp, generateTotpSecret, totpProvisioningUri, totpQrSvg } from './totp';
 import { decryptIfNeeded, encryptField, ctx as encCtx } from '../common/crypto';
 import { childPath, formatMemberCode } from '../member/genealogy';
-
 /**
  * Authentication.
  *
@@ -141,7 +140,6 @@ export class AuthService {
     }
     await this.prisma.otpChallenge.update({ where: { id: challenge.id }, data: { consumed: true } });
   }
-
   /* --------------------------------------------------------------- signup */
 
   /**
@@ -167,95 +165,130 @@ export class AuthService {
 
     const passwordHash = await hashPassword(input.password);
 
-    const created = await this.prisma.$transaction(async (tx) => {
-      const sponsor = await this.resolveSponsor(tx, input.sponsorCode);
-      const placement = childPath(sponsor);
-
-      const series = await tx.$queryRaw<{ nextValue: number }[]>`
-        INSERT INTO "NumberSeries" (key, prefix, "nextValue", "updatedAt")
-        VALUES ('member', 'MC', 100002, NOW())
-        ON CONFLICT (key) DO UPDATE SET "nextValue" = "NumberSeries"."nextValue" + 1, "updatedAt" = NOW()
-        RETURNING "nextValue" - 1 AS "nextValue"
-      `;
-      const memberCode = formatMemberCode(series[0].nextValue);
-
-      let member;
-      try {
-        member = await tx.member.create({
-          data: {
-            memberCode,
-            name,
-            phone,
-            email,
-            passwordHash,
-            sponsorId: sponsor.id,
-            ancestorPath: placement.ancestorPath,
-            depth: placement.depth,
-            lastDeviceId: input.deviceId,
-            // Both wallets up front. Nothing can spend or earn without them.
-            wallets: { create: [{ kind: 'SHOPPING' }, { kind: 'INCOME' }] },
-          },
-        });
-      } catch (e) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-          const target = String((e.meta as any)?.target ?? '');
-          if (target.includes('phone')) throw new ConflictException('This mobile number is already registered. Log in instead.');
-          if (target.includes('email')) throw new ConflictException('This email is already registered.');
-        }
-        throw e;
-      }
-
-      if (input.deviceId) {
-        await tx.deviceLink.upsert({
-          where: { memberId_deviceId: { memberId: member.id, deviceId: input.deviceId } },
-          create: { memberId: member.id, deviceId: input.deviceId },
-          update: { lastSeen: new Date() },
-        });
-        const sharing = await tx.deviceLink.count({ where: { deviceId: input.deviceId } });
-        const settings = await tx.storeSetting.findUnique({ where: { key: 'security' } });
-        const limit = (settings?.value as any)?.maxAccountsPerDevice ?? 2;
-        if (sharing > limit) {
-          await tx.securityAlert.create({
-            data: {
-              severity: 'HIGH',
-              type: 'MULTIPLE_ACCOUNTS',
-              message: `${sharing} accounts now registered from one device`,
-              memberId: member.id,
-              refType: 'device',
-              refId: input.deviceId,
-            },
-          });
-        }
-      }
-
-      await tx.notification.create({
-        data: {
-          memberId: member.id,
-          title: 'Welcome to Majestic Cart',
-          body: `Your member ID is ${memberCode}. Recharge your wallet to start shopping and earning.`,
-          kind: 'INFO',
-        },
-      });
-      if (!sponsor.isCompany) {
-        await tx.notification.create({
-          data: {
-            memberId: sponsor.id,
-            title: 'New member in your team',
-            body: `${name} (${memberCode}) joined with your sponsor ID.`,
-            kind: 'TEAM',
-          },
-        });
-      }
-      await tx.auditLog.create({
-        data: { actorType: 'MEMBER', actorId: member.id, action: 'member.signup', detail: { memberCode, sponsorId: sponsor.id }, ipAddress: ctx.ipAddress },
-      });
-      return member;
-    });
+    const created = await this.createMemberWithRetry({ input, ctx, name, phone, email, passwordHash });
 
     const session = await this.tokens.issue({ sub: created.id, typ: 'MEMBER', code: created.memberCode }, ctx);
     return { ...session, memberCode: created.memberCode };
   }
 
+  /**
+   * The member-code counter is meant to stay one ahead of every code in use,
+   * but it is seeded once at deploy time and a code created outside it (the
+   * company root, a manual fix) can leave it behind reality. Rather than a
+   * customer's signup breaking on that mismatch, resync the counter to the
+   * true max and try again — at most twice, so a genuine, unrelated failure
+   * still surfaces instead of looping forever.
+   */
+  private async createMemberWithRetry(
+    args: { input: SignupInput; ctx: SessionContext; name: string; phone: string; email: string | null; passwordHash: string },
+    attempt = 1,
+  ): Promise<{ id: string; memberCode: string }> {
+    const { input, ctx, name, phone, email, passwordHash } = args;
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const sponsor = await this.resolveSponsor(tx, input.sponsorCode);
+        const placement = childPath(sponsor);
+
+        const series = await tx.$queryRaw<{ nextValue: number }[]>`
+          INSERT INTO "NumberSeries" (key, prefix, "nextValue", "updatedAt")
+          VALUES ('member', 'MC', 100002, NOW())
+          ON CONFLICT (key) DO UPDATE SET "nextValue" = "NumberSeries"."nextValue" + 1, "updatedAt" = NOW()
+          RETURNING "nextValue" - 1 AS "nextValue"
+        `;
+        const memberCode = formatMemberCode(series[0].nextValue);
+
+        let member;
+        try {
+          member = await tx.member.create({
+            data: {
+              memberCode,
+              name,
+              phone,
+              email,
+              passwordHash,
+              sponsorId: sponsor.id,
+              ancestorPath: placement.ancestorPath,
+              depth: placement.depth,
+              lastDeviceId: input.deviceId,
+              // Both wallets up front. Nothing can spend or earn without them.
+              wallets: { create: [{ kind: 'SHOPPING' }, { kind: 'INCOME' }] },
+            },
+          });
+        } catch (e) {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+            const target = String((e.meta as any)?.target ?? '');
+            if (target.includes('phone')) throw new ConflictException('This mobile number is already registered. Log in instead.');
+            if (target.includes('email')) throw new ConflictException('This email is already registered.');
+          }
+          throw e;
+        }
+
+        if (input.deviceId) {
+          await tx.deviceLink.upsert({
+            where: { memberId_deviceId: { memberId: member.id, deviceId: input.deviceId } },
+            create: { memberId: member.id, deviceId: input.deviceId },
+            update: { lastSeen: new Date() },
+          });
+          const sharing = await tx.deviceLink.count({ where: { deviceId: input.deviceId } });
+          const settings = await tx.storeSetting.findUnique({ where: { key: 'security' } });
+          const limit = (settings?.value as any)?.maxAccountsPerDevice ?? 2;
+          if (sharing > limit) {
+            await tx.securityAlert.create({
+              data: {
+                severity: 'HIGH',
+                type: 'MULTIPLE_ACCOUNTS',
+                message: `${sharing} accounts now registered from one device`,
+                memberId: member.id,
+                refType: 'device',
+                refId: input.deviceId,
+              },
+            });
+          }
+        }
+
+        await tx.notification.create({
+          data: {
+            memberId: member.id,
+            title: 'Welcome to Majestic Cart',
+            body: `Your member ID is ${memberCode}. Recharge your wallet to start shopping and earning.`,
+            kind: 'INFO',
+          },
+        });
+        if (!sponsor.isCompany) {
+          await tx.notification.create({
+            data: {
+              memberId: sponsor.id,
+              title: 'New member in your team',
+              body: `${name} (${memberCode}) joined with your sponsor ID.`,
+              kind: 'TEAM',
+            },
+          });
+        }
+        await tx.auditLog.create({
+          data: { actorType: 'MEMBER', actorId: member.id, action: 'member.signup', detail: { memberCode, sponsorId: sponsor.id }, ipAddress: ctx.ipAddress },
+        });
+        return member;
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002' && attempt < 3) {
+        const target = String((e.meta as any)?.target ?? '');
+        if (target.includes('memberCode')) {
+          // The transaction that generated this code rolled back along with
+          // it, so the counter is still stuck on the value that just
+          // collided. Resync it to one past the highest code actually in use
+          // and try again.
+          await this.prisma.$executeRaw`
+            UPDATE "NumberSeries" SET "nextValue" = GREATEST("nextValue",
+              (SELECT COALESCE(MAX(CAST(SUBSTRING("memberCode" FROM 3) AS INTEGER)), 100001) FROM "Member") + 1),
+              "updatedAt" = NOW()
+            WHERE key = 'member'
+          `;
+          return this.createMemberWithRetry(args, attempt + 1);
+        }
+      }
+      throw e;
+    }
+  }
   private async resolveSponsor(tx: Prisma.TransactionClient, sponsorCode?: string) {
     const code = (sponsorCode ?? '').trim().toUpperCase();
     if (!code) {
@@ -347,7 +380,6 @@ export class AuthService {
     this.log.log(`Password reset for ${member.memberCode}, ${revoked} sessions revoked`);
     return { ok: true };
   }
-
   /* ----------------------------------------------------------- admin login */
 
   /**
