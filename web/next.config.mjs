@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    // Product photos uploaded from the admin console live in the Neon object
+    // storage bucket; next/image refuses any host that is not listed here.
+    remotePatterns: [{ protocol: 'https', hostname: '**.storage.*.aws.neon.tech' }],
+  },
   async headers() {
     return [
       {
