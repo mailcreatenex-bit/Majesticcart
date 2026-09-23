@@ -1,0 +1,19 @@
+Demo product photos are packshots from Open Beauty Facts (https://world.openbeautyfacts.org),
+licensed CC BY-SA 3.0 by their contributors. Replace them from the admin console with your own photos.
+
+mc-bb02.jpg: Hawaiian Tropic After sun body butter coconut - https://world.openbeautyfacts.org/product/5099821002718 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-bl01.jpg: K, Nivea Body Lotion - https://world.openbeautyfacts.org/product/4005900418135 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-bm03.jpg:  Summer love body mist - https://world.openbeautyfacts.org/product/2099950146140 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-cp08.jpg: Essence Mattifying compact powder - https://world.openbeautyfacts.org/product/4250587738506 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-fc10.jpg: Diadermine Crème de jour, Cible les rides Lift + Lissage immédiat - https://world.openbeautyfacts.org/product/3178040695153 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-fd06.jpg: Maybelline Maybelline New York Fit Me Matte & Poreless 105 Natural Ivory Foundation - https://world.openbeautyfacts.org/product/3600531324483 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-fr04.jpg: Flor de Mayo Mini eau de parfum hombre Flor de Mayo Mistery intense - https://world.openbeautyfacts.org/product/8428390829834 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-gl11.jpg: Nature Republic Nature Republic Aloe Vera Soothing & Moisture Gel - https://world.openbeautyfacts.org/product/8806173420377 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-hm16.jpg: Garnier Garnier - Ultra Doux Honey Treasure Hair Mask, 320ml (11.3oz) - https://world.openbeautyfacts.org/product/3600542359146 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-ho14.jpg: Mielle, Mielle Organics Mielle Organics Rosemary Mint Scalp and Hair Strengthening Oil - 59ml - https://world.openbeautyfacts.org/product/0850001265461 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-kj07.jpg:  Essence 01 Black Kajal Pencil - https://world.openbeautyfacts.org/product/4250035200715 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-kn13.jpg: Swiss Toniq Geneva Cellular Night Repair Miracle Without Essential Oil - https://world.openbeautyfacts.org/product/7640183491009 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-ls05.jpg: MAC Cosmetics MAC Retro Matte Lipstick - Ruby Woo - https://world.openbeautyfacts.org/product/0773602040605 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-sh15.jpg: Himalaya Anti-Hair Fall Bhringaraja Shampp - https://world.openbeautyfacts.org/product/8901138002428 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-sr09.jpg: Babaria Vitamin c serum - https://world.openbeautyfacts.org/product/8410412100076 (CC BY-SA 3.0, Open Beauty Facts contributors)
+mc-ss12.jpg: Neutrogena Hydro Boost Water Gel Lotion SPF 50 - https://world.openbeautyfacts.org/product/0070501113424 (CC BY-SA 3.0, Open Beauty Facts contributors)
