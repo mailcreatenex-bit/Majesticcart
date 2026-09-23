@@ -76,7 +76,7 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
   );
 }
 
-export function ProductGrid({ products }: { products: CatalogProduct[] }) {
+export function ProductGrid({ products, withSidebar = false }: { products: CatalogProduct[]; withSidebar?: boolean }) {
   if (products.length === 0) {
     return (
       <p className="rounded-2xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] px-6 py-12 text-center text-sm text-[var(--muted)]">
@@ -86,7 +86,9 @@ export function ProductGrid({ products }: { products: CatalogProduct[] }) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+    // With a filter sidebar beside it the grid has a quarter less width, so it
+    // stays at three columns on desktop to keep the cards the same size.
+    <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${withSidebar ? '' : 'lg:grid-cols-4'}`}>
       {products.map((p, i) => (
         <ProductCard key={p.slug} product={p} priority={i < 4} />
       ))}

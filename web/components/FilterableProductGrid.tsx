@@ -107,30 +107,98 @@ export function FilterableProductGrid({ products }: { products: CatalogProduct[]
 
   if (products.length === 0) return <ProductGrid products={products} />;
 
-  const chip = (on: boolean) =>
-    `rounded-full border px-3.5 py-1.5 text-sm transition ${
-      on
-        ? 'border-[var(--ink)] bg-[var(--ink)] font-semibold text-[var(--gold-pale)]'
-        : 'border-[var(--line-strong)] bg-[var(--surface)] text-[var(--body)] hover:bg-[var(--surface-tint)]'
-    }`;
+  const countBy = (pick: (p: CatalogProduct) => string | null | undefined) => {
+    const m = new Map<string, number>();
+    for (const p of products) {
+      const k = pick(p);
+      if (k) m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return m;
+  };
+  const categoryCounts = countBy((p) => p.categorySlug);
+  const brandCounts = countBy((p) => p.brand);
+
   const input =
     'w-full rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] px-2.5 py-1.5 text-sm text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none';
-  const legend = 'mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]';
+  const legend = 'mb-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]';
+
+  const checkRow = (key: string, label: string, count: number | undefined, on: boolean, onToggle: () => void) => (
+    <label key={key} className="flex cursor-pointer items-center gap-2.5 py-1 text-sm text-[var(--body)] hover:text-[var(--ink)]">
+      <input type="checkbox" checked={on} onChange={onToggle} className="h-4 w-4 shrink-0 rounded accent-[var(--ink)]" />
+      <span className="flex-1">{label}</span>
+      {count !== undefined && <span className="text-xs text-[var(--faint)]">{count}</span>}
+    </label>
+  );
 
   return (
-    <div>
-      <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm">
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-controls="product-filters"
-            className="rounded-lg border border-[var(--line-strong)] px-3 py-1.5 font-semibold text-[var(--ink)] md:hidden"
-          >
-            Filters{activeCount > 0 ? ` (${activeCount})` : ''}
-          </button>
+    <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+      {/* Filters: a left sidebar from `lg` up, a collapsible panel below it. */}
+      <aside className="mb-4 lg:sticky lg:top-28 lg:mb-0">
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+              aria-controls="product-filters"
+              className="font-semibold text-[var(--ink)] lg:pointer-events-none"
+            >
+              Filters{activeCount > 0 ? ` (${activeCount})` : ''}
+              <span aria-hidden="true" className="ml-2 text-[var(--muted)] lg:hidden">{open ? '−' : '+'}</span>
+            </button>
+            {activeCount > 0 && (
+              <button type="button" onClick={clear} className="text-xs font-semibold text-[var(--accent)] hover:underline">
+                Clear all
+              </button>
+            )}
+          </div>
 
+          <div id="product-filters" className={`${open ? 'block' : 'hidden'} lg:block`}>
+            <div className="mt-4 space-y-6 border-t border-[var(--line)] pt-4">
+              {categories.length > 1 && (
+                <fieldset>
+                  <legend className={legend}>Category</legend>
+                  {categories.map((c) =>
+                    checkRow(c.slug, c.name, categoryCounts.get(c.slug), selCategories.includes(c.slug), () => toggle(selCategories, setSelCategories, c.slug)),
+                  )}
+                </fieldset>
+              )}
+
+              {brands.length > 1 && (
+                <fieldset>
+                  <legend className={legend}>Brand</legend>
+                  {brands.map((b) => checkRow(b, b, brandCounts.get(b), selBrands.includes(b), () => toggle(selBrands, setSelBrands, b)))}
+                </fieldset>
+              )}
+
+              {priceRange.max > priceRange.min && (
+                <fieldset>
+                  <legend className={legend}>Price range (₹)</legend>
+                  <div className="flex items-center gap-2">
+                    <input type="number" inputMode="numeric" min={0} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} placeholder={`Min ${priceRange.min.toLocaleString('en-IN')}`} aria-label="Minimum price in rupees" className={input} />
+                    <span aria-hidden="true" className="text-[var(--faint)]">–</span>
+                    <input type="number" inputMode="numeric" min={0} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} placeholder={`Max ${priceRange.max.toLocaleString('en-IN')}`} aria-label="Maximum price in rupees" className={input} />
+                  </div>
+                </fieldset>
+              )}
+
+              {bvRange.max > bvRange.min && (
+                <fieldset>
+                  <legend className={legend}>Business volume (BV)</legend>
+                  <div className="flex items-center gap-2">
+                    <input type="number" inputMode="numeric" min={0} value={bvMin} onChange={(e) => setBvMin(e.target.value)} placeholder={`Min ${bvRange.min.toLocaleString('en-IN')}`} aria-label="Minimum business volume" className={input} />
+                    <span aria-hidden="true" className="text-[var(--faint)]">–</span>
+                    <input type="number" inputMode="numeric" min={0} value={bvMax} onChange={(e) => setBvMax(e.target.value)} placeholder={`Max ${bvRange.max.toLocaleString('en-IN')}`} aria-label="Maximum business volume" className={input} />
+                  </div>
+                </fieldset>
+              )}
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm">
           <label className="flex items-center gap-2 text-[var(--body)]">
             Sort
             <select
@@ -145,88 +213,23 @@ export function FilterableProductGrid({ products }: { products: CatalogProduct[]
               <option value="discount">Biggest discount</option>
             </select>
           </label>
-
           <span className="ml-auto text-xs text-[var(--faint)]">
             {filtered.length} of {products.length} shown
           </span>
         </div>
 
-        <div id="product-filters" className={`${open ? 'block' : 'hidden'} md:block`}>
-          <div className="mt-4 grid gap-5 border-t border-[var(--line)] pt-4 sm:grid-cols-2 lg:grid-cols-4">
-            {categories.length > 1 && (
-              <fieldset>
-                <legend className={legend}>Category</legend>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((c) => {
-                    const on = selCategories.includes(c.slug);
-                    return (
-                      <button key={c.slug} type="button" aria-pressed={on} onClick={() => toggle(selCategories, setSelCategories, c.slug)} className={chip(on)}>
-                        {c.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            )}
-
-            {brands.length > 1 && (
-              <fieldset>
-                <legend className={legend}>Brand</legend>
-                <div className="flex flex-wrap gap-2">
-                  {brands.map((b) => {
-                    const on = selBrands.includes(b);
-                    return (
-                      <button key={b} type="button" aria-pressed={on} onClick={() => toggle(selBrands, setSelBrands, b)} className={chip(on)}>
-                        {b}
-                      </button>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            )}
-
-            {priceRange.max > priceRange.min && (
-              <fieldset>
-                <legend className={legend}>Price range (₹)</legend>
-                <div className="flex items-center gap-2">
-                  <input type="number" inputMode="numeric" min={0} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} placeholder={`Min ${priceRange.min.toLocaleString('en-IN')}`} aria-label="Minimum price in rupees" className={input} />
-                  <span aria-hidden="true" className="text-[var(--faint)]">–</span>
-                  <input type="number" inputMode="numeric" min={0} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} placeholder={`Max ${priceRange.max.toLocaleString('en-IN')}`} aria-label="Maximum price in rupees" className={input} />
-                </div>
-              </fieldset>
-            )}
-
-            {bvRange.max > bvRange.min && (
-              <fieldset>
-                <legend className={legend}>Business volume (BV)</legend>
-                <div className="flex items-center gap-2">
-                  <input type="number" inputMode="numeric" min={0} value={bvMin} onChange={(e) => setBvMin(e.target.value)} placeholder={`Min ${bvRange.min.toLocaleString('en-IN')}`} aria-label="Minimum business volume" className={input} />
-                  <span aria-hidden="true" className="text-[var(--faint)]">–</span>
-                  <input type="number" inputMode="numeric" min={0} value={bvMax} onChange={(e) => setBvMax(e.target.value)} placeholder={`Max ${bvRange.max.toLocaleString('en-IN')}`} aria-label="Maximum business volume" className={input} />
-                </div>
-              </fieldset>
-            )}
-          </div>
-
-          {activeCount > 0 && (
-            <button type="button" onClick={clear} className="mt-4 text-sm font-semibold text-[var(--accent)] hover:underline">
-              Clear all filters
-            </button>
+        <div className="mt-4">
+          {filtered.length > 0 ? (
+            <ProductGrid products={filtered} withSidebar />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-[var(--line-strong)] px-6 py-14 text-center">
+              <p className="font-serif text-lg text-[var(--ink)]">No products match these filters</p>
+              <button type="button" onClick={clear} className="mt-3 text-sm font-semibold text-[var(--accent)] hover:underline">
+                Clear all filters
+              </button>
+            </div>
           )}
         </div>
-      </div>
-
-      <div className="mt-4">
-        {filtered.length > 0 ? (
-          <ProductGrid products={filtered} />
-        ) : (
-          <div className="rounded-2xl border border-dashed border-[var(--line-strong)] px-6 py-14 text-center">
-            <p className="font-serif text-lg text-[var(--ink)]">No products match these filters</p>
-            <button type="button" onClick={clear} className="mt-3 text-sm font-semibold text-[var(--accent)] hover:underline">
-              Clear all filters
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
