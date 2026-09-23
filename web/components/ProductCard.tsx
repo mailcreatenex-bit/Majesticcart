@@ -2,15 +2,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { CatalogProduct } from '@/lib/catalog';
 import { discountPercent, showMoney, showVolume } from '@/lib/money';
+import { CardAddToBag } from './CardAddToBag';
 
 /**
  * A product in a grid.
  *
- * A server component with no interactivity: adding to the bag happens on the
- * product page, where the member can see what they are buying. A card that
- * added to the bag would have to be a client component, and shipping a
- * JavaScript bundle per card to render a static grid is the wrong trade on the
- * page a crawler and a first-time visitor both land on.
+ * The card itself is a server component, so the image, name and price are plain
+ * HTML a crawler reads without running anything. Only the quantity stepper and
+ * "Add to cart" underneath are a client island (CardAddToBag), kept outside the
+ * link so a tap on them never navigates away.
  *
  * `priority` on the first row only — those are the LCP candidates, and marking
  * every image priority preloads the whole grid and makes LCP worse, not better.
@@ -19,10 +19,8 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
   const off = discountPercent(product.mrp.paise, product.price.paise);
 
   return (
-    <Link
-      href={`/product/${product.slug}`}
-      className="group block overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition hover:shadow-lg hover:shadow-rose-900/5"
-    >
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition hover:shadow-lg hover:shadow-rose-900/5">
+      <Link href={`/product/${product.slug}`} className="block flex-1">
       <div className="relative aspect-[4/5] overflow-hidden bg-[var(--page)]">
         {product.imageUrl ? (
           <Image
@@ -51,7 +49,7 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
         )}
       </div>
 
-      <div className="p-4">
+      <div className="p-4 pb-3">
         <p className="text-[11px] uppercase tracking-wider text-[var(--faint)]">
           {product.brand ? `${product.brand} · ${product.category}` : product.category}
         </p>
@@ -72,7 +70,12 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
             login — see the income-claim lint in lib/seo.ts. */}
         <p className="mt-1.5 text-[11px] text-[var(--muted)]">{showVolume(product.businessVolume)} per unit</p>
       </div>
-    </Link>
+      </Link>
+
+      <div className="px-4 pb-3">
+        <CardAddToBag product={product} />
+      </div>
+    </div>
   );
 }
 
