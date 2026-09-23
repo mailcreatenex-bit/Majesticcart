@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
 import { buildMetadata, metaDescription, SITE } from '@/lib/seo';
 import { listProducts, listCategories, categoryCopy } from '@/lib/catalog';
@@ -61,8 +62,12 @@ export default async function HomePage() {
 
       {/* ------------------------------------------------------------ hero */}
       <section className="relative overflow-hidden border-b border-[var(--line)] bg-gradient-to-b from-[var(--accent-soft)] via-[var(--page)] to-[var(--page)]">
-        <div className={`mx-auto max-w-6xl px-4 py-16 sm:py-24 ${hero.imageUrl ? 'grid gap-10 md:grid-cols-2 md:items-center' : ''}`}>
-          <div className="max-w-2xl">
+        <div
+          className={`mx-auto grid max-w-6xl px-4 md:grid-cols-2 ${
+            hero.imageUrl ? 'gap-10 py-16 sm:py-24 md:items-center' : 'gap-4 pt-16 sm:pt-24 md:items-end'
+          }`}
+        >
+          <div className={`max-w-2xl ${hero.imageUrl ? '' : 'md:pb-24'}`}>
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--accent)]">{hero.eyebrow}</p>
             {/* The only h1 on the page. It carries the brand and what is sold,
                 because that is the query it has to answer. Editable from the
@@ -91,10 +96,29 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-          {hero.imageUrl && (
+          {hero.imageUrl ? (
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={hero.imageUrl} alt="" className="h-full w-full object-cover" />
+            </div>
+          ) : (
+            // The default hero when no image has been set in the console: a
+            // cutout standing on the section's own gradient, so there is no
+            // photo rectangle to see.
+            <div className="relative mx-auto w-full max-w-sm self-end md:max-w-none">
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-8 bottom-0 top-8 rounded-full bg-[radial-gradient(closest-side,var(--gold),transparent)] opacity-20"
+              />
+              <Image
+                src="/models/model-saree.webp"
+                alt=""
+                width={698}
+                height={626}
+                priority
+                sizes="(min-width: 768px) 560px, 90vw"
+                className="fade-bottom relative h-auto w-full"
+              />
             </div>
           )}
         </div>
@@ -139,25 +163,67 @@ export default async function HomePage() {
 
       {/* ------------------------------------------------------- about us */}
       <section className="border-y border-[var(--line)] bg-[var(--accent-soft)]">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:flex sm:items-center sm:justify-between sm:gap-10">
-          <div className="max-w-xl">
+        <div className="mx-auto grid max-w-6xl items-end gap-6 px-4 pt-14 md:grid-cols-[1fr_auto] md:gap-12">
+          <div className="max-w-xl pb-2 md:pb-14">
             <h2 className="font-serif text-2xl text-[var(--ink)]">About Majestic Cart</h2>
             <p className="mt-3 text-sm leading-relaxed text-[var(--body)]">
               Majestic Cart is an Indian beauty brand sold direct — formulated and manufactured in India,
               and sold through a network of independent sellers rather than retail shelves. Here&apos;s how
               the business works, and just as importantly, what it does not do.
             </p>
+            <Link
+              href="/about"
+              className="mt-6 inline-block rounded-xl border border-[var(--ink)]/15 bg-[var(--surface)] px-6 py-3 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]"
+            >
+              Read our story →
+            </Link>
           </div>
-          <Link
-            href="/about"
-            className="mt-6 inline-block shrink-0 rounded-xl border border-[var(--ink)]/15 bg-[var(--surface)] px-6 py-3 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)] sm:mt-0"
-          >
-            Read our story →
-          </Link>
+          <Image
+            src="/models/model-glow.webp"
+            alt=""
+            width={994}
+            height={1000}
+            sizes="(min-width: 768px) 320px, 240px"
+            className="fade-bottom mx-auto h-60 w-auto md:h-80"
+          />
         </div>
       </section>
 
       <MandalaRule />
+
+      {/* ------------------------------------------------------- community */}
+      <section className="mx-auto max-w-6xl px-4 pt-14">
+        <div className="grid items-end gap-8 md:grid-cols-2 md:gap-12">
+          <div className="pb-2 md:pb-20">
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--accent)]">Join free</p>
+            <h2 className="mt-3 font-serif text-3xl leading-tight text-[var(--ink)] sm:text-4xl">Beauty is better shared</h2>
+            <p className="mt-4 max-w-md text-base leading-relaxed text-[var(--body)]">
+              Joining is free — no registration fee, and no purchase is needed. Shop the range, follow your
+              team, and read exactly how the business works before you decide anything.
+            </p>
+            <Link
+              href="/join"
+              className="mt-7 inline-block rounded-xl gold-foil px-7 py-3.5 font-semibold text-white shadow-lg shadow-amber-900/20"
+            >
+              Become a member
+            </Link>
+          </div>
+          <div className="relative">
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-6 bottom-0 top-10 rounded-full bg-[radial-gradient(closest-side,var(--gold),transparent)] opacity-15"
+            />
+            <Image
+              src="/models/model-group.webp"
+              alt=""
+              width={1287}
+              height={739}
+              sizes="(min-width: 768px) 560px, 92vw"
+              className="fade-bottom relative h-auto w-full"
+            />
+          </div>
+        </div>
+      </section>
 
       {/* ----------------------------------------------------- explore */}
       <section className="mx-auto max-w-6xl px-4 py-14">

@@ -113,7 +113,11 @@ export default function JoinPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <PageHeader title="Become a member" lead={COPY.lead} />
+      <PageHeader
+        title="Become a member"
+        lead={COPY.lead}
+        image={{ src: '/models/model-portrait.webp', width: 655, height: 549 }}
+      />
 
       <div className="mx-auto max-w-4xl px-4 py-12">
         <section>

@@ -154,6 +154,17 @@
   .mandala-rule::after { background: linear-gradient(to left, transparent, currentColor); }
 
   /**
+   * Model cutouts stand on the section they sit in. The photos are cropped at
+   * the shoulders, so the last stretch fades to nothing rather than ending in
+   * a hard edge — the figure dissolves into whatever the page colour is, in
+   * either theme.
+   */
+  .fade-bottom {
+    -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+  }
+
+  /**
    * Gold foil.
    *
    * One sweep of light across the fill on hover, and only on the primary call
