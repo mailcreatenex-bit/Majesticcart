@@ -37,8 +37,8 @@ export function Header() {
     // layout lets content draw under the status bar in the first place) — on
     // everything else `env(safe-area-inset-top)` resolves to 0 and this is a
     // no-op.
-    <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--surface)] pt-[env(safe-area-inset-top)] backdrop-blur">
-      <nav className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:gap-6" aria-label="Main">
+    <header className="chrome-dark sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--surface)] pt-[env(safe-area-inset-top)] backdrop-blur">
+      <nav className="mx-auto flex h-16 max-w-6xl sm:h-20 items-center gap-2 px-4 sm:gap-6" aria-label="Main">
         {/* The wordmark is dropped here deliberately: the seal alone is what
             carries brand recognition, and skipping the text is what leaves
             the mobile header room for the menu, wallet and bag icons without
@@ -51,7 +51,7 @@ export function Header() {
             width={240}
             height={240}
             priority
-            className="h-10 w-10 rounded-full sm:h-11 sm:w-11"
+            className="h-12 w-12 rounded-full sm:h-16 sm:w-16"
           />
         </Link>
         <MobileMenu links={SHOP_LINKS} />
@@ -103,11 +103,11 @@ function WalletIcon() {
 
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-[var(--line)] bg-[var(--surface)]">
+    <footer className="chrome-dark mt-20 border-t border-[var(--line)] bg-[var(--surface)]">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2.5 font-serif text-lg text-[var(--ink)]">
-            <Image src="/brand/majestic-cart-seal.png" alt="" width={240} height={240} className="h-9 w-9 rounded-full" />
+            <Image src="/brand/majestic-cart-seal.png" alt="" width={240} height={240} className="h-14 w-14 rounded-full" />
             {SITE.name}
           </div>
           <p className="mt-2 text-sm text-[var(--muted)]">{SITE.tagline}</p>
