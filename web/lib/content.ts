@@ -49,7 +49,7 @@ const DEFAULT_THEME: ThemeSettings = {
   hero: {
     eyebrow: 'Beauty from brands you know',
     title: 'Beauty brands you love,\nunder one roof',
-    subtitle: 'Makeup, skin care, body care and fragrance from leading beauty brands, delivered direct to your door.',
+    subtitle: 'Shop makeup, skin care, body care and fragrance from brands you already trust — Lakmé, Lotus Herbals, Pond’s, Dot & Key, Himalaya and more — delivered to your door.',
     primaryCtaLabel: 'Shop the range',
     primaryCtaHref: '/shop',
     secondaryCtaLabel: 'Become a member',
@@ -94,5 +94,21 @@ export async function getCmsPage(slug: string): Promise<CmsPage | null> {
 export async function getTheme(): Promise<ThemeSettings> {
   const t = await getJson<ThemeSettings>('/theme');
   if (!t) return DEFAULT_THEME;
-  return { colors: { ...DEFAULT_THEME.colors, ...t.colors }, logoUrl: t.logoUrl ?? '', hero: { ...DEFAULT_THEME.hero, ...t.hero } };
+  const hero = { ...DEFAULT_THEME.hero, ...t.hero };
+
+  // The console's Theme page was saved with the original launch copy, which
+  // describes Majestic Cart as the maker of its own products. It sells other
+  // brands' products and makes none, so that wording is treated as unset and
+  // the current default shows instead. Anything an admin writes afterwards is
+  // left exactly as saved.
+  const stale = {
+    eyebrow: /^made in india$/i,
+    title: /formulated for indian skin/i,
+    subtitle: /glow botanics|urban skin co|formulated|developed for indian/i,
+  } as const;
+  for (const key of ['eyebrow', 'title', 'subtitle'] as const) {
+    if (stale[key].test(hero[key])) hero[key] = DEFAULT_THEME.hero[key];
+  }
+
+  return { colors: { ...DEFAULT_THEME.colors, ...t.colors }, logoUrl: t.logoUrl ?? '', hero };
 }
