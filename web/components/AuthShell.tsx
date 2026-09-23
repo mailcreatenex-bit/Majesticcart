@@ -21,7 +21,7 @@ export function AuthShell({ title, lead, children, footer }: {
     <div className="mx-auto max-w-md px-4 py-14">
       <div className="text-center">
         <Link href="/" className="inline-block">
-          <Image src="/brand/majestic-cart-seal.png" alt={SITE.name} width={240} height={240} priority className="mx-auto h-20 w-20 rounded-full" />
+          <Image src="/brand/majestic-cart-logo.webp" alt={SITE.name} width={512} height={512} priority className="mx-auto h-28 w-28" />
         </Link>
         <h1 className="mt-5 font-serif text-2xl text-[var(--ink)]">{title}</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">{lead}</p>

@@ -178,6 +178,22 @@
   .gold-foil:hover,
   .gold-foil:focus-visible { background-position: 6% 0; }
   .gold-foil:disabled { background-image: none; }
+
+  /**
+   * Brand marquee. Logos are dark marks on transparency: muted to grey in the
+   * light theme and knocked out to white in Royal Night, full colour on hover.
+   */
+  .brand-marquee {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+  .brand-track { animation: brand-scroll 38s linear infinite; }
+  .brand-marquee:hover .brand-track { animation-play-state: paused; }
+  @keyframes brand-scroll { to { transform: translateX(-50%); } }
+  .brand-logo { filter: grayscale(1); opacity: 0.7; transition: opacity 200ms, filter 200ms; }
+  .brand-logo:hover { filter: none; opacity: 1; }
+  :root[data-theme='night'] .brand-logo { filter: brightness(0) invert(1); opacity: 0.6; }
+  :root[data-theme='night'] .brand-logo:hover { opacity: 0.95; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -185,4 +201,8 @@
   /* The foil's resting position is mid-gradient, so with the transition
      disabled it still looks like gold rather than freezing mid-sweep. */
   .gold-foil { background-position: 50% 0 !important; }
+  /* A looping animation cannot be "shortened" - it would strobe. Stop it and
+     let the row scroll by hand instead. */
+  .brand-track { animation: none !important; }
+  .brand-marquee { overflow-x: auto !important; }
 }

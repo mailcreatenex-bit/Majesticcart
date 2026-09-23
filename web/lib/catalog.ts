@@ -151,14 +151,14 @@ export async function getStorefrontMember(code: string): Promise<{ code: string;
  */
 export const CATEGORY_COPY: Record<string, { blurb: string; intro: string }> = {
   makeup: {
-    blurb: 'Colour cosmetics formulated for Indian skin tones.',
+    blurb: 'Colour cosmetics from leading brands.',
     intro:
-      'Foundations, lipsticks and eye colour built around Indian undertones rather than adapted from shades made for other markets. Every formula is dermatologically tested and made in India.',
+      'Foundations, lipsticks and eye colour from established brands, so you can shop the shades you already know in one place.',
   },
   'skin-care': {
-    blurb: 'Serums, cleansers and moisturisers for humid Indian weather.',
+    blurb: 'Serums, cleansers and moisturisers from trusted brands.',
     intro:
-      'Skin care designed for the climate it is worn in — lightweight textures that hold up through a humid afternoon, with actives at concentrations meant for daily use rather than a single dramatic result.',
+      'Skin care from established brands — cleansers, moisturisers, serums and sun care for everyday routines.',
   },
   'body-care': {
     blurb: 'Lotions, butters and washes for everyday skin.',
@@ -166,9 +166,9 @@ export const CATEGORY_COPY: Record<string, { blurb: string; intro: string }> = {
       'Body care for regular use: lotions that absorb rather than sit, butters for dry winter skin, and washes gentle enough for daily showers.',
   },
   fragrance: {
-    blurb: 'Eau de parfum with the depth Indian occasions call for.',
+    blurb: 'Perfumes and body mists from leading brands.',
     intro:
-      'Fragrance built on oud, saffron, rose and sandalwood — notes that belong to this part of the world — concentrated as eau de parfum so they last through an evening.',
+      'Eau de parfum, deodorants and body mists from established brands, for everyday wear and for evenings.',
   },
 };
 

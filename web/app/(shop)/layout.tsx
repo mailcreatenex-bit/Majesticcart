@@ -21,7 +21,7 @@ const body = Jost({ subsets: ['latin'], weight: ['400', '500', '600', '700'], va
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.origin),
   title: { default: `${SITE.name} — ${SITE.tagline}`, template: `%s` },
-  description: 'Luxury skin, body and colour cosmetics formulated for Indian skin, sold direct across India.',
+  description: 'Makeup, skin care, body care and fragrance from leading beauty brands, sold direct across India.',
   applicationName: SITE.name,
   formatDetection: { telephone: true, address: false, email: false },
   // Set per page by buildMetadata(); this is the safe default for anything

@@ -46,12 +46,12 @@ export function Header() {
             the image. */}
         <Link href="/" aria-label={SITE.name} className="flex shrink-0 items-center">
           <Image
-            src="/brand/majestic-cart-seal.png"
+            src="/brand/majestic-cart-logo.webp"
             alt=""
-            width={240}
-            height={240}
+            width={512}
+            height={512}
             priority
-            className="h-12 w-12 rounded-full sm:h-16 sm:w-16"
+            className="h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem]"
           />
         </Link>
         <MobileMenu links={SHOP_LINKS} />
@@ -107,7 +107,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2.5 font-serif text-lg text-[var(--ink)]">
-            <Image src="/brand/majestic-cart-seal.png" alt="" width={240} height={240} className="h-14 w-14 rounded-full" />
+            <Image src="/brand/majestic-cart-logo.webp" alt="" width={512} height={512} className="h-16 w-16" />
             {SITE.name}
           </div>
           <p className="mt-2 text-sm text-[var(--muted)]">{SITE.tagline}</p>

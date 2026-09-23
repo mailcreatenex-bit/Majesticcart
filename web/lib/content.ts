@@ -47,9 +47,9 @@ const DEFAULT_THEME: ThemeSettings = {
   colors: { ink: '#341316', accent: '#B84654', gold: '#D9B25A' },
   logoUrl: '',
   hero: {
-    eyebrow: 'Made in India',
-    title: 'Luxury beauty,\nformulated for Indian skin',
-    subtitle: 'Colour cosmetics, skin care, body care and fragrance — developed for Indian undertones and Indian weather, and delivered direct to your door.',
+    eyebrow: 'Beauty from brands you know',
+    title: 'Beauty brands you love,\nunder one roof',
+    subtitle: 'Makeup, skin care, body care and fragrance from leading beauty brands, delivered direct to your door.',
     primaryCtaLabel: 'Shop the range',
     primaryCtaHref: '/shop',
     secondaryCtaLabel: 'Become a member',

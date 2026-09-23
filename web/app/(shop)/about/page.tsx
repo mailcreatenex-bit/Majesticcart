@@ -17,9 +17,9 @@ export const metadata: Metadata = buildMetadata({
  * page a regulator reads first — so no earnings figure may appear on it.
  */
 const COPY = {
-  lead: 'A beauty brand built for Indian skin, sold by the people who use it.',
+  lead: 'A beauty store built around independent sellers who use the products themselves.',
   story: [
-    'Majestic Cart makes skin, body, hair and colour cosmetics formulated for Indian skin tones and Indian weather. We sell direct, through members who use the products themselves, because a recommendation from someone who has actually used a saffron night oil through a Kolkata summer is worth more than a shelf tag.',
+    'Majestic Cart sells beauty and personal-care products made by other established brands — we do not manufacture products or sell under a brand of our own. We sell direct, through members who use the products themselves, because a recommendation from someone who has actually used a serum through a Kolkata summer is worth more than a shelf tag.',
     'Every product carries a business volume, and members earn on what they sell and what their team sells, once the order is delivered. That is the whole model.',
   ],
   howItWorks: [

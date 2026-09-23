@@ -5,6 +5,7 @@ import { listProducts, listCategories, categoryCopy } from '@/lib/catalog';
 import { getTheme } from '@/lib/content';
 import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
+import { BrandCarousel } from '@/components/BrandCarousel';
 
 /**
  * Home.
@@ -21,7 +22,7 @@ import { ProductGrid } from '@/components/ProductCard';
 export const revalidate = 3600;
 
 const DESCRIPTION =
-  'Luxury skin, body and colour cosmetics formulated for Indian skin and sold direct across India. Makeup, skin care, body care and fragrance, made in India.';
+  'Makeup, skin care, body care and fragrance from leading beauty brands such as Lakmé, Lotus Herbals, Pond’s, Dot & Key and Himalaya, sold direct across India.';
 
 export const metadata: Metadata = buildMetadata({
   title: `${SITE.name} — ${SITE.tagline}`,
@@ -100,6 +101,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <BrandCarousel />
+
       {/* ------------------------------------------------------ categories */}
       <section className="mx-auto max-w-6xl px-4 py-14">
         <h2 className="font-serif text-2xl text-[var(--ink)]">Shop by category</h2>
@@ -143,9 +146,10 @@ export default async function HomePage() {
           <div className="max-w-xl">
             <h2 className="font-serif text-2xl text-[var(--ink)]">About Majestic Cart</h2>
             <p className="mt-3 text-sm leading-relaxed text-[var(--body)]">
-              Majestic Cart is an Indian beauty brand sold direct — formulated and manufactured in India,
-              and sold through a network of independent sellers rather than retail shelves. Here&apos;s how
-              the business works, and just as importantly, what it does not do.
+              Majestic Cart brings beauty and personal-care products from established brands together in one
+              place, and sells them through a network of independent sellers rather than retail shelves. We do
+              not make products or sell under a brand of our own. Here&apos;s how the business works, and just
+              as importantly, what it does not do.
             </p>
           </div>
           <Link
@@ -195,8 +199,8 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3">
           {[
             {
-              title: 'Made and tested in India',
-              body: 'Formulated and manufactured in India, dermatologically tested, and compliant with BIS labelling.',
+              title: 'Brands you already know',
+              body: 'Everything we sell is made by other established beauty brands. We do not manufacture products or sell under our own brand name.',
             },
             {
               title: 'Wallet-based ordering',

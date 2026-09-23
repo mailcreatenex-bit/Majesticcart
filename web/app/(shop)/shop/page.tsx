@@ -22,7 +22,7 @@ import { FilterableProductGrid } from '@/components/FilterableProductGrid';
 export const revalidate = 3600;
 
 const DESCRIPTION =
-  'The full Majestic Cart range — makeup, skin care, body care and fragrance, formulated in India for Indian skin.';
+  'Makeup, skin care, body care and fragrance from leading beauty brands, all in one place.';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Shop all products'),
