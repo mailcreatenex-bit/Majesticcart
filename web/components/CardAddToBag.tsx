@@ -89,7 +89,7 @@ export function CardAddToBag({ product }: { product: CatalogProduct }) {
           onClick={onAdd}
           className="w-full rounded-xl gold-foil px-3 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-900/20"
         >
-          {justAdded ? 'Added ✓' : 'Add to cart'}
+          {justAdded ? 'Added ✓' : 'Add to bag'}
         </button>
       </div>
 
