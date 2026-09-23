@@ -192,29 +192,12 @@ export function Footer() {
   );
 }
 
-export function PageHeader({ title, lead, image }: {
-  title: string;
-  lead?: string;
-  /** A transparent-background cutout, shown from `md` up, standing on the header band. */
-  image?: { src: string; width: number; height: number };
-}) {
+export function PageHeader({ title, lead }: { title: string; lead?: string }) {
   return (
     <div className="border-b border-[var(--line)] bg-[var(--accent-soft)]">
-      <div className={`mx-auto max-w-4xl px-4 ${image ? 'flex items-end justify-between gap-8 pt-12' : 'py-12'}`}>
-        <div className={image ? 'pb-12' : ''}>
-          <h1 className="font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">{title}</h1>
-          {lead && <p className="mt-3 max-w-2xl text-[var(--body)]">{lead}</p>}
-        </div>
-        {image && (
-          <Image
-            src={image.src}
-            alt=""
-            width={image.width}
-            height={image.height}
-            sizes="240px"
-            className="fade-bottom hidden h-48 w-auto shrink-0 md:block"
-          />
-        )}
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <h1 className="font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">{title}</h1>
+        {lead && <p className="mt-3 max-w-2xl text-[var(--body)]">{lead}</p>}
       </div>
     </div>
   );
