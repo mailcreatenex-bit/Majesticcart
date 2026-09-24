@@ -35,6 +35,8 @@ const NEVER_CACHE = [
   /^\/wallet/,
   /^\/orders/,
   /^\/network/,
+  /^\/id-card/,
+  /^\/statement/,
   /^\/account/,
   /^\/recharge/,
   /^\/cart/,

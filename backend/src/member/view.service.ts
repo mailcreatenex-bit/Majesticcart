@@ -201,6 +201,100 @@ export class MemberViewService {
     };
   }
 
+  /**
+   * A monthly income statement: what the member earned, by kind, what they asked to
+   * withdraw, and the deduction withheld from each withdrawal (the amount the company
+   * accounts for as tax deducted at source).
+   *
+   * Everything is read from the ledger and the withdrawal records for the calendar
+   * month (process timezone Asia/Kolkata, like every period in the system), so the
+   * statement can only say what the books say.
+   */
+  async incomeStatement(memberId: string, periodInput?: string) {
+    const current = isoPeriod(new Date());
+    const period = periodInput && /^\d{4}-(0[1-9]|1[0-2])$/.test(periodInput) ? periodInput : current;
+    const [y, m] = period.split('-').map(Number);
+    const start = new Date(y, m - 1, 1);
+    const end = new Date(y, m, 1);
+
+    const [member, wallet] = await Promise.all([
+      this.prisma.member.findUniqueOrThrow({
+        where: { id: memberId },
+        select: { memberCode: true, name: true, city: true, state: true, joinedAt: true },
+      }),
+      this.prisma.wallet.findUnique({ where: { memberId_kind: { memberId, kind: 'INCOME' } }, select: { id: true } }),
+    ]);
+
+    const incomeKinds = ['SELF_INCOME', 'DIRECT_INCOME', 'TEAM_INCOME', 'GENERATION_BONUS', 'ROYALTY'] as const;
+
+    const [credits, withdrawals, before, upTo] = await Promise.all([
+      wallet
+        ? this.prisma.ledgerEntry.findMany({
+            where: { memberId, walletId: wallet.id, direction: 'CREDIT', category: { in: [...incomeKinds] }, createdAt: { gte: start, lt: end } },
+            orderBy: { createdAt: 'asc' },
+            take: 500,
+            select: { category: true, amountPaise: true, note: true, createdAt: true },
+          })
+        : [],
+      this.prisma.withdrawal.findMany({
+        where: { memberId, createdAt: { gte: start, lt: end } },
+        orderBy: { createdAt: 'asc' },
+        select: { requestedPaise: true, deductionPaise: true, netPaise: true, deductionBp: true, status: true, transferRef: true, createdAt: true },
+      }),
+      wallet ? this.prisma.ledgerEntry.findFirst({ where: { walletId: wallet.id, createdAt: { lt: start } }, orderBy: { createdAt: 'desc' }, select: { balanceAfter: true } }) : null,
+      wallet ? this.prisma.ledgerEntry.findFirst({ where: { walletId: wallet.id, createdAt: { lt: end } }, orderBy: { createdAt: 'desc' }, select: { balanceAfter: true } }) : null,
+    ]);
+
+    const byKind = new Map<string, { total: bigint; count: number }>();
+    let totalIncome = 0n;
+    for (const c of credits) {
+      const b = byKind.get(c.category) ?? { total: 0n, count: 0 };
+      b.total += c.amountPaise;
+      b.count += 1;
+      byKind.set(c.category, b);
+      totalIncome += c.amountPaise;
+    }
+
+    // A rejected withdrawal was reversed, so it neither paid out nor withheld anything.
+    const counted = withdrawals.filter((w) => w.status !== 'REJECTED');
+    const sum = (f: (w: (typeof withdrawals)[number]) => bigint) => counted.reduce((a, w) => a + f(w), 0n);
+
+    return {
+      period,
+      generatedAt: new Date(),
+      member: {
+        code: member.memberCode,
+        name: member.name,
+        location: [member.city, member.state].filter(Boolean).join(', ') || null,
+      },
+      income: incomeKinds.map((k) => ({
+        category: k,
+        label: CATEGORY_LABELS[k],
+        count: byKind.get(k)?.count ?? 0,
+        amount: money(byKind.get(k)?.total ?? 0n),
+      })),
+      totalIncome: money(totalIncome),
+      credits: credits.map((c) => ({ at: c.createdAt, label: CATEGORY_LABELS[c.category] ?? c.category, amount: money(c.amountPaise), note: c.note })),
+      creditsTruncated: credits.length === 500,
+      withdrawals: withdrawals.map((w) => ({
+        at: w.createdAt,
+        status: w.status,
+        requested: money(w.requestedPaise),
+        deduction: money(w.deductionPaise),
+        deductionPct: w.deductionBp / 100,
+        net: money(w.netPaise),
+        transferRef: w.transferRef,
+      })),
+      withdrawalTotals: {
+        requested: money(sum((w) => w.requestedPaise)),
+        deduction: money(sum((w) => w.deductionPaise)),
+        net: money(sum((w) => w.netPaise)),
+      },
+      openingBalance: money(before?.balanceAfter ?? 0n),
+      closingBalance: money(upTo?.balanceAfter ?? 0n),
+    };
+  }
+
   /** Recharge history, so a pending request is visible while it waits. */
   async recharges(memberId: string, opts: { cursor?: string; take?: unknown } = {}) {
     const take = clampPage(opts.take);

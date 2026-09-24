@@ -540,6 +540,11 @@ export class MemberViewController {
     return this.view.order(memberId, id);
   }
 
+  @Get('income-statement')
+  incomeStatement(@CurrentUser('sub') memberId: string, @Query('period') period?: string) {
+    return this.view.incomeStatement(memberId, period);
+  }
+
   /* ------------------------------------------------------------ network */
 
   @Get('network')

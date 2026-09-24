@@ -41,6 +41,7 @@ const NAV = [
   { href: '/wallet', label: 'Wallet' },
   { href: '/orders', label: 'Orders' },
   { href: '/network', label: 'My team' },
+  { href: '/statement', label: 'Statement' },
   { href: '/id-card', label: 'ID card' },
 ];
 
