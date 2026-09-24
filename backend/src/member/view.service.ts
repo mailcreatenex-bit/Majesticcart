@@ -339,6 +339,26 @@ export class MemberViewService {
    * The full tree is deliberately not an endpoint. A member can expand a branch
    * at a time; nothing returns everyone below them in one response.
    */
+  /** This month's own purchase volume for a set of members, as a lookup by member id. */
+  private async monthlyBv(ids: string[]): Promise<Map<string, number>> {
+    if (ids.length === 0) return new Map();
+    const rows = await this.prisma.monthlyVolume.findMany({
+      where: { memberId: { in: ids }, period: isoPeriod(new Date()) },
+      select: { memberId: true, selfBvCenti: true },
+    });
+    return new Map(rows.map((r) => [r.memberId, Number(r.selfBvCenti)]));
+  }
+
+  /** What the team screens need from the live plan: rank names and the monthly purchase target. */
+  private async teamPlanFacts() {
+    const plan = await this.prisma.planVersion.findFirst({ orderBy: { version: 'desc' }, select: { config: true } });
+    const parsed = safeParsePlan(plan?.config);
+    return {
+      rankNames: (parsed?.ranks ?? []).map((r) => r.name),
+      target: parsed?.repurchase.enabled ? volume(parsed.repurchase.monthlyBvCenti) : null,
+    };
+  }
+
   async network(memberId: string, opts: { depth?: unknown } = {}) {
     const me = await this.prisma.member.findUniqueOrThrow({
       where: { id: memberId },
@@ -382,8 +402,13 @@ export class MemberViewService {
       },
     });
 
+    const [monthBv, facts] = await Promise.all([this.monthlyBv(directs.map((d) => d.id)), this.teamPlanFacts()]);
+
     return {
       me: { code: me.memberCode, depth: me.depth },
+      period: isoPeriod(new Date()),
+      rankNames: facts.rankNames,
+      target: facts.target,
       levels: [...levels.entries()]
         .sort((a, b) => a[0] - b[0])
         .map(([level, v]) => ({ level, ...v })),
@@ -402,6 +427,7 @@ export class MemberViewService {
         status: d.status,
         rankIndex: d.rankIndex,
         groupBv: volume(Number(d.groupBvCenti)),
+        monthBv: volume(monthBv.get(d.id) ?? 0),
         directCount: d._count.downline,
         joinedAt: d.joinedAt,
       })),
@@ -441,6 +467,8 @@ export class MemberViewService {
       },
     });
 
+    const monthBv = await this.monthlyBv(children.map((c) => c.id));
+
     return {
       parent: child.memberCode,
       children: children.map((c) => ({
@@ -449,8 +477,56 @@ export class MemberViewService {
         name: c.name.split(' ')[0],
         status: c.status,
         rankIndex: c.rankIndex,
+        monthBv: volume(monthBv.get(c.id) ?? 0),
         directCount: c._count.downline,
         joinedAt: c.joinedAt,
+      })),
+    };
+  }
+
+  /**
+   * Find someone in your own team by first name or member ID.
+   *
+   * Scoped exactly like `branch()`: only members whose ancestor path sits under the
+   * caller's subtree prefix can match, so it cannot be used to look up anyone outside
+   * the team. It returns the same minimal fields as the tree - first name, code, rank,
+   * this month's purchase volume - and how many levels down the person is.
+   */
+  async searchTeam(memberId: string, q: unknown) {
+    const term = String(q ?? '').trim();
+    if (term.length < 2) return { results: [] };
+
+    const me = await this.prisma.member.findUniqueOrThrow({
+      where: { id: memberId },
+      select: { id: true, ancestorPath: true, depth: true },
+    });
+    const rows = await this.prisma.member.findMany({
+      where: {
+        ancestorPath: { startsWith: downlinePrefix(me) },
+        OR: [
+          { name: { contains: term, mode: 'insensitive' } },
+          { memberCode: { contains: term, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: [{ depth: 'asc' }, { joinedAt: 'desc' }],
+      take: 20,
+      select: {
+        id: true, memberCode: true, name: true, status: true, rankIndex: true,
+        joinedAt: true, depth: true, _count: { select: { downline: true } },
+      },
+    });
+    const monthBv = await this.monthlyBv(rows.map((r) => r.id));
+    return {
+      results: rows.map((r) => ({
+        id: r.id,
+        code: r.memberCode,
+        name: r.name.split(' ')[0],
+        status: r.status,
+        rankIndex: r.rankIndex,
+        monthBv: volume(monthBv.get(r.id) ?? 0),
+        directCount: r._count.downline,
+        joinedAt: r.joinedAt,
+        level: r.depth - me.depth,
       })),
     };
   }

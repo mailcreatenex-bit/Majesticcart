@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { type VolumeView } from '@/lib/money';
 import { MemberShell, EmptyState } from './MemberShell';
-import { NetworkTree } from './NetworkTree';
+import { NetworkTree, metTarget, type TeamContext, type TreeNode } from './NetworkTree';
 import { buildReferralLink } from '@/lib/referral';
 
 /**
@@ -32,6 +32,7 @@ interface Direct {
   status: string;
   rankIndex: number;
   groupBv: VolumeView;
+  monthBv: VolumeView;
   directCount: number;
   joinedAt: string;
 }
@@ -42,7 +43,12 @@ interface Network {
   totals: { team: number; active: number; direct: number };
   directs: Direct[];
   truncated: boolean;
+  period: string;
+  rankNames: string[];
+  target: VolumeView | null;
 }
+
+interface SearchHit extends TreeNode { level: number }
 
 export function NetworkView() {
   return (
@@ -55,6 +61,29 @@ export function NetworkView() {
 function Team({ memberCode }: { memberCode: string }) {
   const [network, setNetwork] = useState<Network | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [belowOnly, setBelowOnly] = useState(false);
+  const [query, setQuery] = useState('');
+  const [hits, setHits] = useState<SearchHit[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  // Search runs after a short pause in typing, and only for two characters or more.
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setHits(null); return; }
+    let cancelled = false;
+    setSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const r = await api<{ results: SearchHit[] }>(`/me/network-search?q=${encodeURIComponent(q)}`);
+        if (!cancelled) setHits(r.results);
+      } catch {
+        if (!cancelled) setHits([]);
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [query]);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +108,12 @@ function Team({ memberCode }: { memberCode: string }) {
       </div>
     );
   }
+
+  const ctx: TeamContext = { rankNames: network.rankNames, target: network.target };
+  const activeDirects = network.directs.filter((d) => d.status === 'ACTIVE');
+  const metCount = activeDirects.filter((d) => metTarget(d, ctx) === true).length;
+  const belowCount = activeDirects.filter((d) => metTarget(d, ctx) === false).length;
+  const shownDirects = belowOnly ? activeDirects.filter((d) => metTarget(d, ctx) === false) : network.directs;
 
   return (
     <div className="space-y-6">
@@ -123,12 +158,75 @@ function Team({ memberCode }: { memberCode: string }) {
         </section>
       )}
 
+      {/* --------------------------------------------------------- search */}
+      <section aria-label="Find someone in your team">
+        <label htmlFor="team-search" className="font-serif text-xl text-[var(--ink)]">Find someone in your team</label>
+        <input
+          id="team-search"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="First name or member ID"
+          autoComplete="off"
+          className="mt-3 w-full rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
+        />
+        {query.trim().length >= 2 && (
+          <div className="mt-3" aria-live="polite">
+            {searching && hits === null ? (
+              <p className="text-sm text-[var(--muted)]">Searching…</p>
+            ) : hits && hits.length > 0 ? (
+              <>
+                <ul className="divide-y divide-[var(--line)] rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
+                  {hits.map((h) => {
+                    const met = h.status === 'ACTIVE' ? metTarget(h, ctx) : null;
+                    return (
+                      <li key={h.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-4 py-3">
+                        <span className="text-sm font-medium text-[var(--ink)]">{h.name}</span>
+                        <code className="text-[11px] text-[var(--muted)]">{h.code}</code>
+                        <span className="rounded-full bg-[var(--gold-pale)] px-2 py-0.5 text-[10px] font-semibold text-[var(--gold-mid)]">{ctx.rankNames[h.rankIndex] ?? 'Member'}</span>
+                        {met !== null && (
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${met ? 'bg-[#E8F5EC] text-[#1F7A3D]' : 'bg-[#FDF3DC] text-[#9A6A08]'}`}>{met ? 'Target met' : 'Below target'}</span>
+                        )}
+                        <span className="w-full text-[11px] text-[var(--faint)]">Level {h.level} · This month {h.monthBv?.display}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            ) : (
+              <p className="text-sm text-[var(--muted)]">No one in your team matches “{query.trim()}”.</p>
+            )}
+          </div>
+        )}
+      </section>
+
       {/* -------------------------------------------------------- directs */}
       <section>
         <h2 className="font-serif text-xl text-[var(--ink)]">People you sponsored</h2>
 
+        {network.target && activeDirects.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm">
+            <span className="text-[var(--body)]">
+              This month&apos;s target is <strong className="text-[var(--ink)]">{network.target.display}</strong> of purchases:
+              {' '}<strong className="text-[#1F7A3D]">{metCount} met</strong>, <strong className="text-[#9A6A08]">{belowCount} below</strong>.
+            </span>
+            {belowCount > 0 && (
+              <button
+                type="button"
+                aria-pressed={belowOnly}
+                onClick={() => setBelowOnly((v) => !v)}
+                className={`ml-auto rounded-full border px-3 py-1 text-xs font-semibold ${belowOnly ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--gold-pale)]' : 'border-[var(--line-strong)] text-[var(--body)] hover:bg-[var(--surface-tint)]'}`}
+              >
+                {belowOnly ? 'Showing below target' : 'Show only below target'}
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="mt-4">
-          {network.directs.length === 0 ? (
+          {shownDirects.length === 0 && network.directs.length > 0 ? (
+            <EmptyState title="Everyone has met the target" body="Nobody in your direct team is below this month's target." />
+          ) : network.directs.length === 0 ? (
             <EmptyState
               title="Nobody yet"
               body="Share your referral link with anyone who wants to sell the products. They will appear here once they sign up."
@@ -136,9 +234,10 @@ function Team({ memberCode }: { memberCode: string }) {
           ) : (
             <NetworkTree
               rootLabel="You"
-              nodes={network.directs.map((d) => ({
+              ctx={ctx}
+              nodes={shownDirects.map((d) => ({
                 id: d.id, code: d.code, name: d.name, status: d.status,
-                rankIndex: d.rankIndex, directCount: d.directCount, joinedAt: d.joinedAt,
+                rankIndex: d.rankIndex, monthBv: d.monthBv, directCount: d.directCount, joinedAt: d.joinedAt,
               }))}
             />
           )}

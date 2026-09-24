@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { api, ApiError } from '@/lib/api';
-import { formatDate } from '@/lib/money';
+import { formatDate, type VolumeView } from '@/lib/money';
 import { StatusPill } from './MemberShell';
 
 /**
@@ -26,11 +26,20 @@ export interface TreeNode {
   name: string;
   status: string;
   rankIndex: number;
+  /** This month's own purchase volume. */
+  monthBv?: VolumeView;
   directCount: number;
   joinedAt: string;
 }
 
-export function NetworkTree({ rootLabel, nodes }: { rootLabel: string; nodes: TreeNode[] }) {
+/** What every row needs to label a rank and judge the month: from the live plan. */
+export interface TeamContext {
+  rankNames: string[];
+  /** The monthly purchase target, or null when the plan has none. */
+  target: VolumeView | null;
+}
+
+export function NetworkTree({ rootLabel, nodes, ctx }: { rootLabel: string; nodes: TreeNode[]; ctx: TeamContext }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
       <div className="flex items-center gap-2 pb-3">
@@ -39,14 +48,14 @@ export function NetworkTree({ rootLabel, nodes }: { rootLabel: string; nodes: Tr
       </div>
       <ul>
         {nodes.map((n, i) => (
-          <TreeRow key={n.id} node={n} depth={0} isLast={i === nodes.length - 1} />
+          <TreeRow key={n.id} node={n} depth={0} isLast={i === nodes.length - 1} ctx={ctx} />
         ))}
       </ul>
     </div>
   );
 }
 
-function TreeRow({ node, depth, isLast }: { node: TreeNode; depth: number; isLast: boolean }) {
+function TreeRow({ node, depth, isLast, ctx }: { node: TreeNode; depth: number; isLast: boolean; ctx: TeamContext }) {
   const [open, setOpen] = useState(false);
   const [children, setChildren] = useState<TreeNode[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -105,11 +114,13 @@ function TreeRow({ node, depth, isLast }: { node: TreeNode; depth: number; isLas
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <span className="truncate text-sm font-medium text-[var(--ink)]">{node.name}</span>
             <code className="text-[11px] text-[var(--muted)]">{node.code}</code>
-            <RankChip index={node.rankIndex} />
+            <RankChip name={ctx.rankNames[node.rankIndex]} index={node.rankIndex} />
             <StatusPill status={node.status} />
+            <TargetBadge node={node} ctx={ctx} />
           </div>
           <p className="text-[11px] text-[var(--faint)]">
             Joined {formatDate(node.joinedAt)}
+            {node.monthBv && ` · This month ${node.monthBv.display}`}
             {node.directCount > 0 && ` · ${node.directCount} below`}
           </p>
         </div>
@@ -120,7 +131,7 @@ function TreeRow({ node, depth, isLast }: { node: TreeNode; depth: number; isLas
       {open && children && children.length > 0 && (
         <ul className="pl-3">
           {children.map((c, i) => (
-            <TreeRow key={c.id} node={c} depth={depth + 1} isLast={i === children.length - 1} />
+            <TreeRow key={c.id} node={c} depth={depth + 1} isLast={i === children.length - 1} ctx={ctx} />
           ))}
         </ul>
       )}
@@ -131,13 +142,28 @@ function TreeRow({ node, depth, isLast }: { node: TreeNode; depth: number; isLas
   );
 }
 
-/** Tiny, not the full crown — this is one line among possibly hundreds. */
-function RankChip({ index }: { index: number }) {
-  if (index <= 0) return null;
+/** The rank's own name, so a row reads "Silver" rather than a code the reader has to decode. */
+function RankChip({ name, index }: { name?: string; index: number }) {
   return (
-    <span className="rounded-full bg-[var(--gold-pale)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--gold-mid)]">
-      R{index}
+    <span className="rounded-full bg-[var(--gold-pale)] px-2 py-0.5 text-[10px] font-semibold text-[var(--gold-mid)]">
+      {name ?? `Rank ${index + 1}`}
     </span>
+  );
+}
+
+/** Whether this month's purchase has reached the plan's target - the thing a team lead wants to see at a glance. */
+export function metTarget(node: Pick<TreeNode, 'monthBv'>, ctx: TeamContext): boolean | null {
+  if (!ctx.target || !node.monthBv) return null;
+  return node.monthBv.centi >= ctx.target.centi;
+}
+
+function TargetBadge({ node, ctx }: { node: TreeNode; ctx: TeamContext }) {
+  const met = node.status === 'ACTIVE' ? metTarget(node, ctx) : null;
+  if (met === null) return null;
+  return met ? (
+    <span className="rounded-full bg-[#E8F5EC] px-2 py-0.5 text-[10px] font-semibold text-[#1F7A3D]">Target met</span>
+  ) : (
+    <span className="rounded-full bg-[#FDF3DC] px-2 py-0.5 text-[10px] font-semibold text-[#9A6A08]">Below target</span>
   );
 }
 

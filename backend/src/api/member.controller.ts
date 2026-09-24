@@ -547,6 +547,11 @@ export class MemberViewController {
     return this.view.network(memberId, { depth });
   }
 
+  @Get('network-search')
+  networkSearch(@CurrentUser('sub') memberId: string, @Query('q') q?: string) {
+    return this.view.searchTeam(memberId, q);
+  }
+
   @Get('network/:childId')
   branch(@CurrentUser('sub') memberId: string, @Param('childId') childId: string) {
     return this.view.branch(memberId, childId);
