@@ -139,6 +139,22 @@ export class ProfileService {
     });
   }
 
+  /**
+   * Point the member at an uploaded profile photo.
+   *
+   * The key is checked against the exact shape StorageService mints for this
+   * member — `member-photo/<date>/<memberId>-<uuid>.<ext>` — so a member cannot
+   * attach another member's file, or any other object in the bucket, as their
+   * photo. Returns the previous key so the caller can delete the old file.
+   */
+  async setPhoto(memberId: string, objectKey: string): Promise<{ previous: string | null }> {
+    const shape = new RegExp(`^member-photo/\\d{4}-\\d{2}-\\d{2}/${memberId}-[0-9a-f-]{36}\\.(jpg|png|webp)$`);
+    if (!shape.test(objectKey)) throw new BadRequestException('That photo could not be used. Upload it again.');
+    const current = await this.prisma.member.findUniqueOrThrow({ where: { id: memberId }, select: { photoKey: true } });
+    await this.prisma.member.update({ where: { id: memberId }, data: { photoKey: objectKey } });
+    return { previous: current.photoKey };
+  }
+
   async saveProfile(memberId: string, patch: { name?: string; email?: string }) {
     const data: Record<string, unknown> = {};
     if (patch.name !== undefined) {

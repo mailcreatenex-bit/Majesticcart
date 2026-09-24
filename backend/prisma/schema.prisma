@@ -56,6 +56,10 @@ model Member {
   state       String?
   pincode     String?
 
+  // Object-storage key of the member's profile photo, used to build their ID
+  // card. Null until they upload one.
+  photoKey    String?
+
   payoutUpi          String?
   payoutHolder       String?
   payoutBank         String?

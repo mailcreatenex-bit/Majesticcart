@@ -59,7 +59,7 @@ export class MemberViewService {
           select: {
             id: true, memberCode: true, name: true, phone: true, email: true,
             status: true, rankIndex: true, selfBvCenti: true, groupBvCenti: true,
-            joinedAt: true, sponsorId: true,
+            joinedAt: true, sponsorId: true, photoKey: true, city: true, state: true,
           },
         }),
         this.prisma.wallet.findMany({
@@ -102,6 +102,9 @@ export class MemberViewService {
         email: member.email,
         status: member.status,
         joinedAt: member.joinedAt,
+        // Turned into a public URL by the controller; the key itself is not sent on.
+        photoKey: member.photoKey,
+        location: [member.city, member.state].filter(Boolean).join(', ') || null,
       },
       rank: {
         index: member.rankIndex,
@@ -128,6 +131,9 @@ export class MemberViewService {
         periodGroup: volume(monthly?.groupBvCenti ?? 0),
       },
       team: { direct: directCount },
+      // The monthly purchase a member is expected to make, read from the live plan so nothing
+      // that shows it (the ID card's target design) has its own copy of the number.
+      repurchase: parsed?.repurchase.enabled ? { targetBv: volume(parsed.repurchase.monthlyBvCenti) } : null,
       pending: { recharges: pendingRecharges, withdrawals: pendingWithdrawals, notifications: unread },
     };
   }

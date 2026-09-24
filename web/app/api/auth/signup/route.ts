@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(signupUrl, 303);
   }
 
-  const res = NextResponse.redirect(new URL('/account', req.url), 303);
+  // New members land on the ID card, where the first thing to do is add a photo.
+  const res = NextResponse.redirect(new URL('/id-card?welcome=1', req.url), 303);
   res.cookies.set(COOKIES.member.access, body.accessToken, sessionCookieOptions(ACCESS_TOKEN_MAX_AGE_SECONDS));
   res.cookies.set(COOKIES.member.refresh, body.refreshToken, sessionCookieOptions(REFRESH_TOKEN_MAX_AGE_SECONDS));
   return res;

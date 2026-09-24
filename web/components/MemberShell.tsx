@@ -16,7 +16,10 @@ import { showMoney, type MoneyView } from '@/lib/money';
  */
 
 export interface MemberSummary {
-  member: { id: string; code: string; name: string; phone: string; email: string | null; status: string; joinedAt: string };
+  member: {
+    id: string; code: string; name: string; phone: string; email: string | null; status: string; joinedAt: string;
+    photoUrl: string | null; location: string | null;
+  };
   rank: { index: number; name: string; next: { name: string; requiredBv: { centi: number; display: string }; remainingBv: { centi: number; display: string } } | null };
   wallets: { shopping: MoneyView; income: MoneyView };
   volume: {
@@ -27,6 +30,8 @@ export interface MemberSummary {
     periodGroup: { centi: number; display: string };
   };
   team: { direct: number };
+  /** The plan's monthly repurchase target, or null when the plan has none. */
+  repurchase: { targetBv: { centi: number; display: string } } | null;
   pending: { recharges: number; withdrawals: number; notifications: number };
 }
 
@@ -35,6 +40,7 @@ const NAV = [
   { href: '/wallet', label: 'Wallet' },
   { href: '/orders', label: 'Orders' },
   { href: '/network', label: 'My team' },
+  { href: '/id-card', label: 'ID card' },
 ];
 
 /**

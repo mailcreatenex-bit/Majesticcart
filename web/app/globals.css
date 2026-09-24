@@ -196,6 +196,17 @@
   :root[data-theme='night'] .brand-logo:hover { opacity: 0.95; }
 }
 
+/* Printing the ID card: only the card, at ID-card size, with no page chrome. */
+@media print {
+  @page { margin: 8mm; }
+  body * { visibility: hidden !important; }
+  #id-card-print, #id-card-print * { visibility: visible !important; }
+  #id-card-print {
+    position: absolute; left: 0; top: 0;
+    width: 100mm !important; box-shadow: none !important; border-radius: 0 !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   /* The foil's resting position is mid-gradient, so with the transition

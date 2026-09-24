@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  Controller, Get, Post, Patch, Body, Param, Query, HttpCode, Req, UseGuards,
+  Controller, Get, Post, Put, Patch, Body, Param, Query, HttpCode, Req, UseGuards,
 } from '@nestjs/common';
 import { zodBody } from '../common/zod.pipe';
 import { money, volume, parseMoneyInput } from '../common/serialization';
@@ -120,6 +120,13 @@ export const UploadTicketSchema = z.object({
   contentType: z.string(),
   contentLength: z.number().int().positive(),
 });
+
+const PhotoTicketSchema = z.object({
+  contentType: z.string(),
+  contentLength: z.number().int().positive(),
+});
+
+const SavePhotoSchema = z.object({ objectKey: z.string().min(10).max(200) });
 
 /* ---------------------------------------------------------------- auth */
 
@@ -418,11 +425,36 @@ export class MemberViewController {
   constructor(
     private readonly view: MemberViewService,
     private readonly profile: ProfileService,
+    private readonly storage: StorageService,
   ) {}
 
   @Get()
-  dashboard(@CurrentUser('sub') memberId: string) {
-    return this.view.dashboard(memberId);
+  async dashboard(@CurrentUser('sub') memberId: string) {
+    const d = await this.view.dashboard(memberId);
+    const { photoKey, ...member } = d.member;
+    return { ...d, member: { ...member, photoUrl: photoKey ? this.storage.publicUrl(photoKey) : null } };
+  }
+
+  /** A ticket to upload the profile photo straight to object storage, as for a recharge screenshot. */
+  @Post('photo/upload-ticket')
+  @HttpCode(200)
+  async photoTicket(
+    @CurrentUser('sub') memberId: string,
+    @Body(zodBody(PhotoTicketSchema)) body: z.infer<typeof PhotoTicketSchema>,
+  ) {
+    const ticket = await this.storage.createUploadTicket({ purpose: 'member-photo', memberId, ...body });
+    return { ...ticket, publicUrl: this.storage.publicUrl(ticket.objectKey) };
+  }
+
+  /** Attach the uploaded photo to this member and delete the one it replaces. */
+  @Put('photo')
+  async savePhoto(
+    @CurrentUser('sub') memberId: string,
+    @Body(zodBody(SavePhotoSchema)) body: z.infer<typeof SavePhotoSchema>,
+  ) {
+    const { previous } = await this.profile.setPhoto(memberId, body.objectKey);
+    if (previous && previous !== body.objectKey) await this.storage.delete(previous);
+    return { photoUrl: this.storage.publicUrl(body.objectKey) };
   }
 
   @Get('payout')

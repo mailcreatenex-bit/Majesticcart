@@ -52,7 +52,7 @@ export class StorageService {
    * open invitation to host arbitrary files in your bucket.
    */
   async createUploadTicket(args: {
-    purpose: 'recharge-screenshot' | 'product-image' | 'payment-qr' | 'brand-logo' | 'blog-cover' | 'page-image' | 'theme-asset';
+    purpose: 'recharge-screenshot' | 'member-photo' | 'product-image' | 'payment-qr' | 'brand-logo' | 'blog-cover' | 'page-image' | 'theme-asset';
     memberId?: string;
     contentType: string;
     contentLength: number;
