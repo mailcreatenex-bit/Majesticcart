@@ -79,7 +79,7 @@ export function RankPanel({ rank, joinedLabel }: { rank: RankInfo; joinedLabel: 
         <div className="mt-5">
           <div className="flex justify-between text-xs text-[var(--body)]">
             <span>Next: <span className="font-semibold text-[var(--ink)]">{rank.next.name}</span></span>
-            <span>{showVolume(rank.next.remainingBv)} BV to go</span>
+            <span>{showVolume(rank.next.remainingBv)} to go</span>
           </div>
           <div
             className="mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--surface-tint)]"
@@ -103,12 +103,12 @@ export function RankPanel({ rank, joinedLabel }: { rank: RankInfo; joinedLabel: 
             <div>
               <dt className="uppercase tracking-wider text-[var(--faint)]">You have</dt>
               <dd className="mt-0.5 text-sm font-semibold text-[var(--ink)]">
-                {showVolume(rank.next.currentBv)} <span className="font-normal text-[var(--muted)]">of {showVolume(rank.next.requiredBv)} BV</span>
+                {showVolume(rank.next.currentBv)} <span className="font-normal text-[var(--muted)]">of {showVolume(rank.next.requiredBv)}</span>
               </dd>
             </div>
             <div>
               <dt className="uppercase tracking-wider text-[var(--faint)]">Still needed</dt>
-              <dd className="mt-0.5 text-sm font-semibold text-[var(--ink)]">{showVolume(rank.next.remainingBv)} BV</dd>
+              <dd className="mt-0.5 text-sm font-semibold text-[var(--ink)]">{showVolume(rank.next.remainingBv)}</dd>
               <dd className="mt-0.5 text-[11px] text-[var(--muted)]">
                 {rank.next.basis === 'TEAM_BV'
                   ? 'Counted on your team’s purchases, not your own.'
