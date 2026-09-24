@@ -38,6 +38,7 @@ import { SupportService } from './support/support.service';
 import { MemberSupportController, PublicSupportController, AdminSupportController } from './api/support.controller';
 import { AdminReportsService } from './reporting/admin-reports.service';
 import { AdminReportsController } from './api/admin-reports.controller';
+import { AdminAuditController } from './api/admin-audit.controller';
 import { AuthController, OrderController, WalletController, MemberViewController, ShadeFinderController } from './api/member.controller';
 import {
   AdminAuthController, AdminRechargeController, AdminOrderController, AdminWithdrawalController,
@@ -208,7 +209,7 @@ export class WalletOpsModule {}
   controllers: [
     AdminPlanController, AdminDashboardController, ReportController, AdminSecurityController,
     AdminSettingsController, ThemeController, AdminThemeController, AdminReportsController,
-    MemberSupportController, PublicSupportController, AdminSupportController,
+    MemberSupportController, PublicSupportController, AdminSupportController, AdminAuditController,
   ],
   providers: [DashboardService, ReportService, SecurityAlertService, AdminReportsService, SupportService],
   exports: [DashboardService, ReportService, SecurityAlertService],

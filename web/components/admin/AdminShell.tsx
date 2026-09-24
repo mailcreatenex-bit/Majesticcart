@@ -49,6 +49,7 @@ const NAV: { href: string; label: string; permission: string }[] = [
   { href: '/admin/coupons', label: 'Coupons', permission: 'coupons.manage' },
   { href: '/admin/reports', label: 'Reports', permission: 'reports.view' },
   { href: '/admin/support', label: 'Support', permission: 'support.manage' },
+  { href: '/admin/audit', label: 'Audit log', permission: 'security.view' },
   { href: '/admin/blog', label: 'Blog', permission: 'blog.manage' },
   { href: '/admin/pages', label: 'Pages', permission: 'pages.manage' },
   { href: '/admin/theme', label: 'Theme', permission: 'theme.manage' },

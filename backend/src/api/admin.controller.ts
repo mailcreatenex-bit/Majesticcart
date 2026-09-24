@@ -500,11 +500,20 @@ export class AdminPlanController {
     }))) body: { plan: z.infer<typeof PlanConfigSchema>; note?: string; acceptUnlimited: boolean },
   ) {
     assertSustainable(body.plan, { acceptUnlimited: body.acceptUnlimited });
+    const previous = await this.prisma.planVersion.findFirst({ orderBy: { version: 'desc' }, select: { version: true, config: true } });
     const row = await this.prisma.planVersion.create({
       data: { config: body.plan as never, note: body.note, createdById: adminId },
     });
+    // The audit entry names the sections that changed and both versions, so "who changed the
+    // plan, and what" can be answered from the log alone (the full plan of each version is kept too).
+    const before = (previous?.config ?? {}) as Record<string, unknown>;
+    const after = body.plan as unknown as Record<string, unknown>;
+    const changedSections = Object.keys({ ...before, ...after }).filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]));
     await this.prisma.auditLog.create({
-      data: { actorType: 'ADMIN', actorId: adminId, action: 'plan.publish', detail: { version: row.version, note: body.note } },
+      data: {
+        actorType: 'ADMIN', actorId: adminId, action: 'plan.publish',
+        detail: { version: row.version, previousVersion: previous?.version ?? null, changedSections, note: body.note, acceptedUnlimited: body.acceptUnlimited, ranksRecomputed: true },
+      },
     });
     // Re-sort every member against the new ladder. Nobody loses income already
     // credited; only their current rank moves.
@@ -536,6 +545,13 @@ export class AdminPlanController {
   @HttpCode(200)
   async distribute(@Param('fundKey') fundKey: string, @CurrentUser('sub') adminId: string) {
     const r = await this.commission.distributeRoyalty(fundKey, adminId);
+    // Money left a pool and went to members: it always leaves a record of who pressed the button.
+    await this.prisma.auditLog.create({
+      data: {
+        actorType: 'ADMIN', actorId: adminId, action: 'royalty.distribute',
+        detail: { fundKey, runId: r.runId, perHeadPaise: String(r.perHeadPaise), qualifiers: r.qualifiers },
+      },
+    });
     return { runId: r.runId, perHead: money(r.perHeadPaise), qualifiers: r.qualifiers };
   }
 }
