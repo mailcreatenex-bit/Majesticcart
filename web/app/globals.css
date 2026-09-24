@@ -192,10 +192,10 @@
   @keyframes brand-scroll { to { transform: translateX(-50%); } }
   /* Each mark sits on a white chip in both themes: many are full-colour badges
      (a blue disc with white lettering), which a light-on-dark knock-out would erase. */
-  .brand-logo { filter: grayscale(1); opacity: 0.75; transition: opacity 200ms, filter 200ms; }
+  .brand-logo { opacity: 0.92; transition: opacity 200ms; }
   .brand-chip { transition: box-shadow 200ms, transform 200ms; }
   .brand-chip:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); transform: translateY(-2px); }
-  .brand-chip:hover .brand-logo, .brand-chip:focus-visible .brand-logo { filter: none; opacity: 1; }
+  .brand-chip:hover .brand-logo, .brand-chip:focus-visible .brand-logo { opacity: 1; }
 }
 
 /* Printing the ID card: only the card, at ID-card size, with no page chrome. */

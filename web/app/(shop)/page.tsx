@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { buildMetadata, metaDescription, SITE } from '@/lib/seo';
-import { listProducts, listCategories, categoryCopy } from '@/lib/catalog';
+import { listProducts, listCategories, categoryCopy, categoryTree } from '@/lib/catalog';
 import { getTheme } from '@/lib/content';
 import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
@@ -107,7 +107,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-14">
         <h2 className="font-serif text-2xl text-[var(--ink)]">Shop by category</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.map((c) => (
+          {categoryTree(categories).map((c) => (
             <Link
               key={c.slug}
               href={`/category/${c.slug}`}
