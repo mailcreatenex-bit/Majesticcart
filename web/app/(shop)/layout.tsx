@@ -8,6 +8,7 @@ import { themeBootScript } from '@/components/ThemeToggle';
 import { SITE, organizationJsonLd } from '@/lib/seo';
 import { ENTITY } from '@/lib/legal';
 import { getTheme } from '@/lib/content';
+import { AnnouncementBar } from '@/components/AnnouncementBar';
 import '@/app/globals.css';
 
 /**
@@ -101,6 +102,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Wraps the chrome as well as the page: the header's bag badge reads
             the same cart the pages write to. */}
         <CartProvider>
+          <AnnouncementBar a={theme.announcement} />
           <Header />
           <main id="main">{children}</main>
           <Footer />

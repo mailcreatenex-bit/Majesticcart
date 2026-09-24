@@ -14,7 +14,13 @@ interface ThemeValue {
     secondaryCtaLabel: string; secondaryCtaHref: string;
     imageUrl: string;
   };
+  announcement: {
+    enabled: boolean; text: string; linkLabel: string; linkHref: string;
+    couponCode: string; startsOn: string; endsOn: string;
+  };
 }
+
+const NO_BANNER: ThemeValue['announcement'] = { enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '' };
 
 export function ThemeAdminView() {
   return (
@@ -31,13 +37,14 @@ function Theme() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    api<ThemeValue>('/admin/theme').then(setValue).catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load theme settings.'));
+    api<ThemeValue>('/admin/theme').then((v) => setValue({ ...v, announcement: { ...NO_BANNER, ...v.announcement } })).catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load theme settings.'));
   }, []);
 
   if (error && !value) return <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>;
   if (!value) return <TableSkeleton rows={4} />;
 
   const setColor = (key: keyof ThemeValue['colors'], v: string) => setValue({ ...value, colors: { ...value.colors, [key]: v } });
+  const setBanner = <K extends keyof ThemeValue['announcement']>(key: K, v: ThemeValue['announcement'][K]) => setValue({ ...value, announcement: { ...value.announcement, [key]: v } });
   const setHero = <K extends keyof ThemeValue['hero']>(key: K, v: ThemeValue['hero'][K]) => setValue({ ...value, hero: { ...value.hero, [key]: v } });
 
   const save = async () => {
@@ -88,6 +95,31 @@ function Theme() {
             <ImageUploadField label="Hero image (optional)" value={value.hero.imageUrl} onChange={(url) => setHero('imageUrl', url)} purpose="theme-asset" hint="Leave blank to keep the plain gradient background." />
           </div>
         </div>
+      </Panel>
+
+      <Panel title="Festival banner">
+        <label className="flex items-center gap-2 text-sm font-medium text-neutral-800">
+          <input type="checkbox" checked={value.announcement.enabled} onChange={(e) => setBanner('enabled', e.target.checked)} className="h-4 w-4" />
+          Show a banner across the top of the site
+        </label>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field label="Banner text" value={value.announcement.text} onChange={(v) => setBanner('text', v)} span2 />
+          <Field label="Coupon code to show (optional)" value={value.announcement.couponCode} onChange={(v) => setBanner('couponCode', v.toUpperCase())} />
+          <Field label="Link label (optional)" value={value.announcement.linkLabel} onChange={(v) => setBanner('linkLabel', v)} />
+          <Field label="Link address (optional)" value={value.announcement.linkHref} onChange={(v) => setBanner('linkHref', v)} span2 />
+          <label className="block text-sm font-medium text-neutral-800">
+            Starts on (optional)
+            <input type="date" value={value.announcement.startsOn} onChange={(e) => setBanner('startsOn', e.target.value)} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+          </label>
+          <label className="block text-sm font-medium text-neutral-800">
+            Ends on (optional)
+            <input type="date" value={value.announcement.endsOn} onChange={(e) => setBanner('endsOn', e.target.value)} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+          </label>
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">
+          Example: “Diwali offer - 10% off your first order” with the code WELCOME10 (create it under Coupons with “first order only”).
+          The site is cached for up to an hour, so a banner appears or leaves within the hour of its start or end date.
+        </p>
       </Panel>
 
       {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

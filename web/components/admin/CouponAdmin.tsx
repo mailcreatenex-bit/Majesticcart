@@ -24,6 +24,7 @@ interface AdminCoupon {
   usageLimit: number | null;
   usedCount: number;
   perMemberLimit: number;
+  firstOrderOnly?: boolean;
   isActive: boolean;
   startsAt: string | null;
   expiresAt: string | null;
@@ -135,7 +136,7 @@ function CouponRow({ coupon, onChanged }: { coupon: AdminCoupon; onChanged: () =
         {coupon.usedCount}{coupon.usageLimit != null ? ` / ${coupon.usageLimit}` : ''}
         {exhausted && <span className="ml-1 text-xs font-semibold text-red-700">exhausted</span>}
       </td>
-      <td className="px-4 py-3 tabular-nums">{coupon.perMemberLimit}×</td>
+      <td className="px-4 py-3 tabular-nums">{coupon.perMemberLimit}×{coupon.firstOrderOnly && <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">first order</span>}</td>
       <td className="px-4 py-3 text-xs text-neutral-500">
         {coupon.startsAt && <div>From {new Date(coupon.startsAt).toLocaleDateString('en-IN')}</div>}
         {coupon.expiresAt && (
@@ -171,6 +172,7 @@ function CouponForm({ onDone, onCancel }: { onDone: () => Promise<void>; onCance
     minOrder: '0',
     usageLimit: '',
     perMemberLimit: '1',
+    firstOrderOnly: false,
     startsAt: '',
     expiresAt: '',
   });
@@ -198,6 +200,7 @@ function CouponForm({ onDone, onCancel }: { onDone: () => Promise<void>; onCance
           minOrder: form.minOrder || '0',
           usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
           perMemberLimit: Number(form.perMemberLimit) || 1,
+          firstOrderOnly: form.firstOrderOnly,
           startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : undefined,
           expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : undefined,
         },
@@ -249,6 +252,14 @@ function CouponForm({ onDone, onCancel }: { onDone: () => Promise<void>; onCance
         <Field label="Total use limit (optional)" value={form.usageLimit} onChange={(v) => set('usageLimit', v.replace(/\D/g, ''))}
           hint="Leave blank for unlimited redemptions across all members" />
         <Field label="Uses per member" value={form.perMemberLimit} onChange={(v) => set('perMemberLimit', v.replace(/\D/g, ''))} />
+
+        <label className="flex items-start gap-2 text-sm font-medium text-neutral-800 sm:col-span-2">
+          <input type="checkbox" checked={form.firstOrderOnly} onChange={(e) => setForm({ ...form, firstOrderOnly: e.target.checked })} className="mt-0.5 h-4 w-4" />
+          <span>
+            Welcome offer - first order only
+            <span className="block text-xs font-normal text-neutral-500">Works only for a member who has not placed an order yet (a cancelled order does not count).</span>
+          </span>
+        </label>
 
         <label className="block text-sm font-medium text-neutral-800">
           Starts (optional)

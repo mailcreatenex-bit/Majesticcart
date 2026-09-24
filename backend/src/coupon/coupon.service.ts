@@ -34,6 +34,7 @@ export const CouponInputSchema = z.object({
   minOrder: z.string().regex(/^\d+(\.\d{1,2})?$/).default('0'),
   usageLimit: z.number().int().positive().optional(),
   perMemberLimit: z.number().int().positive().default(1),
+  firstOrderOnly: z.boolean().default(false),
   startsAt: z.string().datetime().optional(),
   expiresAt: z.string().datetime().optional(),
   isActive: z.boolean().default(true),
@@ -79,6 +80,7 @@ export class CouponService {
           minOrderPaise: rupeesToPaise(input.minOrder),
           usageLimit: input.usageLimit ?? null,
           perMemberLimit: input.perMemberLimit,
+          firstOrderOnly: input.firstOrderOnly,
           isActive: input.isActive,
           startsAt: input.startsAt ? new Date(input.startsAt) : null,
           expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
@@ -108,6 +110,7 @@ export class CouponService {
   async preview(code: string, memberId: string, subtotalPaise: Paise): Promise<CouponPreview> {
     const coupon = await this.prisma.coupon.findUnique({ where: { code: this.normalise(code) } });
     this.assertUsable(coupon, subtotalPaise);
+    await this.assertFirstOrder(this.prisma, coupon!, memberId);
     const uses = await this.prisma.couponRedemption.count({ where: { couponId: coupon!.id, memberId } });
     if (uses >= coupon!.perMemberLimit) {
       throw new BadRequestException('You have already used this coupon the maximum number of times.');
@@ -142,6 +145,7 @@ export class CouponService {
 
     const coupon = await tx.coupon.findUniqueOrThrow({ where: { id: rows[0].id } });
     this.assertUsable(coupon, subtotalPaise);
+    await this.assertFirstOrder(tx, coupon, memberId);
 
     const priorUses = await tx.couponRedemption.count({ where: { couponId: coupon.id, memberId } });
     if (priorUses >= coupon.perMemberLimit) {
@@ -175,6 +179,13 @@ export class CouponService {
     if (subtotalPaise < coupon.minOrderPaise) {
       throw new BadRequestException(`This coupon needs a minimum order of ${(Number(coupon.minOrderPaise) / 100).toFixed(2)}.`);
     }
+  }
+
+  /** A welcome offer only works for a member with no orders yet; a cancelled order does not use it up. */
+  private async assertFirstOrder(db: { order: { count: (a: { where: { memberId: string; status: { not: 'CANCELLED' } } }) => Promise<number> } }, coupon: { firstOrderOnly: boolean }, memberId: string) {
+    if (!coupon.firstOrderOnly) return;
+    const prior = await db.order.count({ where: { memberId, status: { not: 'CANCELLED' } } });
+    if (prior > 0) throw new BadRequestException('This offer is for your first order only.');
   }
 
   private computeDiscount(coupon: { type: CouponType; value: number; maxDiscountPaise: bigint | null }, subtotalPaise: Paise): Paise {

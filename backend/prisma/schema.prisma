@@ -601,6 +601,8 @@ model Coupon {
   // Per member, separately — a usageLimit of 100 does not mean one member can
   // take all 100.
   perMemberLimit   Int        @default(1)
+  // A welcome offer: valid only while the member has not yet had an order (cancelled ones do not count).
+  firstOrderOnly   Boolean    @default(false)
   isActive         Boolean    @default(true)
   startsAt         DateTime?
   expiresAt        DateTime?

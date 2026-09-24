@@ -41,7 +41,20 @@ export interface ThemeSettings {
     secondaryCtaHref: string;
     imageUrl: string;
   };
+  announcement: {
+    enabled: boolean;
+    text: string;
+    linkLabel: string;
+    linkHref: string;
+    couponCode: string;
+    startsOn: string;
+    endsOn: string;
+  };
 }
+
+const DEFAULT_ANNOUNCEMENT: ThemeSettings['announcement'] = {
+  enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '',
+};
 
 const DEFAULT_THEME: ThemeSettings = {
   colors: { ink: '#341316', accent: '#B84654', gold: '#D9B25A' },
@@ -56,6 +69,7 @@ const DEFAULT_THEME: ThemeSettings = {
     secondaryCtaHref: '/join',
     imageUrl: '',
   },
+  announcement: DEFAULT_ANNOUNCEMENT,
 };
 
 const API = () => {
@@ -110,5 +124,5 @@ export async function getTheme(): Promise<ThemeSettings> {
     if (stale[key].test(hero[key])) hero[key] = DEFAULT_THEME.hero[key];
   }
 
-  return { colors: { ...DEFAULT_THEME.colors, ...t.colors }, logoUrl: t.logoUrl ?? '', hero };
+  return { colors: { ...DEFAULT_THEME.colors, ...t.colors }, logoUrl: t.logoUrl ?? '', hero, announcement: { ...DEFAULT_ANNOUNCEMENT, ...t.announcement } };
 }

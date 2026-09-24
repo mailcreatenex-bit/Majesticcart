@@ -734,6 +734,15 @@ const ThemeSettingSchema = z.object({
     secondaryCtaHref: z.string().trim().max(200),
     imageUrl: z.string().trim().max(500).default(''),
   }),
+  announcement: z.object({
+    enabled: z.boolean().default(false),
+    text: z.string().trim().max(160).default(''),
+    linkLabel: z.string().trim().max(30).default(''),
+    linkHref: z.string().trim().max(200).default(''),
+    couponCode: z.string().trim().toUpperCase().max(24).default(''),
+    startsOn: z.string().trim().max(10).default(''),
+    endsOn: z.string().trim().max(10).default(''),
+  }).default({ enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '' }),
 });
 
 /** Read by the storefront on every homepage render — public, since it's exactly what the page already shows every visitor. */

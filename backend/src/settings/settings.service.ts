@@ -73,7 +73,23 @@ export interface ThemeSettingValue {
     secondaryCtaHref: string;
     imageUrl: string;
   };
+  /** A strip across the top of the storefront for a festival or an offer. Off until an admin turns it on. */
+  announcement: {
+    enabled: boolean;
+    text: string;
+    linkLabel: string;
+    linkHref: string;
+    /** Optional coupon code shown as a chip, so the offer and its code sit together. */
+    couponCode: string;
+    /** ISO dates (YYYY-MM-DD) bounding when it shows; blank means no bound. */
+    startsOn: string;
+    endsOn: string;
+  };
 }
+
+const DEFAULT_ANNOUNCEMENT: ThemeSettingValue['announcement'] = {
+  enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '',
+};
 
 const DEFAULT_THEME: ThemeSettingValue = {
   colors: { ink: '#341316', accent: '#B84654', gold: '#D9B25A' },
@@ -88,6 +104,7 @@ const DEFAULT_THEME: ThemeSettingValue = {
     secondaryCtaHref: '/join',
     imageUrl: '',
   },
+  announcement: DEFAULT_ANNOUNCEMENT,
 };
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
@@ -207,6 +224,7 @@ export class SettingsService {
       colors: { ...DEFAULT_THEME.colors, ...stored?.colors },
       logoUrl: stored?.logoUrl ?? DEFAULT_THEME.logoUrl,
       hero: { ...DEFAULT_THEME.hero, ...stored?.hero },
+      announcement: { ...DEFAULT_ANNOUNCEMENT, ...stored?.announcement },
     };
   }
 
@@ -215,6 +233,16 @@ export class SettingsService {
       if (!HEX_RE.test(hex)) throw new BadRequestException(`"${name}" needs a hex colour like #B84654.`);
     }
     if (!input.hero.title.trim()) throw new BadRequestException('The homepage headline cannot be empty.');
+    if (input.announcement.enabled && !input.announcement.text.trim()) {
+      throw new BadRequestException('Write the banner text, or switch the banner off.');
+    }
+    const day = /^(\d{4}-\d{2}-\d{2})?$/;
+    if (!day.test(input.announcement.startsOn) || !day.test(input.announcement.endsOn)) {
+      throw new BadRequestException('Banner dates must look like 2026-10-20, or be left blank.');
+    }
+    if (input.announcement.startsOn && input.announcement.endsOn && input.announcement.startsOn > input.announcement.endsOn) {
+      throw new BadRequestException('The banner cannot end before it starts.');
+    }
 
     await this.prisma.storeSetting.upsert({
       where: { key: THEME_SETTING_KEY },
