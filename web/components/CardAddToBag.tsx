@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useCart } from './CartProvider';
+import { useT } from './LocaleProvider';
 import { MAX_QUANTITY } from '@/lib/cart';
 import type { CatalogProduct } from '@/lib/catalog';
 
@@ -16,6 +17,7 @@ import type { CatalogProduct } from '@/lib/catalog';
  * It sits outside the card's link, so tapping a button never navigates away.
  */
 export function CardAddToBag({ product }: { product: CatalogProduct }) {
+  const t = useT();
   const { add, cart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
@@ -89,7 +91,7 @@ export function CardAddToBag({ product }: { product: CatalogProduct }) {
           onClick={onAdd}
           className="w-full rounded-xl gold-foil px-3 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-900/20"
         >
-          {justAdded ? 'Added ✓' : 'Add to bag'}
+          {justAdded ? t('shop.added') : t('shop.addToBag')}
         </button>
       </div>
 

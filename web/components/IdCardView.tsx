@@ -6,6 +6,7 @@ import { api, ApiError } from '@/lib/api';
 import { buildCardSvg, availableVariants, CARD_W, CARD_H, type CardData, type CardVariant } from '@/lib/idcard';
 import { SITE } from '@/lib/seo';
 import { MemberShell, type MemberSummary } from './MemberShell';
+import { useT } from './LocaleProvider';
 
 /**
  * The member's printable ID card.
@@ -69,6 +70,7 @@ async function toDataUrl(url: string): Promise<string | null> {
 
 function IdCard({ data, reload }: { data: MemberSummary; reload: () => void }) {
   const params = useSearchParams();
+  const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
   const [localPhoto, setLocalPhoto] = useState<string | null>(null);
   const [remotePhoto, setRemotePhoto] = useState<string | null>(null);
@@ -205,20 +207,20 @@ function IdCard({ data, reload }: { data: MemberSummary; reload: () => void }) {
         )}
 
         <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
-          <h2 className="font-serif text-lg text-[var(--ink)]">Your photo</h2>
+          <h2 className="font-serif text-lg text-[var(--ink)]">{t('idcard.photo')}</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">A clear, front-facing photo with your face in the middle. It is cropped to a square.</p>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" id="id-photo" onChange={(e) => onPick(e.target.files?.[0])} />
           <label
             htmlFor="id-photo"
             className={`mt-4 inline-block cursor-pointer rounded-xl border border-[var(--line-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)] ${uploading ? 'pointer-events-none opacity-60' : ''}`}
           >
-            {uploading ? 'Uploading…' : photo ? 'Change photo' : 'Upload photo'}
+            {uploading ? '…' : photo ? t('idcard.change') : t('idcard.upload')}
           </label>
         </section>
 
         {variants.length > 1 && (
           <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
-            <h2 className="font-serif text-lg text-[var(--ink)]">Card design</h2>
+            <h2 className="font-serif text-lg text-[var(--ink)]">{t('idcard.design')}</h2>
             <p className="mt-1 text-sm text-[var(--muted)]">Unlocked by what you have achieved.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {variants.map((v) => {
@@ -241,10 +243,10 @@ function IdCard({ data, reload }: { data: MemberSummary; reload: () => void }) {
 
         <div className="flex flex-wrap gap-3">
           <button type="button" onClick={() => window.print()} className="rounded-xl gold-foil px-6 py-3 font-semibold text-white shadow-lg shadow-amber-900/20">
-            Print card
+            {t('idcard.print')}
           </button>
           <button type="button" onClick={download} disabled={saving} className="rounded-xl border border-[var(--line-strong)] px-6 py-3 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)] disabled:opacity-60">
-            {saving ? 'Saving…' : 'Download image'}
+            {saving ? '…' : t('idcard.download')}
           </button>
         </div>
 

@@ -8,6 +8,8 @@ import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
 import { AccountLink } from './AccountLink';
 import { CategoryNav } from './CategoryNav';
+import { T, LanguageSwitcher } from './LocaleProvider';
+import type { TKey } from '@/lib/i18n';
 import { categoryTree, listCategories } from '@/lib/catalog';
 
 /**
@@ -20,25 +22,29 @@ import { categoryTree, listCategories } from '@/lib/catalog';
  */
 
 const SHOP_LINKS = [
-  { href: '/shop', label: 'All products' },
+  { href: '/shop', label: 'All products', k: 'nav.all' as TKey },
   { href: '/category/makeup', label: 'Makeup' },
   { href: '/category/skin-care', label: 'Skin care' },
   { href: '/category/body-care', label: 'Body care' },
   { href: '/category/fragrance', label: 'Fragrance' },
 ];
 const COMPANY_LINKS = [
-  { href: '/about', label: 'About us' },
-  { href: '/contact', label: 'Contact us' },
-  { href: '/join', label: 'Become a member' },
-  { href: '/faq', label: 'FAQ' },
+  { href: '/about', label: 'About us', k: 'link.about' as TKey },
+  { href: '/contact', label: 'Contact us', k: 'link.contact' as TKey },
+  { href: '/join', label: 'Become a member', k: 'link.join' as TKey },
+  { href: '/faq', label: 'FAQ', k: 'link.faq' as TKey },
 ];
+
+const POLICY_KEY: Record<string, TKey> = {
+  'privacy-policy': 'link.privacy', terms: 'link.terms', 'refund-policy': 'link.refund', 'shipping-policy': 'link.shipping',
+};
 
 /** Departments and their sub-categories from the live catalogue; the static list is the fallback if the API is down. */
 async function shopMenu() {
   const tree = categoryTree(await listCategories());
   const links = tree.length
     ? [
-        { href: '/shop', label: 'All products' },
+        { href: '/shop', label: 'All products', k: 'nav.all' as TKey },
         ...tree.map((d) => ({
           href: `/category/${d.slug}`,
           label: d.name,
@@ -92,6 +98,7 @@ export async function Header() {
           {/* Renders nothing where installing is impossible, so the nav does
               not carry a dead control on Firefox or inside WhatsApp. */}
           <ThemeToggle />
+          <LanguageSwitcher />
           <InstallButton variant="header" />
           {/* Goes to the member's wallet. A guest lands here too — MemberShell's
               own 401 handling sends them on to login, the same as any other
@@ -105,7 +112,7 @@ export async function Header() {
             <WalletIcon />
           </Link>
           <Link href="/cart" className="inline-flex items-center rounded-full px-2 py-2 text-sm text-[var(--muted)] hover:text-[var(--ink)] sm:px-3">
-            Bag
+            <T k="nav.bag" />
             <CartCount />
           </Link>
           <AccountLink />
@@ -143,32 +150,32 @@ export async function Footer() {
         </div>
 
         <nav aria-label="Shop">
-          <h2 className="text-sm font-semibold text-[var(--ink)]">Shop</h2>
+          <h2 className="text-sm font-semibold text-[var(--ink)]"><T k="footer.shop" /></h2>
           <ul className="mt-3 space-y-2">
             {shopLinks.map((l) => (
-              <li key={l.href}><Link href={l.href} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{l.label}</Link></li>
+              <li key={l.href}><Link href={l.href} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{'k' in l && l.k ? <T k={l.k} /> : l.label}</Link></li>
             ))}
           </ul>
         </nav>
 
         <nav aria-label="Company">
-          <h2 className="text-sm font-semibold text-[var(--ink)]">Company</h2>
+          <h2 className="text-sm font-semibold text-[var(--ink)]"><T k="footer.company" /></h2>
           <ul className="mt-3 space-y-2">
             {COMPANY_LINKS.map((l) => (
-              <li key={l.href}><Link href={l.href} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{l.label}</Link></li>
+              <li key={l.href}><Link href={l.href} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{'k' in l && l.k ? <T k={l.k} /> : l.label}</Link></li>
             ))}
           </ul>
-          <h2 className="mt-6 text-sm font-semibold text-[var(--ink)]">Policies</h2>
+          <h2 className="mt-6 text-sm font-semibold text-[var(--ink)]"><T k="footer.policies" /></h2>
           <ul className="mt-3 space-y-2">
             {LEGAL_DOCUMENTS.map((d) => (
-              <li key={d.slug}><Link href={`/legal/${d.slug}`} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{d.title}</Link></li>
+              <li key={d.slug}><Link href={`/legal/${d.slug}`} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{POLICY_KEY[d.slug] ? <T k={POLICY_KEY[d.slug]} /> : d.title}</Link></li>
             ))}
           </ul>
         </nav>
 
         {/* Required to be published and reachable. Not buried. */}
         <div>
-          <h2 className="text-sm font-semibold text-[var(--ink)]">Customer care</h2>
+          <h2 className="text-sm font-semibold text-[var(--ink)]"><T k="footer.care" /></h2>
           <address className="mt-3 space-y-1 text-sm not-italic text-[var(--muted)]">
             <div><a href={`tel:${ENTITY.supportPhone}`} className="hover:text-[var(--ink)]">{ENTITY.supportPhone}</a></div>
             <div><a href={`mailto:${ENTITY.supportEmail}`} className="hover:text-[var(--ink)]">{ENTITY.supportEmail}</a></div>
@@ -180,7 +187,7 @@ export async function Footer() {
             <InstallButton />
           </div>
 
-          <h2 className="mt-6 text-sm font-semibold text-[var(--ink)]">Grievance officer</h2>
+          <h2 className="mt-6 text-sm font-semibold text-[var(--ink)]"><T k="footer.grievance" /></h2>
           <address className="mt-3 space-y-1 text-sm not-italic text-[var(--muted)]">
             <div>{ENTITY.grievanceOfficer.name}</div>
             <div><a href={`mailto:${ENTITY.grievanceOfficer.email}`} className="hover:text-[var(--ink)]">{ENTITY.grievanceOfficer.email}</a></div>

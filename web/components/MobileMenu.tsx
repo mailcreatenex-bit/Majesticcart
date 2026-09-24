@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { T } from './LocaleProvider';
+import type { TKey } from '@/lib/i18n';
 
 /**
  * The category nav, for phones.
@@ -11,7 +13,7 @@ import { useEffect, useState } from 'react';
  * or "Skin care" without scrolling to the footer. This is that equivalent:
  * a toggle button plus a dropdown panel, closed by default.
  */
-export interface MenuGroup { href: string; label: string; children?: { href: string; label: string }[] }
+export interface MenuGroup { href: string; label: string; k?: TKey; children?: { href: string; label: string }[] }
 
 export function MobileMenu({ links }: { links: MenuGroup[] }) {
   const [open, setOpen] = useState(false);
@@ -63,7 +65,7 @@ export function MobileMenu({ links }: { links: MenuGroup[] }) {
                     <ul className="mb-2 ml-3 border-l border-[var(--line-strong)] pl-2">
                       <li>
                         <Link href={l.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]">
-                          All {l.label}
+                          <T k="nav.allIn" /> {l.label}
                         </Link>
                       </li>
                       {l.children.map((c) => (
@@ -81,7 +83,7 @@ export function MobileMenu({ links }: { links: MenuGroup[] }) {
                     onClick={() => setOpen(false)}
                     className="block rounded-lg px-3 py-3 text-[var(--body)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
                   >
-                    {l.label}
+                    {l.k ? <T k={l.k} /> : l.label}
                   </Link>
                 )}
               </li>

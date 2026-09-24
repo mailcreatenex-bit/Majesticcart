@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { categoryTree, type CatalogBrand, type CatalogCategory, type CatalogProduct } from '@/lib/catalog';
 import { ProductGrid } from './ProductCard';
+import { useT } from './LocaleProvider';
 
 type SortKey = 'featured' | 'price_asc' | 'price_desc' | 'discount' | 'bv_desc';
 
@@ -31,6 +32,7 @@ const parseBound = (v: string): number | null => {
  * simply does not appear.
  */
 export function FilterableProductGrid({ products, allCategories, allBrands }: { products: CatalogProduct[]; allCategories?: CatalogCategory[]; allBrands?: CatalogBrand[] }) {
+  const t = useT();
   // The catalogue's own category tree (departments and their sub-categories) when the
   // page supplies it; otherwise the filter falls back to whatever the products carry.
   const tree = useMemo(() => categoryTree(allCategories ?? []).filter((d) => d.children.length > 0), [allCategories]);
@@ -157,12 +159,12 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
               aria-controls="product-filters"
               className="font-semibold text-[var(--ink)] lg:pointer-events-none"
             >
-              Filters{activeCount > 0 ? ` (${activeCount})` : ''}
+              {t('filter.filters')}{activeCount > 0 ? ` (${activeCount})` : ''}
               <span aria-hidden="true" className="ml-2 text-[var(--muted)] lg:hidden">{open ? '−' : '+'}</span>
             </button>
             {activeCount > 0 && (
               <button type="button" onClick={clear} className="text-xs font-semibold text-[var(--accent)] hover:underline">
-                Clear all
+                {t('filter.clear')}
               </button>
             )}
           </div>
@@ -171,7 +173,7 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
             <div className="mt-4 space-y-6 border-t border-[var(--line)] pt-4">
               {tree.length > 0 ? (
                 <fieldset>
-                  <legend className={legend}>Category</legend>
+                  <legend className={legend}>{t('filter.category')}</legend>
                   <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
                     {tree.map((d) => (
                       <div key={d.slug}>
@@ -187,7 +189,7 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
                 </fieldset>
               ) : categories.length > 1 && (
                 <fieldset>
-                  <legend className={legend}>Category</legend>
+                  <legend className={legend}>{t('filter.category')}</legend>
                   {categories.map((c) =>
                     checkRow(c.slug, c.name, categoryCounts.get(c.slug), selCategories.includes(c.slug), () => toggle(selCategories, setSelCategories, c.slug)),
                   )}
@@ -196,7 +198,7 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
 
               {brands.length > 1 && (
                 <fieldset>
-                  <legend className={legend}>Brand</legend>
+                  <legend className={legend}>{t('filter.brand')}</legend>
                   <div className="max-h-72 overflow-y-auto pr-1">
                     {brands.map((b) => checkRow(b, b, brandCounts.get(b) ?? 0, selBrands.includes(b), () => toggle(selBrands, setSelBrands, b)))}
                   </div>
@@ -205,7 +207,7 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
 
               {priceRange.max > priceRange.min && (
                 <fieldset>
-                  <legend className={legend}>Price range (₹)</legend>
+                  <legend className={legend}>{t('filter.price')}</legend>
                   <div className="flex items-center gap-2">
                     <input type="number" inputMode="numeric" min={0} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} placeholder={`Min ${priceRange.min.toLocaleString('en-IN')}`} aria-label="Minimum price in rupees" className={input} />
                     <span aria-hidden="true" className="text-[var(--faint)]">–</span>
@@ -216,7 +218,7 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
 
               {bvRange.max > bvRange.min && (
                 <fieldset>
-                  <legend className={legend}>Business volume (BV)</legend>
+                  <legend className={legend}>{t('filter.bv')}</legend>
                   <div className="flex items-center gap-2">
                     <input type="number" inputMode="numeric" min={0} value={bvMin} onChange={(e) => setBvMin(e.target.value)} placeholder={`Min ${bvRange.min.toLocaleString('en-IN')}`} aria-label="Minimum business volume" className={input} />
                     <span aria-hidden="true" className="text-[var(--faint)]">–</span>

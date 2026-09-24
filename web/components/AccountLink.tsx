@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { MEMBER_FLAG_COOKIE } from '@/lib/session-shared';
+import { useT } from './LocaleProvider';
 
 /**
  * The header's account button: "Log in" for a visitor, "My account" for a member.
@@ -14,6 +15,7 @@ import { MEMBER_FLAG_COOKIE } from '@/lib/session-shared';
  */
 export function AccountLink() {
   const [signedIn, setSignedIn] = useState(false);
+  const t = useT();
   useEffect(() => {
     setSignedIn(document.cookie.split('; ').some((c) => c === `${MEMBER_FLAG_COOKIE}=1`));
   }, []);
@@ -22,7 +24,7 @@ export function AccountLink() {
       href={signedIn ? '/account' : '/login'}
       className="shrink-0 rounded-xl bg-[var(--ink)] px-3 py-2 text-sm font-semibold text-[var(--gold-pale)] sm:px-4"
     >
-      {signedIn ? 'My account' : 'Log in'}
+      {signedIn ? t('nav.account') : t('nav.login')}
     </Link>
   );
 }

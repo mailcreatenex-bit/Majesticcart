@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { CategoryNode } from '@/lib/catalog';
+import { T } from './LocaleProvider';
 
 /**
  * Desktop department bar. Each department opens a panel of its sub-categories on
@@ -11,7 +12,7 @@ export function CategoryNav({ tree }: { tree: CategoryNode[] }) {
     <ul className="hidden items-center gap-0.5 xl:flex">
       <li>
         <Link href="/shop" className="rounded-full px-3 py-2 text-sm text-[var(--muted)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]">
-          All products
+          <T k="nav.all" />
         </Link>
       </li>
       {tree.map((d) => (
@@ -27,7 +28,7 @@ export function CategoryNav({ tree }: { tree: CategoryNode[] }) {
               <ul className="max-h-[70vh] overflow-y-auto rounded-2xl border border-[var(--line-strong)] bg-[var(--surface)] p-2 shadow-xl">
                 <li>
                   <Link href={`/category/${d.slug}`} className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]">
-                    All {d.name}
+                    <T k="nav.allIn" /> {d.name}
                   </Link>
                 </li>
                 {d.children.map((c) => (

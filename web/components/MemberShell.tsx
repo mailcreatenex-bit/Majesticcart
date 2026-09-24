@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useT } from './LocaleProvider';
+import type { TKey } from '@/lib/i18n';
 import type { RankInfo } from './RankPanel';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -37,14 +39,14 @@ export interface MemberSummary {
 }
 
 const NAV = [
-  { href: '/account', label: 'Overview' },
-  { href: '/wallet', label: 'Wallet' },
-  { href: '/orders', label: 'Orders' },
-  { href: '/autoship', label: 'Autoship' },
-  { href: '/network', label: 'My team' },
-  { href: '/statement', label: 'Statement' },
-  { href: '/id-card', label: 'ID card' },
-  { href: '/share', label: 'Share' },
+  { href: '/account', label: 'Overview', k: 'member.overview' as TKey },
+  { href: '/wallet', label: 'Wallet', k: 'member.wallet' as TKey },
+  { href: '/orders', label: 'Orders', k: 'member.orders' as TKey },
+  { href: '/autoship', label: 'Autoship', k: 'member.autoship' as TKey },
+  { href: '/network', label: 'My team', k: 'member.team' as TKey },
+  { href: '/statement', label: 'Statement', k: 'member.statement' as TKey },
+  { href: '/id-card', label: 'ID card', k: 'member.idcard' as TKey },
+  { href: '/share', label: 'Share', k: 'member.share' as TKey },
 ];
 
 /**
@@ -62,6 +64,7 @@ export function MemberShell({
   children: (data: MemberSummary, reload: () => void) => React.ReactNode;
 }) {
   const pathname = usePathname();
+  const t = useT();
   const [data, setData] = useState<MemberSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
@@ -98,8 +101,8 @@ export function MemberShell({
         {data && (
           <div className="flex items-start gap-3">
             <div className="flex gap-3 text-right">
-              <WalletChip label="Shopping" value={showMoney(data.wallets.shopping)} href="/recharge" cta="Add money" />
-              <WalletChip label="Income" value={showMoney(data.wallets.income)} href="/wallet?kind=income" cta="Statement" />
+              <WalletChip label={t('member.shopping')} value={showMoney(data.wallets.shopping)} href="/recharge" cta={t('member.addMoney')} />
+              <WalletChip label={t('member.income')} value={showMoney(data.wallets.income)} href="/wallet?kind=income" cta={t('member.statementLink')} />
             </div>
             <SignOut />
           </div>
@@ -128,7 +131,7 @@ export function MemberShell({
                   : 'border-transparent text-[var(--muted)] hover:text-[var(--ink)]'
               }`}
             >
-              {l.label}
+              {t(l.k)}
             </Link>
           );
         })}
@@ -163,6 +166,7 @@ export function MemberShell({
  * the cookie, revokes it on the API, and clears it either way.
  */
 function SignOut() {
+  const t = useT();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -177,7 +181,7 @@ function SignOut() {
       }}
       className="mt-1 rounded-xl border border-[var(--line-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-tint)] disabled:opacity-50"
     >
-      {busy ? '…' : 'Sign out'}
+      {busy ? '…' : t('member.signout')}
     </button>
   );
 }

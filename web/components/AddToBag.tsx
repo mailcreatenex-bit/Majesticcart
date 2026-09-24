@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from './CartProvider';
+import { useT } from './LocaleProvider';
 import { MAX_QUANTITY } from '@/lib/cart';
 import type { CatalogProduct } from '@/lib/catalog';
 
@@ -19,6 +20,7 @@ import type { CatalogProduct } from '@/lib/catalog';
  * would be a dead end with nothing to do next.
  */
 export function AddToBag({ product }: { product: CatalogProduct }) {
+  const t = useT();
   const { add, cart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -82,7 +84,7 @@ export function AddToBag({ product }: { product: CatalogProduct }) {
           onClick={onAdd}
           className="flex-1 rounded-xl gold-foil px-7 py-3.5 font-semibold text-white shadow-lg shadow-amber-900/20"
         >
-          Add to bag
+          {t('shop.addToBag')}
         </button>
       </div>
 

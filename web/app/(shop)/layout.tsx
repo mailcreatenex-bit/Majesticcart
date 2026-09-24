@@ -9,6 +9,7 @@ import { SITE, organizationJsonLd } from '@/lib/seo';
 import { ENTITY } from '@/lib/legal';
 import { getTheme } from '@/lib/content';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
+import { LocaleProvider } from '@/components/LocaleProvider';
 import '@/app/globals.css';
 
 /**
@@ -101,12 +102,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(org) }} />
         {/* Wraps the chrome as well as the page: the header's bag badge reads
             the same cart the pages write to. */}
+        <LocaleProvider>
         <CartProvider>
           <AnnouncementBar a={theme.announcement} />
           <Header />
           <main id="main">{children}</main>
           <Footer />
         </CartProvider>
+        </LocaleProvider>
         <PwaRegister />
         {/* Appears after 30 seconds of visible browsing, never to someone who
             already installed it or said no recently. */}
