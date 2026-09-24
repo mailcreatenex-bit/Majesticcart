@@ -32,11 +32,11 @@ export async function BrandCarousel() {
                   href={`/brand/${b.slug}`}
                   tabIndex={copy === 1 ? -1 : undefined}
                   aria-label={copy === 1 ? undefined : `Shop ${b.name}`}
-                  className="brand-chip flex h-16 w-40 items-center justify-center rounded-xl bg-white px-4 sm:h-20 sm:w-48"
+                  className="brand-chip flex h-20 w-44 items-center justify-center rounded-xl bg-white px-5 sm:h-24 sm:w-56"
                 >
                   {/* Plain <img>: small static marks, already sized by CSS. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={b.logoUrl as string} alt={copy === 1 ? '' : b.name} loading="lazy" className="brand-logo max-h-9 max-w-full object-contain sm:max-h-11" />
+                  <img src={b.logoUrl as string} alt={copy === 1 ? '' : b.name} loading="lazy" className="brand-logo max-h-11 max-w-full object-contain sm:max-h-14" />
                 </Link>
               </li>
             )),
