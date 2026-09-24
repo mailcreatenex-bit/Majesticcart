@@ -33,6 +33,8 @@ export interface CatalogProduct {
   inStock: boolean;
   imageUrl?: string;
   galleryImages?: string[];
+  ingredients?: string | null;
+  howToUse?: string | null;
 }
 
 export interface CatalogCategory {

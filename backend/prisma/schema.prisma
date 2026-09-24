@@ -61,6 +61,7 @@ model Member {
   photoKey    String?
 
   autoship    AutoshipPlan?
+  reviews     Review[]
 
   payoutUpi          String?
   payoutHolder       String?
@@ -270,6 +271,11 @@ model Product {
   // by image".
   imageUrl      String?
   galleryImages String[] @default([])
+  // What is in it and how to use it: shown on the product page, and what a buyer of
+  // skin care or fragrance looks for before anything else.
+  ingredients   String?
+  howToUse      String?
+  reviews       Review[]
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -872,6 +878,29 @@ model AuditLog {
 
   @@index([action, createdAt])
   @@index([actorId, createdAt])
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  HIDDEN
+}
+
+// One review per member per product, and only from a member who has had it delivered.
+model Review {
+  id        String       @id @default(cuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  rating    Int // 1 to 5
+  title     String?
+  body      String
+  status    ReviewStatus @default(PUBLISHED)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([productId, memberId])
+  @@index([productId, status, createdAt])
 }
 
 // A member's standing monthly order (see AutoshipService). One per member.

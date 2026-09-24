@@ -1,3 +1,4 @@
+import { ProductReviews } from '@/components/ProductReviews';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -157,6 +158,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <h2 className="mt-10 font-serif text-lg text-[var(--ink)]">About this product</h2>
             <p className="mt-2 max-w-prose leading-relaxed text-[var(--body)]">{product.description}</p>
 
+            {product.howToUse && (
+              <>
+                <h2 className="mt-8 font-serif text-lg text-[var(--ink)]">How to use</h2>
+                <p className="mt-2 max-w-prose whitespace-pre-line leading-relaxed text-[var(--body)]">{product.howToUse}</p>
+              </>
+            )}
+            {product.ingredients && (
+              <>
+                <h2 className="mt-8 font-serif text-lg text-[var(--ink)]">Ingredients</h2>
+                <p className="mt-2 max-w-prose whitespace-pre-line text-sm leading-relaxed text-[var(--body)]">{product.ingredients}</p>
+              </>
+            )}
+
             {/* Required on a product listing by the Consumer Protection
                 (E-Commerce) Rules, 2020. Not optional, and not a footnote. */}
             <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-[var(--line)] pt-6 text-sm">
@@ -186,6 +200,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </p>
           </div>
         </article>
+
+        <ProductReviews slug={slug} />
 
         {related.length > 0 && (
           <section className="mt-16 border-t border-[var(--line)] pt-10">

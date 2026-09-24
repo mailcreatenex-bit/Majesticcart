@@ -34,6 +34,8 @@ interface AdminProduct {
   slug: string;
   name: string;
   description: string | null;
+  ingredients?: string | null;
+  howToUse?: string | null;
   categoryId: string;
   category?: { id: string; name: string; slug: string };
   brandId: string | null;
@@ -173,6 +175,7 @@ function Catalog() {
 
           <BrandPanel brands={brands} onChanged={load} />
           <CategoryPanel categories={categories} onChanged={load} />
+          <ReviewsPanel />
         </>
       )}
     </div>
@@ -406,6 +409,8 @@ function ProductForm({
     sku: product?.sku ?? '',
     name: product?.name ?? '',
     description: product?.description ?? '',
+    ingredients: product?.ingredients ?? '',
+    howToUse: product?.howToUse ?? '',
     categoryId: product?.categoryId ?? categories[0]?.id ?? '',
     brandId: product?.brandId ?? '',
     mrp: product ? (Number(product.mrpPaise) / 100).toFixed(2) : '',
@@ -464,6 +469,8 @@ function ProductForm({
       sku: form.sku.trim().toUpperCase(),
       name: form.name.trim(),
       description: form.description.trim() || undefined,
+      ingredients: form.ingredients.trim() || undefined,
+      howToUse: form.howToUse.trim() || undefined,
       categoryId: form.categoryId,
       brandId: form.brandId || undefined,
       mrp: form.mrp,
@@ -515,6 +522,21 @@ function ProductForm({
               rows={3}
               className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"
             />
+          </label>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-neutral-800">
+            How to use (optional)
+            <textarea value={form.howToUse} onChange={(e) => set('howToUse', e.target.value)} rows={3}
+              className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+          </label>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-neutral-800">
+            Ingredients (optional)
+            <textarea value={form.ingredients} onChange={(e) => set('ingredients', e.target.value)} rows={3}
+              className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
           </label>
         </div>
 
@@ -860,6 +882,60 @@ function CategoryChip({ c, strong, busy, onRemove }: { c: Category; strong?: boo
         ×
       </button>
     </span>
+  );
+}
+
+/* ---------------------------------------------------------------- reviews */
+
+interface AdminReview { id: string; rating: number; title: string | null; body: string; status: 'PUBLISHED' | 'HIDDEN'; at: string; product: string; productSlug: string; author: string; memberCode: string }
+
+/** Moderation: every review is published on arrival; an admin can hide one that breaks the rules and restore it later. */
+function ReviewsPanel() {
+  const [rows, setRows] = useState<AdminReview[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = async () => {
+    try { setRows(await api<AdminReview[]>('/admin/catalog/reviews')); }
+    catch (e) { setError(e instanceof ApiError ? e.message : 'Could not load reviews.'); }
+  };
+  useEffect(() => { void load(); }, []);
+
+  const toggle = async (r: AdminReview) => {
+    setBusy(r.id); setError(null);
+    try {
+      await api(`/admin/catalog/reviews/${r.id}/status`, { method: 'POST', body: { status: r.status === 'HIDDEN' ? 'PUBLISHED' : 'HIDDEN' } });
+      await load();
+    } catch (e) { setError(e instanceof ApiError ? e.message : 'Could not update the review.'); }
+    finally { setBusy(null); }
+  };
+
+  return (
+    <Panel title="Reviews">
+      {error && <p className="mb-2 text-sm text-red-700">{error}</p>}
+      {!rows ? <p className="text-sm text-neutral-500">Loading…</p> : rows.length === 0 ? (
+        <p className="text-sm text-neutral-500">No reviews yet. Members can review a product once it has been delivered to them.</p>
+      ) : (
+        <ul className="divide-y divide-neutral-100">
+          {rows.map((r) => (
+            <li key={r.id} className="flex items-start justify-between gap-4 py-3 text-sm">
+              <div className="min-w-0">
+                <p className="text-neutral-900">
+                  <span className="text-amber-500">{'★'.repeat(r.rating)}</span><span className="text-neutral-300">{'★'.repeat(5 - r.rating)}</span>
+                  {' '}<span className="font-medium">{r.title ?? ''}</span>
+                  {r.status === 'HIDDEN' && <span className="ml-2 rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-600">hidden</span>}
+                </p>
+                <p className="mt-0.5 text-neutral-700">{r.body}</p>
+                <p className="mt-0.5 text-xs text-neutral-500">{r.product} - {r.author} ({r.memberCode}) - {new Date(r.at).toLocaleDateString('en-IN')}</p>
+              </div>
+              <button type="button" disabled={busy === r.id} onClick={() => toggle(r)} className="shrink-0 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-100 disabled:opacity-50">
+                {r.status === 'HIDDEN' ? 'Show' : 'Hide'}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
   );
 }
 

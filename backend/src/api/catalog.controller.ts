@@ -5,6 +5,7 @@ import { zodBody } from '../common/zod.pipe';
 import { Public, RequirePermission, MemberOnly, CurrentUser } from '../auth/guards';
 import { CatalogService, ProductInputSchema, StockAdjustSchema, COSMETICS_HSN } from '../catalog/catalog.service';
 import { InvoiceService } from '../invoice/invoice.service';
+import { ReviewService } from '../catalog/review.service';
 import { money, volume } from '../common/serialization';
 import { rupeesToPaise, bvToCenti } from '../common/money';
 import { PrismaClient } from '@prisma/client';
@@ -19,7 +20,14 @@ import { PrismaClient } from '@prisma/client';
 
 @Controller('catalog')
 export class CatalogController {
-  constructor(private readonly catalog: CatalogService) {}
+  constructor(private readonly catalog: CatalogService, private readonly reviews: ReviewService) {}
+
+  /** Published reviews and the star summary. Only first names are shown. */
+  @Public()
+  @Get('product/:slug/reviews')
+  productReviews(@Param('slug') slug: string, @Query('cursor') cursor?: string) {
+    return this.reviews.forProduct(slug, cursor);
+  }
 
   @Public()
   @Get('categories')
@@ -92,7 +100,22 @@ const BrandInputSchema = z.object({
 @RequirePermission('catalog.manage')
 @Controller('admin/catalog')
 export class AdminCatalogController {
-  constructor(private readonly catalog: CatalogService) {}
+  constructor(private readonly catalog: CatalogService, private readonly reviews: ReviewService) {}
+
+  @Get('reviews')
+  reviewList(@Query('status') status?: string) {
+    return this.reviews.adminList(status === 'HIDDEN' ? 'HIDDEN' : status === 'PUBLISHED' ? 'PUBLISHED' : undefined);
+  }
+
+  @Post('reviews/:id/status')
+  @HttpCode(200)
+  reviewStatus(
+    @Param('id') id: string,
+    @CurrentUser('sub') adminId: string,
+    @Body(zodBody(z.object({ status: z.enum(['PUBLISHED', 'HIDDEN']) }))) body: { status: 'PUBLISHED' | 'HIDDEN' },
+  ) {
+    return this.reviews.setStatus(id, body.status, adminId);
+  }
 
   @Get('products')
   list(
@@ -307,5 +330,30 @@ function publicProduct(p: any) {
     lowStock: p.stock > 0 && p.stock <= 5,
     imageUrl: p.imageUrl,
     galleryImages: p.galleryImages ?? [],
+    ingredients: p.ingredients ?? null,
+    howToUse: p.howToUse ?? null,
   };
+}
+
+const ReviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  title: z.string().trim().max(80).optional(),
+  body: z.string().trim().min(10, 'Tell us a little more - at least 10 characters').max(1000),
+});
+
+/** A member's own review of a product they have had delivered. */
+@MemberOnly()
+@Controller('reviews')
+export class MemberReviewController {
+  constructor(private readonly reviews: ReviewService) {}
+
+  @Get(':slug/mine')
+  mine(@CurrentUser('sub') memberId: string, @Param('slug') slug: string) {
+    return this.reviews.mine(memberId, slug);
+  }
+
+  @Put(':slug')
+  write(@CurrentUser('sub') memberId: string, @Param('slug') slug: string, @Body(zodBody(ReviewSchema)) body: z.infer<typeof ReviewSchema>) {
+    return this.reviews.write(memberId, slug, body);
+  }
 }

@@ -27,10 +27,11 @@ import { ReportService } from './reporting/report.service';
 import { StorageService } from './media/storage.service';
 import { ProfileService } from './member/profile.service';
 import { MemberViewService } from './member/view.service';
+import { ReviewService } from './catalog/review.service';
 import { CatalogService } from './catalog/catalog.service';
 import { CouponService } from './coupon/coupon.service';
 import { InvoiceService } from './invoice/invoice.service';
-import { CatalogController, AdminCatalogController, InvoiceController } from './api/catalog.controller';
+import { CatalogController, AdminCatalogController, InvoiceController, MemberReviewController } from './api/catalog.controller';
 import { smsProvider, SMS_SENDER } from './notifications/sms.service';
 import { AuthController, OrderController, WalletController, MemberViewController, ShadeFinderController } from './api/member.controller';
 import {
@@ -141,8 +142,8 @@ export class SettingsModule {}
 export class MemberModule {}
 
 @Module({
-  controllers: [CatalogController, AdminCatalogController],
-  providers: [CatalogService],
+  controllers: [CatalogController, AdminCatalogController, MemberReviewController],
+  providers: [CatalogService, ReviewService],
   exports: [CatalogService],
 })
 export class CatalogModule {}

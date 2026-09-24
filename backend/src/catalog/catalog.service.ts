@@ -43,6 +43,8 @@ export const ProductInputSchema = z.object({
   sku: z.string().trim().toUpperCase().regex(/^[A-Z0-9][A-Z0-9-]{2,23}$/, 'SKU: 3 to 24 letters, digits or hyphens'),
   name: z.string().trim().min(3, 'Product name is too short').max(120),
   description: z.string().trim().max(2000).optional(),
+  ingredients: z.string().trim().max(2000).optional(),
+  howToUse: z.string().trim().max(2000).optional(),
   categoryId: z.string().min(1, 'Choose a category'),
   // Optional: a product can go live before its brand does. Left blank, the
   // storefront shows it as unbranded rather than blocking the save on it.
@@ -326,6 +328,8 @@ export class CatalogService implements OnModuleInit {
           slug: await this.uniqueSlug(input.name),
           name: input.name,
           description: input.description ?? null,
+          ingredients: input.ingredients || null,
+          howToUse: input.howToUse || null,
           categoryId: input.categoryId,
           brandId: input.brandId ?? null,
           mrpPaise, pricePaise, bvCenti,
@@ -371,6 +375,7 @@ export class CatalogService implements OnModuleInit {
       where: { id },
       data: {
         sku: input.sku, name: input.name, description: input.description ?? null,
+        ingredients: input.ingredients || null, howToUse: input.howToUse || null,
         categoryId: input.categoryId, brandId: input.brandId ?? null, mrpPaise, pricePaise, bvCenti,
         gstBp: input.gstBp, hsnCode: input.hsnCode, countryOfOrigin: input.countryOfOrigin,
         stock: input.stock, isActive: input.isActive, imageUrl: input.imageUrl ?? null,
