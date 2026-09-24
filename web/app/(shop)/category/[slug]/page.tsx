@@ -152,7 +152,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
         <div className="mt-4">
           {products.length > 0 ? (
-            <FilterableProductGrid products={products} />
+            <FilterableProductGrid products={products} allCategories={allCategories} />
           ) : (
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-8 text-center">
               <p className="font-serif text-lg text-[var(--ink)]">Products are on their way</p>

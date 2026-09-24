@@ -5,7 +5,7 @@ import {
   buildMetadata, pageTitle, metaDescription, breadcrumbJsonLd, SITE,
 } from '@/lib/seo';
 import { absoluteUrl } from '@/lib/referral';
-import { listProducts, listBrands, getBrand } from '@/lib/catalog';
+import { listProducts, listBrands, getBrand, listCategories } from '@/lib/catalog';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
 
 /**
@@ -41,9 +41,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BrandPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const [brand, products] = await Promise.all([
+  const [brand, products, allCategories] = await Promise.all([
     getBrand(slug),
     listProducts({ brand: slug }),
+    listCategories(),
   ]);
   // A slug that isn't a real (or currently visible) brand is a 404, not an
   // empty grid — same reasoning as the category page: an empty grid at a
@@ -95,7 +96,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         </p>
 
         <div className="mt-4">
-          <FilterableProductGrid products={products} />
+          <FilterableProductGrid products={products} allCategories={allCategories} />
         </div>
 
         <div className="mt-12 border-t border-[var(--line)] pt-6">

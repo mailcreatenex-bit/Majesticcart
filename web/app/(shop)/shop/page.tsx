@@ -78,7 +78,7 @@ export default async function ShopPage() {
         </p>
 
         <div className="mt-4">
-          <FilterableProductGrid products={products} />
+          <FilterableProductGrid products={products} allCategories={categories} />
         </div>
       </div>
     </>

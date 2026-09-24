@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { CatalogProduct } from '@/lib/catalog';
+import { categoryTree, type CatalogCategory, type CatalogProduct } from '@/lib/catalog';
 import { ProductGrid } from './ProductCard';
 
 type SortKey = 'featured' | 'price_asc' | 'price_desc' | 'discount' | 'bv_desc';
@@ -30,7 +30,17 @@ const parseBound = (v: string): number | null => {
  * category or brand page, where every product shares one value, that group
  * simply does not appear.
  */
-export function FilterableProductGrid({ products }: { products: CatalogProduct[] }) {
+export function FilterableProductGrid({ products, allCategories }: { products: CatalogProduct[]; allCategories?: CatalogCategory[] }) {
+  // The catalogue's own category tree (departments and their sub-categories) when the
+  // page supplies it; otherwise the filter falls back to whatever the products carry.
+  const tree = useMemo(() => categoryTree(allCategories ?? []).filter((d) => d.children.length > 0), [allCategories]);
+  const parentOf = useMemo(() => {
+    const byId = new Map((allCategories ?? []).map((c) => [c.id, c.slug]));
+    return new Map((allCategories ?? []).filter((c) => c.parentId).map((c) => [c.slug, byId.get(c.parentId as string) ?? null]));
+  }, [allCategories]);
+  /** A product belongs to its own category and to that category's department. */
+  const inCategory = (p: CatalogProduct, slug: string) => p.categorySlug === slug || parentOf.get(p.categorySlug) === slug;
+
   const categories = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of products) m.set(p.categorySlug, p.category);
@@ -86,7 +96,7 @@ export function FilterableProductGrid({ products }: { products: CatalogProduct[]
     const kept = products.filter((p) => {
       const price = rupees(p.price.paise);
       const bv = bvOf(p);
-      if (selCategories.length && !selCategories.includes(p.categorySlug)) return false;
+      if (selCategories.length && !selCategories.some((s) => inCategory(p, s))) return false;
       if (selBrands.length && !(p.brand && selBrands.includes(p.brand))) return false;
       if (pMin !== null && price < pMin) return false;
       if (pMax !== null && price > pMax) return false;
@@ -103,7 +113,8 @@ export function FilterableProductGrid({ products }: { products: CatalogProduct[]
       case 'bv_desc': return [...kept].sort((a, b) => b.businessVolume.centi - a.businessVolume.centi);
       default: return kept;
     }
-  }, [products, sort, selCategories, selBrands, priceMin, priceMax, bvMin, bvMax]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, sort, selCategories, selBrands, priceMin, priceMax, bvMin, bvMax, parentOf]);
 
   if (products.length === 0) return <ProductGrid products={products} />;
 
@@ -116,6 +127,7 @@ export function FilterableProductGrid({ products }: { products: CatalogProduct[]
     return m;
   };
   const categoryCounts = countBy((p) => p.categorySlug);
+  const countIn = (slug: string) => products.filter((p) => inCategory(p, slug)).length;
   const brandCounts = countBy((p) => p.brand);
 
   const input =
@@ -155,7 +167,23 @@ export function FilterableProductGrid({ products }: { products: CatalogProduct[]
 
           <div id="product-filters" className={`${open ? 'block' : 'hidden'} lg:block`}>
             <div className="mt-4 space-y-6 border-t border-[var(--line)] pt-4">
-              {categories.length > 1 && (
+              {tree.length > 0 ? (
+                <fieldset>
+                  <legend className={legend}>Category</legend>
+                  <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+                    {tree.map((d) => (
+                      <div key={d.slug}>
+                        {checkRow(d.slug, d.name, countIn(d.slug), selCategories.includes(d.slug), () => toggle(selCategories, setSelCategories, d.slug))}
+                        <div className="ml-5 border-l border-[var(--line)] pl-2">
+                          {d.children.map((c) =>
+                            checkRow(c.slug, c.name, countIn(c.slug), selCategories.includes(c.slug), () => toggle(selCategories, setSelCategories, c.slug)),
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </fieldset>
+              ) : categories.length > 1 && (
                 <fieldset>
                   <legend className={legend}>Category</legend>
                   {categories.map((c) =>
