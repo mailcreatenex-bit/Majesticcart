@@ -362,7 +362,7 @@ function pageFileFor(route: string): string {
 /** Routes that must never be indexed. Matched against PRIVATE_PREFIXES. */
 const MUST_BE_PRIVATE = [
   '/account', '/wallet', '/wallet/withdraw', '/orders', '/orders/[id]',
-  '/network', '/recharge', '/cart', '/checkout', '/id-card', '/statement',
+  '/network', '/recharge', '/cart', '/checkout', '/id-card', '/statement', '/share',
   // The console, including its own sign-in page. An indexed admin login is an
   // invitation to credential-stuff it.
   '/admin', '/admin/login',

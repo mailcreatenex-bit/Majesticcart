@@ -43,6 +43,7 @@ const NAV = [
   { href: '/network', label: 'My team' },
   { href: '/statement', label: 'Statement' },
   { href: '/id-card', label: 'ID card' },
+  { href: '/share', label: 'Share' },
 ];
 
 /**

@@ -29,7 +29,7 @@ export const SITE = {
  */
 export const PRIVATE_PREFIXES = [
   '/account', '/wallet', '/orders', '/network', '/recharge', '/cart',
-  '/checkout', '/notifications', '/admin', '/reports', '/api', '/id-card', '/statement',
+  '/checkout', '/notifications', '/admin', '/reports', '/api', '/id-card', '/statement', '/share',
 ] as const;
 
 export const NOINDEX_FOLLOW_PREFIXES = [
