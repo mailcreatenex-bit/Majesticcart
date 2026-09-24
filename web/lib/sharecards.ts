@@ -49,10 +49,11 @@ const fit = (text: string, size: number, maxW: number) =>
 export function buildShareSvg(kind: ShareKind, d: ShareData): string {
   const { w, h } = SHARE_SIZE[kind];
   const story = kind === 'story';
-  const top = story ? 150 : 70;
-  const logoSize = story ? 340 : 260;
-  const head = top + logoSize + (story ? 60 : 30);
-  const qr = story ? 400 : 300;
+  const top = story ? 150 : 40;
+  const logoSize = story ? 340 : 200;
+  const head = top + logoSize + (story ? 60 : 20);
+  const qr = story ? 400 : 240;
+  const hs = story ? 84 : 62; // headline size
 
   const link = d.link.replace(/^https?:\/\//, '');
   const blocks = [
@@ -62,25 +63,25 @@ export function buildShareSvg(kind: ShareKind, d: ShareData): string {
     d.logo
       ? `<image href="${d.logo}" x="${(w - logoSize) / 2}" y="${top}" width="${logoSize}" height="${logoSize}"/>`
       : `<text x="${w / 2}" y="${top + logoSize / 2}" text-anchor="middle" font-family="${SERIF}" font-size="72" fill="${GOLD}" font-weight="700">Majestic Cart</text>`,
-    `<text x="${w / 2}" y="${head + 70}" text-anchor="middle" font-family="${SERIF}" font-size="${story ? 84 : 72}" font-weight="700" fill="#F7EBEC">Beauty you trust,</text>`,
-    `<text x="${w / 2}" y="${head + (story ? 170 : 150)}" text-anchor="middle" font-family="${SERIF}" font-size="${story ? 84 : 72}" font-weight="700" fill="${GOLD}">delivered to you.</text>`,
-    `<text x="${w / 2}" y="${head + (story ? 250 : 215)}" text-anchor="middle" font-family="${SANS}" font-size="${story ? 38 : 34}" fill="#DCC6C9">Lakmé · Himalaya · Lotus Herbals · Pond’s · Dot &amp; Key · and more</text>`,
+    `<text x="${w / 2}" y="${head + (story ? 70 : 62)}" text-anchor="middle" font-family="${SERIF}" font-size="${hs}" font-weight="700" fill="#F7EBEC">Beauty you trust,</text>`,
+    `<text x="${w / 2}" y="${head + (story ? 170 : 132)}" text-anchor="middle" font-family="${SERIF}" font-size="${hs}" font-weight="700" fill="${GOLD}">delivered to you.</text>`,
+    `<text x="${w / 2}" y="${head + (story ? 250 : 190)}" text-anchor="middle" font-family="${SANS}" font-size="${story ? 38 : 30}" fill="#DCC6C9">Lakmé · Himalaya · Lotus Herbals · Pond’s · Dot &amp; Key · and more</text>`,
   ];
 
-  const cardY = story ? head + 340 : head + 275;
-  const cardH = story ? 780 : 470;
+  const cardY = story ? head + 340 : head + 235;
+  const cardH = story ? 780 : 480;
   blocks.push(`<rect x="70" y="${cardY}" width="${w - 140}" height="${cardH}" rx="44" fill="#FFFFFF"/>`);
-  blocks.push(`<text x="${w / 2}" y="${cardY + 84}" text-anchor="middle" font-family="${SANS}" font-size="34" font-weight="600" fill="#93767B" letter-spacing="3">JOIN WITH MY MEMBER ID</text>`);
-  blocks.push(`<text x="${w / 2}" y="${cardY + 170}" text-anchor="middle" font-family="${SERIF}" font-size="96" font-weight="700" fill="#341316">${esc(d.code)}</text>`);
+  blocks.push(`<text x="${w / 2}" y="${cardY + (story ? 84 : 66)}" text-anchor="middle" font-family="${SANS}" font-size="${story ? 34 : 28}" font-weight="600" fill="#93767B" letter-spacing="3">JOIN WITH MY MEMBER ID</text>`);
+  blocks.push(`<text x="${w / 2}" y="${cardY + (story ? 170 : 148)}" text-anchor="middle" font-family="${SERIF}" font-size="${story ? 96 : 84}" font-weight="700" fill="#341316">${esc(d.code)}</text>`);
   if (d.qrSvg) {
-    blocks.push(qrGroup(d.qrSvg, (w - qr) / 2, cardY + 210, qr));
-    blocks.push(`<text x="${w / 2}" y="${cardY + 210 + qr + 56}" text-anchor="middle" font-family="${SANS}" font-size="32" fill="#624144">Scan to open — registering is free</text>`);
+    blocks.push(qrGroup(d.qrSvg, (w - qr) / 2, cardY + (story ? 210 : 178), qr));
+    blocks.push(`<text x="${w / 2}" y="${cardY + (story ? 210 : 178) + qr + (story ? 56 : 44)}" text-anchor="middle" font-family="${SANS}" font-size="${story ? 32 : 26}" fill="#624144">Scan to open — registering is free</text>`);
   } else {
     blocks.push(`<text x="${w / 2}" y="${cardY + 290}" text-anchor="middle" font-family="${SANS}" font-size="34" fill="#624144"${fit(link, 34, w - 200)}>${esc(link)}</text>`);
   }
-  const nameY = h - (story ? 150 : 90);
-  blocks.push(`<text x="${w / 2}" y="${nameY}" text-anchor="middle" font-family="${SANS}" font-size="38" fill="#F7EBEC"${fit(`Shared by ${d.name}`, 38, w - 160)}>Shared by ${esc(d.name)}</text>`);
-  blocks.push(`<text x="${w / 2}" y="${nameY + 52}" text-anchor="middle" font-family="${SANS}" font-size="28" fill="#AD9296"${fit(link, 28, w - 160)}>${esc(link)}</text>`);
+  const nameY = h - (story ? 150 : 62);
+  blocks.push(`<text x="${w / 2}" y="${nameY}" text-anchor="middle" font-family="${SANS}" font-size="${story ? 38 : 32}" fill="#F7EBEC"${fit(`Shared by ${d.name}`, 38, w - 160)}>Shared by ${esc(d.name)}</text>`);
+  blocks.push(`<text x="${w / 2}" y="${nameY + (story ? 52 : 38)}" text-anchor="middle" font-family="${SANS}" font-size="${story ? 28 : 24}" fill="#AD9296"${fit(link, 28, w - 160)}>${esc(link)}</text>`);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="${SANS}">
 <defs><linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#341316"/><stop offset="1" stop-color="#1A0E10"/></linearGradient></defs>
