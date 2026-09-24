@@ -47,6 +47,7 @@ const NAV = [
   { href: '/statement', label: 'Statement', k: 'member.statement' as TKey },
   { href: '/id-card', label: 'ID card', k: 'member.idcard' as TKey },
   { href: '/share', label: 'Share', k: 'member.share' as TKey },
+  { href: '/support', label: 'Support', k: 'member.support' as TKey },
 ];
 
 /**

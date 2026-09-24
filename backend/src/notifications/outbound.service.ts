@@ -24,7 +24,7 @@ import { SMS_SENDER, type SmsSender } from './sms.service';
  *     people about last month's orders.
  */
 
-const RELAYED_KINDS = ['ORDER', 'WALLET', 'WITHDRAWAL', 'AUTOSHIP', 'SECURITY'];
+const RELAYED_KINDS = ['ORDER', 'WALLET', 'WITHDRAWAL', 'AUTOSHIP', 'SECURITY', 'SUPPORT'];
 const RUN_EVERY_MS = 60 * 1000;
 const FIRST_RUN_DELAY_MS = 45 * 1000;
 const MAX_AGE_MS = 6 * 60 * 60 * 1000;

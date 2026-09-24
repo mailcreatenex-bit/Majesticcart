@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, organizationJsonLd } from '@/lib/seo';
 import { ENTITY } from '@/lib/legal';
 import { PageHeader } from '@/components/Chrome';
+import { ContactForm } from '@/components/ContactForm';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Contact us'),
@@ -52,6 +53,15 @@ export default function ContactPage() {
             Acknowledged within 48 hours and resolved within one month, as required by the
             Consumer Protection (E-Commerce) Rules, 2020.
           </p>
+        </section>
+
+        <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 md:col-span-2">
+          <h2 className="font-serif text-xl text-[var(--ink)]">Write to us</h2>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Ask a question or raise a complaint. You get a reference number, and we acknowledge it within 48 hours.
+            Members can also do this from the Support tab in their account, where the replies appear.
+          </p>
+          <div className="mt-4"><ContactForm /></div>
         </section>
 
         <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 md:col-span-2">

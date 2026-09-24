@@ -22,6 +22,8 @@ export const PERMISSIONS: PermissionDef[] = [
   { key: 'reports.manage', label: 'Build and save custom reports', group: 'General' },
   { key: 'security.view', label: 'View security alerts', group: 'General' },
 
+  { key: 'support.manage', label: 'Answer support tickets and complaints', group: 'General' },
+
   { key: 'orders.manage', label: 'Manage orders (fulfilment)', group: 'Orders' },
   { key: 'orders.return', label: 'Process returns', group: 'Orders' },
 
@@ -52,7 +54,7 @@ export const FINANCE_PERMISSIONS: string[] = [
 
 export const SUPPORT_PERMISSIONS: string[] = [
   'dashboard.view', 'reports.view', 'security.view',
-  'orders.manage',
+  'orders.manage', 'support.manage',
 ];
 
 const VALID = new Set(ALL_PERMISSIONS);

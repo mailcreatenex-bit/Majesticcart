@@ -34,6 +34,8 @@ import { InvoiceService } from './invoice/invoice.service';
 import { CatalogController, AdminCatalogController, InvoiceController, MemberReviewController } from './api/catalog.controller';
 import { smsProvider, SMS_SENDER } from './notifications/sms.service';
 import { OutboundNotifier } from './notifications/outbound.service';
+import { SupportService } from './support/support.service';
+import { MemberSupportController, PublicSupportController, AdminSupportController } from './api/support.controller';
 import { AdminReportsService } from './reporting/admin-reports.service';
 import { AdminReportsController } from './api/admin-reports.controller';
 import { AuthController, OrderController, WalletController, MemberViewController, ShadeFinderController } from './api/member.controller';
@@ -206,8 +208,9 @@ export class WalletOpsModule {}
   controllers: [
     AdminPlanController, AdminDashboardController, ReportController, AdminSecurityController,
     AdminSettingsController, ThemeController, AdminThemeController, AdminReportsController,
+    MemberSupportController, PublicSupportController, AdminSupportController,
   ],
-  providers: [DashboardService, ReportService, SecurityAlertService, AdminReportsService],
+  providers: [DashboardService, ReportService, SecurityAlertService, AdminReportsService, SupportService],
   exports: [DashboardService, ReportService, SecurityAlertService],
 })
 export class AdminModule {}

@@ -61,6 +61,7 @@ model Member {
   photoKey    String?
 
   autoship    AutoshipPlan?
+  tickets     SupportTicket[]
   // Whether to also send SMS/WhatsApp for orders, wallet credits and withdrawals. On by default; the member can switch it off.
   notifyExternal Boolean @default(true)
   reviews     Review[]
@@ -880,6 +881,45 @@ model AuditLog {
 
   @@index([action, createdAt])
   @@index([actorId, createdAt])
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+// A question or complaint from a member (or a visitor, via the contact page). See SupportService for the 48-hour / one-month clocks.
+model SupportTicket {
+  id             String       @id @default(cuid())
+  ticketNo       String       @unique
+  memberId       String?
+  member         Member?      @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  name           String
+  contact        String // phone or email, so staff can reply to a visitor
+  category       String
+  subject        String
+  status         TicketStatus @default(OPEN)
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  replies        SupportReply[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([status, createdAt])
+  @@index([memberId, updatedAt])
+}
+
+model SupportReply {
+  id         String        @id @default(cuid())
+  ticketId   String
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorType String // MEMBER | GUEST | ADMIN
+  authorId   String?
+  body       String
+  createdAt  DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
 }
 
 enum ReviewStatus {

@@ -59,6 +59,7 @@ export const DICT = {
   'member.statement': { en: 'Statement', hi: 'स्टेटमेंट', bn: 'স্টেটমেন্ট' },
   'member.idcard': { en: 'ID card', hi: 'आईडी कार्ड', bn: 'আইডি কার্ড' },
   'member.share': { en: 'Share', hi: 'शेयर करें', bn: 'শেয়ার করুন' },
+  'member.support': { en: 'Support', hi: 'सहायता', bn: 'সহায়তা' },
   'member.signout': { en: 'Sign out', hi: 'साइन आउट', bn: 'সাইন আউট' },
   'member.shopping': { en: 'Shopping', hi: 'शॉपिंग', bn: 'শপিং' },
   'member.income': { en: 'Income', hi: 'आय', bn: 'আয়' },
