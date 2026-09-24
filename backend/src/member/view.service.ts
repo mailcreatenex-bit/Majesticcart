@@ -116,6 +116,14 @@ export class MemberViewService {
               name: next.name,
               requiredBv: volume(next.minBvCenti),
               remainingBv: volume(Math.max(0, next.minBvCenti - rankBv)),
+              // The member's own number against the requirement, what the ladder is counted on,
+              // and what the next rank pays - so the screen can say what is still needed, in full.
+              currentBv: volume(rankBv),
+              basis: parsed?.rankBasis ?? 'GROUP_BV',
+              selfPct: next.selfPctBp / 100,
+              teamPct: next.teamPctBp / 100,
+              currentSelfPct: (current?.selfPctBp ?? 0) / 100,
+              currentTeamPct: (current?.teamPctBp ?? 0) / 100,
             }
           : null,
       },

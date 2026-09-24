@@ -22,7 +22,17 @@ const SEEN_RANK_KEY = 'mc-seen-rank';
 export interface RankInfo {
   index: number;
   name: string;
-  next: { name: string; requiredBv: VolumeView; remainingBv: VolumeView } | null;
+  next: {
+    name: string;
+    requiredBv: VolumeView;
+    remainingBv: VolumeView;
+    currentBv: VolumeView;
+    basis: 'GROUP_BV' | 'TEAM_BV';
+    selfPct: number;
+    teamPct: number;
+    currentSelfPct: number;
+    currentTeamPct: number;
+  } | null;
 }
 
 export function RankPanel({ rank, joinedLabel }: { rank: RankInfo; joinedLabel: string }) {
@@ -85,8 +95,33 @@ export function RankPanel({ rank, joinedLabel }: { rank: RankInfo; joinedLabel: 
             />
           </div>
           <p className="mt-2 text-[11px] text-[var(--muted)]">
-            {Math.round(pct)}% of the way there. Volume counts from you and your whole team.
+            {Math.round(pct)}% of the way there.
           </p>
+
+          {/* What is still needed, spelled out: the number, what it is counted on, and what the rank is worth. */}
+          <dl className="mt-4 grid gap-3 rounded-xl bg-[var(--surface)] p-4 text-xs sm:grid-cols-3">
+            <div>
+              <dt className="uppercase tracking-wider text-[var(--faint)]">You have</dt>
+              <dd className="mt-0.5 text-sm font-semibold text-[var(--ink)]">
+                {showVolume(rank.next.currentBv)} <span className="font-normal text-[var(--muted)]">of {showVolume(rank.next.requiredBv)} BV</span>
+              </dd>
+            </div>
+            <div>
+              <dt className="uppercase tracking-wider text-[var(--faint)]">Still needed</dt>
+              <dd className="mt-0.5 text-sm font-semibold text-[var(--ink)]">{showVolume(rank.next.remainingBv)} BV</dd>
+              <dd className="mt-0.5 text-[11px] text-[var(--muted)]">
+                {rank.next.basis === 'TEAM_BV'
+                  ? 'Counted on your team’s purchases, not your own.'
+                  : 'Counted on your own and your whole team’s purchases.'}
+              </dd>
+            </div>
+            <div>
+              <dt className="uppercase tracking-wider text-[var(--faint)]">What {rank.next.name} pays</dt>
+              <dd className="mt-0.5 text-sm font-semibold text-[var(--ink)]">
+                {rank.next.selfPct}% <span className="font-normal text-[var(--muted)]">on your purchases{rank.next.selfPct !== rank.next.currentSelfPct ? `, up from ${rank.next.currentSelfPct}%` : ''}</span>
+              </dd>
+            </div>
+          </dl>
         </div>
       ) : (
         <p className="mt-4 rounded-xl bg-[var(--surface-tint)] px-4 py-3 text-xs text-[var(--body)]">

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { RankInfo } from './RankPanel';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
@@ -20,7 +21,7 @@ export interface MemberSummary {
     id: string; code: string; name: string; phone: string; email: string | null; status: string; joinedAt: string;
     photoUrl: string | null; location: string | null;
   };
-  rank: { index: number; name: string; next: { name: string; requiredBv: { centi: number; display: string }; remainingBv: { centi: number; display: string } } | null };
+  rank: RankInfo;
   wallets: { shopping: MoneyView; income: MoneyView };
   volume: {
     lifetimeSelf: { centi: number; display: string };
