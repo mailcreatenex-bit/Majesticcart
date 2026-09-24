@@ -40,7 +40,7 @@ export async function BrandCarousel() {
                 >
                   {/* Plain <img>: small static marks, already sized by CSS. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={b.logoUrl as string} alt={copy === 1 ? '' : b.name} loading="lazy" className="brand-logo max-h-9 max-w-full object-contain sm:max-h-11" />
+                  <img src={b.logoUrl as string} alt={copy === 1 ? '' : b.name} loading="eager" className="brand-logo max-h-9 max-w-full object-contain sm:max-h-11" />
                 </Link>
               </li>
             )),
