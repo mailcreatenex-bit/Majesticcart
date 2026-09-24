@@ -7,6 +7,8 @@ import { CartCount } from './CartProvider';
 import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
 import { AccountLink } from './AccountLink';
+import { CategoryNav } from './CategoryNav';
+import { categoryTree, listCategories } from '@/lib/catalog';
 
 /**
  * Shared chrome.
@@ -31,7 +33,24 @@ const COMPANY_LINKS = [
   { href: '/faq', label: 'FAQ' },
 ];
 
-export function Header() {
+/** Departments and their sub-categories from the live catalogue; the static list is the fallback if the API is down. */
+async function shopMenu() {
+  const tree = categoryTree(await listCategories());
+  const links = tree.length
+    ? [
+        { href: '/shop', label: 'All products' },
+        ...tree.map((d) => ({
+          href: `/category/${d.slug}`,
+          label: d.name,
+          children: d.children.map((c) => ({ href: `/category/${c.slug}`, label: c.name })),
+        })),
+      ]
+    : SHOP_LINKS;
+  return { tree, links };
+}
+
+export async function Header() {
+  const { tree, links } = await shopMenu();
   return (
     // The extra top padding only ever does anything on a notched/Dynamic
     // Island phone with the PWA installed (`viewport-fit: cover` in the shop
@@ -55,16 +74,20 @@ export function Header() {
             className="h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem]"
           />
         </Link>
-        <MobileMenu links={SHOP_LINKS} />
-        <ul className="hidden gap-1 md:flex">
-          {SHOP_LINKS.slice(0, 4).map((l) => (
-            <li key={l.href}>
-              <Link href={l.href} className="rounded-full px-3 py-2 text-sm text-[var(--muted)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]">
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <MobileMenu links={links} />
+        {tree.length ? (
+          <CategoryNav tree={tree} />
+        ) : (
+          <ul className="hidden gap-1 xl:flex">
+            {SHOP_LINKS.slice(0, 4).map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="rounded-full px-3 py-2 text-sm text-[var(--muted)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           {/* Renders nothing where installing is impossible, so the nav does
               not carry a dead control on Firefox or inside WhatsApp. */}
@@ -102,7 +125,8 @@ function WalletIcon() {
   );
 }
 
-export function Footer() {
+export async function Footer() {
+  const { links: shopLinks } = await shopMenu();
   return (
     <footer className="chrome-dark mt-20 border-t border-[var(--line)] bg-[var(--surface)]">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">
@@ -121,7 +145,7 @@ export function Footer() {
         <nav aria-label="Shop">
           <h2 className="text-sm font-semibold text-[var(--ink)]">Shop</h2>
           <ul className="mt-3 space-y-2">
-            {SHOP_LINKS.map((l) => (
+            {shopLinks.map((l) => (
               <li key={l.href}><Link href={l.href} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{l.label}</Link></li>
             ))}
           </ul>

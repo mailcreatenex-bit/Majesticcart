@@ -11,7 +11,9 @@ import { useEffect, useState } from 'react';
  * or "Skin care" without scrolling to the footer. This is that equivalent:
  * a toggle button plus a dropdown panel, closed by default.
  */
-export function MobileMenu({ links }: { links: { href: string; label: string }[] }) {
+export interface MenuGroup { href: string; label: string; children?: { href: string; label: string }[] }
+
+export function MobileMenu({ links }: { links: MenuGroup[] }) {
   const [open, setOpen] = useState(false);
 
   // Closing on route change would need a router event; closing on Escape and
@@ -19,7 +21,7 @@ export function MobileMenu({ links }: { links: { href: string; label: string }[]
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    const onResize = () => { if (window.innerWidth >= 768) setOpen(false); };
+    const onResize = () => { if (window.innerWidth >= 1280) setOpen(false); };
     window.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
     return () => {
@@ -29,7 +31,7 @@ export function MobileMenu({ links }: { links: { href: string; label: string }[]
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <div className="xl:hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -48,17 +50,40 @@ export function MobileMenu({ links }: { links: { href: string; label: string }[]
           <div className="fixed inset-0 top-16 z-30" onClick={() => setOpen(false)} aria-hidden="true" />
           <ul
             id="mobile-shop-menu"
-            className="absolute inset-x-0 top-full z-40 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 shadow-lg"
+            className="absolute inset-x-0 top-full z-40 max-h-[80vh] overflow-y-auto border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 shadow-lg"
           >
             {links.map((l) => (
               <li key={l.href}>
-                <Link
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className="block rounded-lg px-3 py-3 text-[var(--body)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
-                >
-                  {l.label}
-                </Link>
+                {l.children && l.children.length > 0 ? (
+                  <details className="group">
+                    <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-3 text-[var(--body)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]">
+                      {l.label}
+                      <span aria-hidden="true" className="text-xs transition group-open:rotate-180">▾</span>
+                    </summary>
+                    <ul className="mb-2 ml-3 border-l border-[var(--line-strong)] pl-2">
+                      <li>
+                        <Link href={l.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]">
+                          All {l.label}
+                        </Link>
+                      </li>
+                      {l.children.map((c) => (
+                        <li key={c.href}>
+                          <Link href={c.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-[var(--body)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]">
+                            {c.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : (
+                  <Link
+                    href={l.href}
+                    onClick={() => setOpen(false)}
+                    className="block rounded-lg px-3 py-3 text-[var(--body)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
+                  >
+                    {l.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

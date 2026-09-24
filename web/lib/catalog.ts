@@ -36,6 +36,9 @@ export interface CatalogProduct {
 }
 
 export interface CatalogCategory {
+  id?: string;
+  /** Set on a sub-category: the id of the department it sits under. */
+  parentId?: string | null;
   slug: string;
   name: string;
   description?: string;
@@ -112,6 +115,19 @@ export async function getProduct(slug: string): Promise<CatalogProduct | null> {
 export async function listCategories(): Promise<CatalogCategory[]> {
   const data = await getJson<CatalogCategory[]>('/catalog/categories', { next: { tags: ['catalog'] } });
   return data ?? [];
+}
+
+export interface CategoryNode extends CatalogCategory {
+  children: CatalogCategory[];
+}
+
+/** Departments (no parent) in order, each with its sub-categories. Orphans surface as departments. */
+export function categoryTree(all: CatalogCategory[]): CategoryNode[] {
+  const ids = new Set(all.map((c) => c.id));
+  const isChild = (c: CatalogCategory) => !!c.parentId && ids.has(c.parentId);
+  return all
+    .filter((c) => !isChild(c))
+    .map((d) => ({ ...d, children: all.filter((c) => isChild(c) && c.parentId === d.id) }));
 }
 
 export async function getCategory(slug: string): Promise<CatalogCategory | null> {

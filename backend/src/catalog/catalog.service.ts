@@ -1,9 +1,10 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, ConflictException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { parse as parseCsv } from 'csv-parse/sync';
 import { rupeesToPaise, bvToCenti, formatInr, centiToBvString, Paise } from '../common/money';
 import { toCsvRow } from '../common/csv';
+import { CATEGORY_TREE, CATEGORY_TREE_KEY } from './category-tree';
 
 /**
  * Product catalogue.
@@ -94,8 +95,42 @@ export interface PricingWarning {
 }
 
 @Injectable()
-export class CatalogService {
+export class CatalogService implements OnModuleInit {
+  private readonly log = new Logger(CatalogService.name);
+
   constructor(private readonly prisma: PrismaClient) {}
+
+  async onModuleInit(): Promise<void> {
+    // Never let a category problem stop the API from starting.
+    await this.seedCategoryTree().catch((e) => this.log.error(`Category tree seed failed: ${e instanceof Error ? e.message : e}`));
+  }
+
+  /**
+   * Writes the client's category sheet the first time the API starts with the tree
+   * feature, then records that it has, so later restarts leave the admin's edits
+   * alone. Existing categories are matched by name and reused.
+   */
+  private async seedCategoryTree(): Promise<void> {
+    const done = await this.prisma.storeSetting.findUnique({ where: { key: CATEGORY_TREE_KEY } });
+    if (done) return;
+
+    let sort = 0;
+    const upsert = async (name: string, parentId: string | null) => {
+      const slug = slugify(name);
+      const existing = await this.prisma.category.findFirst({ where: { OR: [{ name }, { slug }] } });
+      sort += 1;
+      if (existing) {
+        return this.prisma.category.update({ where: { id: existing.id }, data: { parentId, sortkey: sort } });
+      }
+      return this.prisma.category.create({ data: { name, slug, parentId, sortkey: sort } });
+    };
+    for (const dept of CATEGORY_TREE) {
+      const parent = await upsert(dept.name, null);
+      for (const child of dept.children) await upsert(child, parent.id);
+    }
+    await this.prisma.storeSetting.create({ data: { key: CATEGORY_TREE_KEY, value: { seededAt: new Date().toISOString() } as never } });
+    this.log.log(`Category tree seeded: ${CATEGORY_TREE.length} departments`);
+  }
 
   /**
    * First name and code only, for a member's public storefront banner
@@ -186,10 +221,13 @@ export class CatalogService {
   } = {}) {
     const where: Record<string, unknown> = {};
     if (!opts.includeInactive) where.isActive = true;
-    if (opts.categoryId) where.categoryId = opts.categoryId;
-    // A slug that matches nothing must return nothing, not everything — hence
-    // filtering on the relation rather than resolving it and ignoring a miss.
-    if (opts.categorySlug) where.category = { slug: opts.categorySlug };
+    // A department also lists what is filed under its sub-categories. A slug that
+    // matches nothing must return nothing, not everything - hence filtering on the
+    // relation rather than resolving it and ignoring a miss.
+    const and: Record<string, unknown>[] = [];
+    if (opts.categoryId) and.push({ category: { OR: [{ id: opts.categoryId }, { parentId: opts.categoryId }] } });
+    if (opts.categorySlug) and.push({ category: { OR: [{ slug: opts.categorySlug }, { parent: { slug: opts.categorySlug } }] } });
+    if (and.length) where.AND = and;
     if (opts.brandId) where.brandId = opts.brandId;
     if (opts.brandSlug) where.brand = { slug: opts.brandSlug };
     if (opts.minPrice || opts.maxPrice) {
@@ -378,15 +416,23 @@ export class CatalogService {
   /* ----------------------------------------------------------- categories */
 
   async categories() {
-    return this.prisma.category.findMany({ orderBy: { sortkey: 'asc' } });
+    return this.prisma.category.findMany({ orderBy: [{ sortkey: 'asc' }, { name: 'asc' }] });
   }
 
-  async createCategory(name: string, actorId: string) {
+  async createCategory(name: string, actorId: string, parentId?: string | null) {
     const clean = name.trim();
     if (clean.length < 2) throw new BadRequestException('Category name is too short.');
+    if (parentId) {
+      const parent = await this.prisma.category.findUnique({ where: { id: parentId } });
+      if (!parent) throw new BadRequestException('That parent category does not exist.');
+      if (parent.parentId) throw new BadRequestException('Categories nest one level only - choose a top-level category as the parent.');
+    }
     try {
-      const cat = await this.prisma.category.create({ data: { name: clean, slug: slugify(clean) } });
-      await this.audit(actorId, 'category.create', { name: clean });
+      const last = await this.prisma.category.aggregate({ _max: { sortkey: true } });
+      const cat = await this.prisma.category.create({
+        data: { name: clean, slug: slugify(clean), parentId: parentId ?? null, sortkey: (last._max.sortkey ?? 0) + 1 },
+      });
+      await this.audit(actorId, 'category.create', { name: clean, parentId: parentId ?? null });
       return cat;
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
@@ -398,6 +444,10 @@ export class CatalogService {
 
   /** Refuses to remove a category that still holds products. */
   async deleteCategory(id: string, actorId: string) {
+    const kids = await this.prisma.category.count({ where: { parentId: id } });
+    if (kids > 0) {
+      throw new ConflictException(`This category still has ${kids} sub-categor${kids === 1 ? 'y' : 'ies'}. Remove or move them first.`);
+    }
     const count = await this.prisma.product.count({ where: { categoryId: id } });
     if (count > 0) {
       throw new ConflictException(`${count} product${count === 1 ? '' : 's'} still use this category. Move them first.`);

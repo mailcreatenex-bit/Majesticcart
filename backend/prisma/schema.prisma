@@ -206,6 +206,12 @@ model Category {
   slug     String    @unique
   sortkey  Int       @default(0)
   products Product[]
+
+  // One level of nesting: a department (no parent) holds sub-categories. Products
+  // may sit in either; a department's page shows its own and its children's.
+  parentId String?
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryTree")
 }
 
 // A multi-brand catalogue: products from more than one supplier sold through

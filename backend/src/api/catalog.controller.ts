@@ -188,9 +188,9 @@ export class AdminCatalogController {
   @Post('categories')
   createCategory(
     @CurrentUser('sub') adminId: string,
-    @Body(zodBody(z.object({ name: z.string().trim().min(2) }))) body: { name: string },
+    @Body(zodBody(z.object({ name: z.string().trim().min(2), parentId: z.string().min(1).nullish() }))) body: { name: string; parentId?: string | null },
   ) {
-    return this.catalog.createCategory(body.name, adminId);
+    return this.catalog.createCategory(body.name, adminId, body.parentId);
   }
 
   @Post('categories/:id/delete')

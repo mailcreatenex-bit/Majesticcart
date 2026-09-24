@@ -6,7 +6,7 @@ import {
 } from '@/lib/seo';
 import { absoluteUrl } from '@/lib/referral';
 import {
-  listProducts, listCategories, getCategory, categoryCopy,
+  listProducts, listCategories, getCategory, categoryCopy, categoryTree,
 } from '@/lib/catalog';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
 
@@ -37,20 +37,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const copy = categoryCopy(slug);
-  return buildMetadata({
-    title: pageTitle(category.name),
-    description: metaDescription(category.description ?? copy.intro),
-    pathname: `/category/${slug}`,
-    ...(category.imageUrl ? { image: { url: category.imageUrl, alt: category.name } } : {}),
-  });
+  // A sub-category with nothing in it yet is a thin page: keep it out of the index
+  // until it has products (the page itself still works, and is linked from the menu).
+  const empty = (await listProducts({ category: slug })).length === 0;
+  return {
+    ...buildMetadata({
+      title: pageTitle(category.name),
+      description: metaDescription(category.description ?? copy.intro),
+      pathname: `/category/${slug}`,
+      ...(category.imageUrl ? { image: { url: category.imageUrl, alt: category.name } } : {}),
+    }),
+    ...(empty ? { robots: { index: false, follow: true } } : {}),
+  };
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const [category, products] = await Promise.all([
+  const [category, products, allCategories] = await Promise.all([
     getCategory(slug),
     listProducts({ category: slug }),
+    listCategories(),
   ]);
   // A slug that is not a real category is a 404, not an empty grid. An empty
   // grid at a made-up URL is a soft 404: the crawler indexes it, and the site
@@ -58,6 +65,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   if (!category) notFound();
 
   const copy = categoryCopy(slug);
+
+  // Where this category sits: the department it belongs to (if it is a sub-category),
+  // and the sub-categories to browse next (its own, or its siblings').
+  const tree = categoryTree(allCategories);
+  const department = category.parentId ? tree.find((d) => d.id === category.parentId) ?? null : null;
+  const family = department ?? tree.find((d) => d.id === category.id) ?? null;
+  const subcategories = family?.children ?? [];
 
   const jsonLd = [
     breadcrumbJsonLd([
@@ -93,6 +107,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           <span className="mx-2">/</span>
           <Link href="/shop" className="hover:text-[var(--ink)]">Shop</Link>
           <span className="mx-2">/</span>
+          {department && (
+            <>
+              <Link href={`/category/${department.slug}`} className="hover:text-[var(--ink)]">{department.name}</Link>
+              <span className="mx-2">/</span>
+            </>
+          )}
           <span className="text-[var(--body)]">{category.name}</span>
         </nav>
 
@@ -107,8 +127,39 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           {products.length} {products.length === 1 ? 'product' : 'products'}
         </p>
 
+        {subcategories.length > 0 && (
+          <nav aria-label={`${family?.name ?? category.name} sub-categories`} className="mt-5 flex flex-wrap gap-2">
+            {department && (
+              <Link href={`/category/${department.slug}`} className="rounded-full border border-[var(--line-strong)] px-4 py-1.5 text-sm text-[var(--body)] hover:bg-[var(--surface-tint)]">
+                All {department.name}
+              </Link>
+            )}
+            {subcategories.map((c) => {
+              const on = c.slug === slug;
+              return (
+                <Link
+                  key={c.slug}
+                  href={`/category/${c.slug}`}
+                  aria-current={on ? 'page' : undefined}
+                  className={`rounded-full border px-4 py-1.5 text-sm transition ${on ? 'border-[var(--ink)] bg-[var(--ink)] font-semibold text-[var(--gold-pale)]' : 'border-[var(--line-strong)] text-[var(--body)] hover:bg-[var(--surface-tint)]'}`}
+                >
+                  {c.name}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+
         <div className="mt-4">
-          <FilterableProductGrid products={products} />
+          {products.length > 0 ? (
+            <FilterableProductGrid products={products} />
+          ) : (
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-8 text-center">
+              <p className="font-serif text-lg text-[var(--ink)]">Products are on their way</p>
+              <p className="mt-2 text-sm text-[var(--body)]">Nothing is listed in {category.name} just yet. Have a look at the rest of the range.</p>
+              <Link href="/shop" className="mt-4 inline-block rounded-xl gold-foil px-6 py-3 font-semibold text-white">Shop all products</Link>
+            </div>
+          )}
         </div>
 
         <div className="mt-12 border-t border-[var(--line)] pt-6">

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, metaDescription, breadcrumbJsonLd } from '@/lib/seo';
-import { listProducts } from '@/lib/catalog';
+import { listProducts, listCategories, categoryTree } from '@/lib/catalog';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
 
 /**
@@ -31,7 +31,8 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function ShopPage() {
-  const products = await listProducts();
+  const [products, categories] = await Promise.all([listProducts(), listCategories()]);
+  const departments = categoryTree(categories).filter((d) => d.children.length > 0);
 
   const jsonLd = breadcrumbJsonLd([
     { name: 'Home', path: '/' },
@@ -51,6 +52,26 @@ export default async function ShopPage() {
 
         <h1 className="mt-3 font-serif text-3xl text-[var(--ink)]">All products</h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--muted)]">{DESCRIPTION}</p>
+
+        {departments.length > 0 && (
+          <section aria-label="Shop by category" className="mt-6">
+            <h2 className="text-sm font-semibold text-[var(--ink)]">Shop by category</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {departments.map((d) => (
+                <div key={d.slug} className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
+                  <Link href={`/category/${d.slug}`} className="font-serif text-lg text-[var(--ink)] hover:text-[var(--accent)]">{d.name}</Link>
+                  <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                    {d.children.map((c) => (
+                      <li key={c.slug}>
+                        <Link href={`/category/${c.slug}`} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{c.name}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <p className="mt-6 text-xs text-[var(--faint)]">
           {products.length} {products.length === 1 ? 'product' : 'products'}

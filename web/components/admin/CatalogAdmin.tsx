@@ -51,7 +51,17 @@ interface AdminProduct {
   galleryImages: string[];
 }
 
-interface Category { id: string; name: string; slug: string }
+interface Category { id: string; name: string; slug: string; parentId?: string | null }
+
+/** Departments first, each followed by its sub-categories: the order a person expects in a picker. */
+function inTreeOrder(categories: Category[]): { c: Category; depth: number }[] {
+  const ids = new Set(categories.map((c) => c.id));
+  const tops = categories.filter((c) => !c.parentId || !ids.has(c.parentId));
+  return tops.flatMap((t) => [
+    { c: t, depth: 0 },
+    ...categories.filter((k) => k.parentId === t.id).map((k) => ({ c: k, depth: 1 })),
+  ]);
+}
 interface Brand { id: string; name: string; slug: string; isActive: boolean; _count?: { products: number } }
 
 interface PricingWarning { level: 'error' | 'warning'; message: string }
@@ -515,7 +525,7 @@ function ProductForm({
             onChange={(e) => set('categoryId', e.target.value)}
             className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"
           >
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {inTreeOrder(categories).map(({ c, depth }) => <option key={c.id} value={c.id}>{depth ? ` ${c.name}` : c.name}</option>)}
           </select>
         </label>
 
@@ -745,15 +755,18 @@ function BrandPanel({ brands, onChanged }: { brands: Brand[]; onChanged: () => P
 
 function CategoryPanel({ categories, onChanged }: { categories: Category[]; onChanged: () => Promise<void> }) {
   const [name, setName] = useState('');
+  const [parentId, setParentId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const departments = categories.filter((c) => !c.parentId);
 
   const add = async () => {
     if (name.trim().length < 2 || busy) return;
     setBusy(true);
     setError(null);
     try {
-      await api('/admin/catalog/categories', { method: 'POST', body: { name: name.trim() } });
+      await api('/admin/catalog/categories', { method: 'POST', body: { name: name.trim(), parentId: parentId || null } });
       setName('');
       await onChanged();
     } catch (err) {
@@ -780,30 +793,38 @@ function CategoryPanel({ categories, onChanged }: { categories: Category[]; onCh
 
   return (
     <Panel title="Categories">
-      <ul className="flex flex-wrap gap-2">
-        {categories.map((c) => (
-          <li key={c.id} className="flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-1.5 text-sm">
-            <span className="text-neutral-800">{c.name}</span>
-            <span className="font-mono text-xs text-neutral-400">/{c.slug}</span>
-            <button
-              type="button"
-              onClick={() => remove(c.id, c.name)}
-              disabled={busy}
-              className="text-xs font-semibold text-red-700 hover:underline disabled:text-neutral-300"
-            >
-              ×
-            </button>
+      <ul className="space-y-3">
+        {inTreeOrder(categories).filter((x) => x.depth === 0).map(({ c: dept }) => (
+          <li key={dept.id}>
+            <div className="flex flex-wrap items-center gap-2">
+              <CategoryChip c={dept} strong busy={busy} onRemove={remove} />
+            </div>
+            <ul className="mt-1.5 flex flex-wrap gap-2 pl-4">
+              {categories.filter((k) => k.parentId === dept.id).map((k) => (
+                <li key={k.id}><CategoryChip c={k} busy={busy} onRemove={remove} /></li>
+              ))}
+            </ul>
           </li>
         ))}
       </ul>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void add(); } }}
           placeholder="New category name"
-          className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"
+          className="min-w-[10rem] flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"
         />
+        <select
+          value={parentId}
+          onChange={(e) => setParentId(e.target.value)}
+          aria-label="Parent category"
+          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"
+        >
+          <option value="">Top-level category</option>
+          {departments.map((d) => <option key={d.id} value={d.id}>Under {d.name}</option>)}
+        </select>
         <button
           type="button"
           onClick={add}
@@ -821,6 +842,24 @@ function CategoryPanel({ categories, onChanged }: { categories: Category[]; onCh
         search traffic, so adding one is a page to write, not just a filter.
       </p>
     </Panel>
+  );
+}
+
+function CategoryChip({ c, strong, busy, onRemove }: { c: Category; strong?: boolean; busy: boolean; onRemove: (id: string, label: string) => void }) {
+  return (
+    <span className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm ${strong ? 'border-neutral-400 bg-neutral-50 font-semibold' : 'border-neutral-200'}`}>
+      <span className="text-neutral-800">{c.name}</span>
+      <span className="font-mono text-xs font-normal text-neutral-400">/{c.slug}</span>
+      <button
+        type="button"
+        onClick={() => onRemove(c.id, c.name)}
+        disabled={busy}
+        aria-label={`Remove ${c.name}`}
+        className="text-xs font-semibold text-red-700 hover:underline disabled:text-neutral-300"
+      >
+        ×
+      </button>
+    </span>
   );
 }
 
