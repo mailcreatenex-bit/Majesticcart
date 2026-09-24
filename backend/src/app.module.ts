@@ -131,7 +131,7 @@ export class PagesModule {}
 export class SettingsModule {}
 
 @Module({
-  imports: [SettingsModule],
+  imports: [SettingsModule, MediaModule],
   controllers: [MemberViewController, ShadeFinderController],
   providers: [ProfileService, MemberViewService, ShadeFinderService],
   exports: [ProfileService, MemberViewService],
