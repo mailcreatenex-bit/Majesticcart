@@ -64,6 +64,15 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 /** Font size that keeps a name inside its plate: full size up to ~14 characters, then shrinking. */
 const nameSize = (name: string, max: number) => Math.max(38, Math.min(max, Math.round(max - Math.max(0, name.length - 14) * 3.2)));
 
+/**
+ * Squeeze a line of text into `maxW` only when it would otherwise run past it.
+ * Estimating the width from the character count is crude, but it errs towards
+ * squeezing, and a slightly narrow name reads better than one that spills out of
+ * its plate onto the artwork behind it.
+ */
+const fit = (text: string, size: number, maxW: number) =>
+  text.length * size * 0.58 > maxW ? ` textLength="${maxW}" lengthAdjust="spacingAndGlyphs"` : '';
+
 const SCRIPT = "'Segoe Script','Brush Script MT','Lucida Handwriting',cursive";
 const SANS = "'Segoe UI',Arial,Helvetica,sans-serif";
 const SERIF = "Georgia,'Times New Roman',serif";
@@ -99,7 +108,7 @@ function locationCard(d: CardData, x: number, y: number, w: number, h: number) {
   const size = lines.some((l) => l.length > 18) ? 46 : 54;
   const startY = y + h / 2 - ((lines.length - 1) * (size + 8)) / 2 + size * 0.34;
   const text = lines
-    .map((l, i) => `<text x="${x + 220}" y="${startY + i * (size + 8)}" font-size="${size}" font-weight="700" fill="${NAVY}">${esc(l)}</text>`)
+    .map((l, i) => `<text x="${x + 220}" y="${startY + i * (size + 8)}" font-size="${size}" font-weight="700" fill="${NAVY}"${fit(l, size, w - 260)}>${esc(l)}</text>`)
     .join('');
   return `<g filter="url(#sh)"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="28" fill="#fff" stroke="${RED}" stroke-width="6"/></g>${pin(x + 110, y + h / 2 + 8, 1.1)}${text}`;
 }
@@ -127,17 +136,17 @@ function welcome(d: CardData) {
   return `${open(skyDefs)}
 <rect width="${CARD_W}" height="${CARD_H}" fill="url(#sky)"/>${clouds}${leaves(10, 10)}${leaves(1010, 60, -1)}
 ${logoImg(d, 610, 30, 340)}
-${photoBlock(d.photo, 'ph', 50, 170, 530, 780, 'rx="44"')}
-<text x="592" y="545" font-family="${SCRIPT}" font-size="104" font-weight="700" fill="${RED}" stroke="#fff" stroke-width="9" paint-order="stroke" transform="rotate(-6 592 545)" textLength="375" lengthAdjust="spacingAndGlyphs">Welcome</text>
-<text x="600" y="640" font-size="58" font-weight="800" fill="${NAVY}">to the</text>
-<text x="600" y="716" font-size="52" font-weight="800" fill="${NAVY}">Majestic Cart</text>
-<text x="600" y="786" font-size="58" font-weight="800" fill="${NAVY}">Family</text>
-<path d="M600 826q150-40 300-6" stroke="#ff9933" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M620 844q140-30 290-4" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M640 862q130-24 260-2" stroke="#2f9e3d" stroke-width="9" fill="none" stroke-linecap="round"/>
-<text x="610" y="930" font-family="${SCRIPT}" font-size="38" font-weight="600" fill="${NAVY}" transform="rotate(-8 610 930)">Together for a</text>
-<text x="626" y="982" font-family="${SCRIPT}" font-size="38" font-weight="600" fill="${NAVY}" transform="rotate(-8 626 982)">Better Future</text>
-<g filter="url(#sh)"><rect x="90" y="925" width="820" height="130" rx="65" fill="${NAVY}" stroke="url(#gold)" stroke-width="7"/></g>
-<text x="500" y="${925 + 65 + nameSize(d.name, 74) * 0.34}" text-anchor="middle" font-family="${SERIF}" font-size="${nameSize(d.name, 74)}" font-weight="700" fill="#fff">${esc(d.name)}</text>
-${locationCard(d, 90, 1085, 820, 240)}
+${photoBlock(d.photo, 'ph', 50, 170, 530, 700, 'rx="44"')}
+<text x="605" y="478" font-family="${SCRIPT}" font-size="100" font-weight="700" fill="${RED}" stroke="#fff" stroke-width="9" paint-order="stroke" transform="rotate(-5 605 478)" textLength="345" lengthAdjust="spacingAndGlyphs">Welcome</text>
+<text x="610" y="566" font-size="56" font-weight="800" fill="${NAVY}">to the</text>
+<text x="610" y="634" font-size="50" font-weight="800" fill="${NAVY}" textLength="340" lengthAdjust="spacingAndGlyphs">Majestic Cart</text>
+<text x="610" y="702" font-size="56" font-weight="800" fill="${NAVY}">Family</text>
+<path d="M610 736q150-30 330-4" stroke="#ff9933" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M610 754q150-26 330-2" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M610 772q150-22 330 0" stroke="#2f9e3d" stroke-width="8" fill="none" stroke-linecap="round"/>
+<text x="610" y="828" font-family="${SCRIPT}" font-size="40" font-weight="600" fill="${NAVY}">Together for a</text>
+<text x="610" y="872" font-family="${SCRIPT}" font-size="40" font-weight="600" fill="${NAVY}">Better Future</text>
+<g filter="url(#sh)"><rect x="90" y="925" width="820" height="120" rx="60" fill="${NAVY}" stroke="url(#gold)" stroke-width="7"/></g>
+<text x="500" y="${925 + 60 + nameSize(d.name, 70) * 0.34}" text-anchor="middle" font-family="${SERIF}" font-size="${nameSize(d.name, 70)}" font-weight="700" fill="#fff"${fit(d.name, nameSize(d.name, 70), 740)}>${esc(d.name)}</text>
+${locationCard(d, 90, 1080, 820, 210)}
 <path d="M0 1500V1390Q250 1330 520 1390T1000 1370V1500Z" fill="url(#waveA)"/><path d="M0 1500V1430Q300 1380 560 1435T1000 1420V1500Z" fill="url(#waveB)"/><path d="M0 1395Q250 1335 520 1395T1000 1375" stroke="url(#gold)" stroke-width="8" fill="none"/>
 <text x="500" y="1470" text-anchor="middle" font-size="34" font-weight="700" fill="#fff" letter-spacing="2">ID ${esc(d.code)}  ·  MEMBER SINCE ${esc(d.joinedYear)}</text>
 </svg>`;
@@ -174,17 +183,17 @@ ${logoImg(d, 40, 30, 300)}
 <text x="50" y="655" font-size="136" font-weight="900" fill="url(#tGreen)" stroke="#fff" stroke-width="8" paint-order="stroke" textLength="455" lengthAdjust="spacingAndGlyphs">COMPLETE</text>
 <g filter="url(#sh)"><polygon points="40,700 560,700 590,760 560,820 40,820 70,760" fill="#a30f1c"/></g>
 <text x="300" y="783" text-anchor="middle" font-size="64" font-weight="800" fill="#fff" letter-spacing="2">WELL DONE</text>
-<text x="70" y="905" font-family="${SCRIPT}" font-size="96" font-weight="700" fill="url(#gold)" stroke="#5b3d0a" stroke-width="2" paint-order="stroke" textLength="430" lengthAdjust="spacingAndGlyphs">Champion!</text>
+<text x="70" y="900" font-family="${SCRIPT}" font-size="84" font-weight="700" fill="url(#gold)" stroke="#5b3d0a" stroke-width="2" paint-order="stroke" textLength="400" lengthAdjust="spacingAndGlyphs">Champion!</text>
 ${plate(940, d.monthLabel, `${d.monthBv} BV`)}
 ${d.targetBv ? `<text x="285" y="1122" text-anchor="middle" font-size="34" font-weight="700" fill="#fff" opacity="0.92">Monthly target: ${esc(d.targetBv)} BV</text>` : ''}
 ${photoBlock(d.photo, 'ph', 520, 190, 450, 660, 'rx="225" ry="225"')}
-${trophy(700, 960, 0.9)}
-<g filter="url(#sh)"><rect x="40" y="1160" width="920" height="200" rx="26" fill="#0b2265" stroke="url(#gold)" stroke-width="7"/></g>
-<text x="500" y="1215" text-anchor="middle" font-family="${SCRIPT}" font-size="40" fill="${GOLD}">Name</text>
-<text x="500" y="${1215 + nameSize(d.name, 84) * 0.98}" text-anchor="middle" font-family="${SERIF}" font-size="${nameSize(d.name, 84)}" font-weight="700" fill="#fff">${esc(d.name)}</text>
-<text x="500" y="1340" text-anchor="middle" font-size="36" font-weight="600" fill="#cfe3ff">${esc(d.location ?? `ID ${d.code}`)}</text>
-<text x="500" y="1442" text-anchor="middle" font-family="${SCRIPT}" font-size="104" font-weight="700" fill="${RED}" stroke="#fff" stroke-width="9" paint-order="stroke">Congratulations!</text>
-<text x="500" y="1488" text-anchor="middle" font-size="30" font-weight="800" fill="#fff" letter-spacing="3">KEEP GROWING, KEEP SHINING!</text>
+${trophy(745, 885, 0.62)}
+<g filter="url(#sh)"><rect x="40" y="1150" width="920" height="195" rx="26" fill="#0b2265" stroke="url(#gold)" stroke-width="7"/></g>
+<text x="500" y="1198" text-anchor="middle" font-family="${SCRIPT}" font-size="38" fill="${GOLD}">Name</text>
+<text x="500" y="${1210 + nameSize(d.name, 78) * 0.9}" text-anchor="middle" font-family="${SERIF}" font-size="${nameSize(d.name, 78)}" font-weight="700" fill="#fff"${fit(d.name, nameSize(d.name, 78), 860)}>${esc(d.name)}</text>
+<text x="500" y="1326" text-anchor="middle" font-size="34" font-weight="600" fill="#cfe3ff"${fit(d.location ?? `ID ${d.code}`, 34, 860)}>${esc(d.location ?? `ID ${d.code}`)}</text>
+<text x="500" y="1424" text-anchor="middle" font-family="${SCRIPT}" font-size="92" font-weight="700" fill="${RED}" stroke="#fff" stroke-width="9" paint-order="stroke">Congratulations!</text>
+<text x="500" y="1470" text-anchor="middle" font-size="28" font-weight="800" fill="#fff" letter-spacing="3">KEEP GROWING, KEEP SHINING!</text>
 <rect x="8" y="8" width="984" height="1484" rx="10" fill="none" stroke="url(#gold)" stroke-width="12"/>
 </svg>`;
 }
@@ -199,18 +208,18 @@ function rank(d: CardData) {
 ${logoImg(d, 30, 20, 300)}
 <g filter="url(#sh)"><path d="M470 60L960 30 940 190 470 215Z" fill="${NAVY}"/></g>
 <text x="710" y="150" text-anchor="middle" font-family="${SCRIPT}" font-size="86" font-weight="700" fill="#ffd84a" transform="rotate(-4 710 150)">New Rank</text>
-<text x="715" y="290" text-anchor="middle" font-size="40" font-weight="700" fill="${NAVY}" font-style="italic">Welcome to the next level</text>
-<text x="480" y="420" font-family="${SCRIPT}" font-size="84" font-weight="700" fill="${RED}" stroke="#fff" stroke-width="9" paint-order="stroke" textLength="490" lengthAdjust="spacingAndGlyphs">Congratulations</text>
-<text x="715" y="490" text-anchor="middle" font-size="58" font-weight="800" fill="${NAVY}">on reaching</text>
-<g filter="url(#sh)"><path d="M470 520H960L935 610 960 700H470L495 610Z" fill="url(#metal)" stroke="#fff" stroke-width="5"/></g>
-<text x="715" y="640" text-anchor="middle" font-size="${rankText.length > 7 ? 74 : 92}" font-weight="900" fill="${p.ink}">${esc(rankText)}</text>
-<text x="715" y="740" text-anchor="middle" font-size="36" font-weight="800" fill="${NAVY}" letter-spacing="6">★ ACHIEVEMENT ★</text>
-${photoBlock(d.photo, 'ph', 30, 260, 470, 690, 'rx="40"')}
-<g filter="url(#sh)"><path d="M470 800H975V930H470Z" fill="${NAVY}" stroke="url(#gold)" stroke-width="6"/></g>
-<text x="722" y="866" text-anchor="middle" font-family="${SERIF}" font-size="${nameSize(d.name, 60) - 6}" font-weight="700" fill="#fff">${esc(d.name)}</text>
-<text x="722" y="912" text-anchor="middle" font-size="28" fill="${GOLD}" font-weight="700">ID ${esc(d.code)}</text>
-<g filter="url(#sh)"><rect x="470" y="960" width="505" height="150" rx="24" fill="#fff" stroke="${RED}" stroke-width="5"/></g>${pin(535, 1050, 0.62)}
-<text x="600" y="1048" font-size="36" font-weight="700" fill="${NAVY}"${(d.location ?? '').length > 17 ? ' textLength="350" lengthAdjust="spacingAndGlyphs"' : ''}>${esc(d.location ?? `Member since ${d.joinedYear}`)}</text>
+<text x="725" y="290" text-anchor="middle" font-size="34" font-weight="700" fill="${NAVY}" font-style="italic">Welcome to the next level</text>
+<text x="490" y="420" font-family="${SCRIPT}" font-size="84" font-weight="700" fill="${RED}" stroke="#fff" stroke-width="9" paint-order="stroke" textLength="470" lengthAdjust="spacingAndGlyphs">Congratulations</text>
+<text x="725" y="490" text-anchor="middle" font-size="56" font-weight="800" fill="${NAVY}">on reaching</text>
+<g filter="url(#sh)"><path d="M490 520H965L940 610 965 700H490L515 610Z" fill="url(#metal)" stroke="#fff" stroke-width="5"/></g>
+<text x="727" y="640" text-anchor="middle" font-size="${rankText.length > 7 ? 74 : 92}" font-weight="900" fill="${p.ink}">${esc(rankText)}</text>
+<text x="727" y="745" text-anchor="middle" font-size="34" font-weight="800" fill="${NAVY}" letter-spacing="6">★ ACHIEVEMENT ★</text>
+${photoBlock(d.photo, 'ph', 30, 260, 430, 690, 'rx="40"')}
+<g filter="url(#sh)"><path d="M490 800H975V930H490Z" fill="${NAVY}" stroke="url(#gold)" stroke-width="6"/></g>
+<text x="732" y="866" text-anchor="middle" font-family="${SERIF}" font-size="${nameSize(d.name, 60) - 6}" font-weight="700" fill="#fff"${fit(d.name, nameSize(d.name, 60) - 6, 440)}>${esc(d.name)}</text>
+<text x="732" y="912" text-anchor="middle" font-size="30" fill="${GOLD}" font-weight="700">ID ${esc(d.code)}</text>
+<g filter="url(#sh)"><rect x="490" y="960" width="485" height="150" rx="24" fill="#fff" stroke="${RED}" stroke-width="5"/></g>${pin(550, 1050, 0.62)}
+<text x="612" y="1048" font-size="36" font-weight="700" fill="${NAVY}"${(d.location ?? '').length > 17 ? ' textLength="340" lengthAdjust="spacingAndGlyphs"' : ''}>${esc(d.location ?? `Member since ${d.joinedYear}`)}</text>
 <g transform="translate(120 975) scale(0.62)" filter="url(#sh)"><ellipse cx="140" cy="250" rx="150" ry="20" fill="#000" opacity="0.12"/>
 <path d="M0 0H280C280 170 210 240 160 255V330H120V255C70 240 0 170 0 0Z" fill="url(#metal)"/><rect x="70" y="330" width="140" height="34" rx="6" fill="url(#metal)"/><rect x="30" y="364" width="220" height="60" rx="8" fill="${NAVY}"/><text x="140" y="405" text-anchor="middle" font-size="30" font-weight="800" fill="#fff">${esc(rankText)}</text></g>
 <path d="M0 1500V1310Q260 1250 520 1310T1000 1290V1500Z" fill="${NAVY}"/><path d="M0 1310Q260 1250 520 1310T1000 1290" stroke="url(#gold)" stroke-width="8" fill="none"/>
