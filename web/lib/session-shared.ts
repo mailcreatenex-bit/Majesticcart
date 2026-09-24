@@ -15,6 +15,15 @@ export const COOKIES: Record<Subject, { access: string; refresh: string }> = {
 
 // Mirrors ACCESS_TTL_SECONDS / REFRESH_TTL_DAYS in
 // backend/src/auth/token.service.ts — see the note in `lib/backend.ts`.
+/**
+ * A readable flag that says "a member session exists", and nothing more. The
+ * session cookies are httpOnly on purpose, so the page cannot tell whether
+ * anyone is signed in; this lets the header show "My account" instead of
+ * "Log in". It carries no identity and grants nothing - the API still checks the
+ * real session on every request.
+ */
+export const MEMBER_FLAG_COOKIE = 'mc_in';
+
 export const ACCESS_TOKEN_MAX_AGE_SECONDS = 15 * 60;
 export const REFRESH_TOKEN_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
@@ -26,6 +35,10 @@ export function sessionCookieOptions(maxAgeSeconds: number) {
     secure: process.env.NODE_ENV === 'production',
     maxAge: maxAgeSeconds,
   };
+}
+
+export function memberFlagOptions(maxAgeSeconds: number) {
+  return { path: '/', httpOnly: false, sameSite: 'lax' as const, secure: process.env.NODE_ENV === 'production', maxAge: maxAgeSeconds };
 }
 
 export function expiredCookieOptions() {

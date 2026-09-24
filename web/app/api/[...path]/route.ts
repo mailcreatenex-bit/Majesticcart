@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  backendUrl, forwardedHeaders, sessionCookieOptions, expiredCookieOptions,
+  backendUrl, forwardedHeaders, sessionCookieOptions, expiredCookieOptions, MEMBER_FLAG_COOKIE, memberFlagOptions,
   isIssuedTokens, withoutTokens, COOKIES, type Subject, type IssuedTokens,
   ACCESS_TOKEN_MAX_AGE_SECONDS, REFRESH_TOKEN_MAX_AGE_SECONDS,
 } from '@/lib/backend';
@@ -116,6 +116,7 @@ async function handle(req: NextRequest, rawParams: Promise<{ path: string[] }>, 
   if (isLogout || (status === 401 && !isLogout)) {
     res.cookies.set(names.access, '', expiredCookieOptions());
     res.cookies.set(names.refresh, '', expiredCookieOptions());
+    if (names === COOKIES.member) res.cookies.set(MEMBER_FLAG_COOKIE, '', { ...memberFlagOptions(0), maxAge: 0 });
   }
 
   return res;

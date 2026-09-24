@@ -6,6 +6,7 @@ import { InstallButton } from './InstallPrompt';
 import { CartCount } from './CartProvider';
 import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
+import { AccountLink } from './AccountLink';
 
 /**
  * Shared chrome.
@@ -84,7 +85,7 @@ export function Header() {
             Bag
             <CartCount />
           </Link>
-          <Link href="/login" className="shrink-0 rounded-xl bg-[var(--ink)] px-3 py-2 text-sm font-semibold text-[var(--gold-pale)] sm:px-4">Log in</Link>
+          <AccountLink />
         </div>
       </nav>
     </header>

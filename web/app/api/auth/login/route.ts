@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { backendUrl, forwardedHeaders, sessionCookieOptions, safeNextPath, isIssuedTokens, COOKIES, ACCESS_TOKEN_MAX_AGE_SECONDS, REFRESH_TOKEN_MAX_AGE_SECONDS } from '@/lib/backend';
+import { backendUrl, forwardedHeaders, sessionCookieOptions, safeNextPath, isIssuedTokens, COOKIES, ACCESS_TOKEN_MAX_AGE_SECONDS, REFRESH_TOKEN_MAX_AGE_SECONDS, MEMBER_FLAG_COOKIE, memberFlagOptions } from '@/lib/backend';
 
 /**
  * Target of `app/(shop)/login/page.tsx`'s real `<form method="post">`.
@@ -53,5 +53,6 @@ export async function POST(req: NextRequest) {
   const res = NextResponse.redirect(target, 303);
   res.cookies.set(COOKIES.member.access, body.accessToken, sessionCookieOptions(ACCESS_TOKEN_MAX_AGE_SECONDS));
   res.cookies.set(COOKIES.member.refresh, body.refreshToken, sessionCookieOptions(REFRESH_TOKEN_MAX_AGE_SECONDS));
+  res.cookies.set(MEMBER_FLAG_COOKIE, '1', memberFlagOptions(REFRESH_TOKEN_MAX_AGE_SECONDS));
   return res;
 }
