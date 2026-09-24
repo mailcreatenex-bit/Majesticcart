@@ -168,7 +168,7 @@ export function Footer() {
         <div className="mx-auto max-w-6xl text-xs leading-relaxed text-[var(--muted)]">
           {/* Says what joining costs and what income depends on, without making
               a claim about amounts. Income figures belong behind the login. */}
-          Joining is free. There is no registration fee and no purchase is required to become a member.
+          Registering is free. There is no registration fee; earning requires a minimum first order, as set out in the compensation plan.
           Income is earned only on products that are sold and delivered, and depends entirely on the sales
           you and your team make. We make no guarantee of earnings.
           <div className="mt-3">© {new Date().getFullYear()} {ENTITY.legalName}. All rights reserved.</div>

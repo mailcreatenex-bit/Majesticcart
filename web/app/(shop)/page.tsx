@@ -174,7 +174,7 @@ export default async function HomePage() {
             { href: '/shop', title: 'Shop the range', body: 'Makeup, skin care, body care and fragrance — the full catalogue, or browse by category.' },
             { href: '/shade-finder', title: 'AI shade finder', body: 'Upload a selfie and get shade suggestions from the current makeup range.' },
             { href: '/wallet', title: 'Wallet & recharge', body: 'Add funds by UPI, track both wallets, or recharge a mobile number instead of buying right now.' },
-            { href: '/join', title: 'Become a member', body: 'Free to join. What it costs, what is expected, and what you are paid on.' },
+            { href: '/join', title: 'Become a member', body: 'Free to register. What it costs, what is expected, and what you are paid on.' },
             { href: '/network', title: 'Your network', body: 'Your team and your referral link, once you are a member.' },
             { href: '/account', title: 'Your account', body: 'Rank, volume, payout details and order history in one place.' },
             { href: '/faq', title: 'Help & policies', body: 'Ordering, delivery, returns and membership — answered plainly, with every policy linked below.' },

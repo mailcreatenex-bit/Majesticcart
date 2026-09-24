@@ -30,12 +30,12 @@ export const metadata: Metadata = buildMetadata({
  * read every word of it.
  */
 const COPY = {
-  lead: 'Sell products you use yourself. No joining fee, no stock to buy, no targets to hit.',
+  lead: 'Sell products you use yourself. Registering is free. Your first order has a minimum value, and a small monthly purchase keeps your income withdrawable.',
 
   steps: [
     {
       title: 'Sign up with a sponsor ID',
-      body: 'Someone already selling shares their member ID with you. You sign up with it, verify your mobile number, and you are a member. It takes about two minutes and costs nothing.',
+      body: 'Someone already selling shares their member ID with you. You sign up with it, verify your mobile number, and you are a member. It takes about two minutes and registering costs nothing.',
     },
     {
       title: 'Add money to your shopping wallet',
@@ -47,22 +47,22 @@ const COPY = {
     },
     {
       title: 'Build a team, if you want to',
-      body: 'You can sponsor other sellers. You are paid on what they sell, never on the fact that they joined.',
+      body: 'You can sponsor other sellers. Sponsors earn a direct income when someone they sponsored makes a first product purchase, and further income on the products their team buys. Nothing is paid just for signing someone up.',
     },
   ],
 
   rules: [
     {
       title: 'Joining is free, and always will be',
-      body: 'No registration fee, no renewal fee, no training fee, no compulsory kit. If anyone asks you to pay to join or to stay a member, report it to the grievance officer — it is a breach of our policy and of the Direct Selling Rules.',
+      body: 'Registering is free: no registration fee, no renewal fee, no training fee, no compulsory kit. If anyone asks you to pay to join or to stay a member, report it to the grievance officer — it is a breach of our policy and of the Direct Selling Rules.',
     },
     {
       title: 'Nobody is paid for recruiting',
-      body: 'Not a rupee is paid for signing someone up. Every payment in the plan is calculated on products that have been sold and delivered. A member who never sponsors anyone can still be paid in full on their own sales.',
+      body: 'Nothing is paid for signing someone up. Every payment in the plan is calculated on products that have been purchased. A member who never sponsors anyone can still be paid in full on their own purchases.',
     },
     {
-      title: 'No minimum purchase to stay active',
-      body: 'You are not required to buy anything to remain a member or to keep your team. A repurchase requirement applies only to withdrawing income, and it is stated in the plan in your account.',
+      title: 'A minimum first order, and a monthly purchase to withdraw',
+      body: 'To earn, a member places a first order of at least the minimum value in the plan. The monthly repurchase target applies only to withdrawing income; it never removes you or your team. Both are stated in the plan in your account, and both are purchases of products you keep, never fees.',
     },
     {
       title: 'Unsold stock can be returned',

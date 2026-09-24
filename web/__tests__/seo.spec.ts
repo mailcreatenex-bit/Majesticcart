@@ -250,7 +250,7 @@ test('ordinary product and price copy is not flagged', () => {
     'Free delivery on orders above ₹999',
     'Members earn business volume on every delivered order',
     '300 BV per unit',
-    'Joining is free. No registration fee and no purchase needed to join.',
+    'Registering is free. No registration fee.',
   ];
   for (const copy of fine) {
     assert.deepEqual(findIncomeClaims(copy), [], `false positive: ${copy}`);

@@ -7,7 +7,7 @@ import { AuthShell, Field, inputClass, primaryButtonClass } from '@/components/A
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Join free'),
-  description: 'Create a free Majestic Cart account. No registration fee and no purchase needed to join.',
+  description: 'Create a free Majestic Cart account. No registration fee.',
   pathname: '/signup',
 });
 
@@ -29,7 +29,7 @@ export default async function SignupPage({
   return (
     <AuthShell
       title="Join Majestic Cart"
-      lead="Free to join. No registration fee and no purchase needed."
+      lead="Free to register. No registration fee."
       footer={<>Already a member? <Link href="/login" className="font-semibold text-[var(--accent)]">Log in</Link></>}
     >
       {error && (

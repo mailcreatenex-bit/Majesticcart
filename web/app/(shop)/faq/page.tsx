@@ -54,7 +54,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Does it cost anything to become a member?',
-    a: 'No. There is no joining fee, no renewal fee and no compulsory purchase of any kind. If anyone asks you to pay to join, report it to the grievance officer.',
+    a: 'Registering is free, and there is no renewal fee. To earn, you place a first order of at least the minimum value in the compensation plan; that is a purchase of products you keep, never a fee. If anyone asks you to pay to join, report it to the grievance officer.',
   },
   {
     q: 'Do I get paid for signing people up?',
