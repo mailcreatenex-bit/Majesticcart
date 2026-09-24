@@ -191,8 +191,17 @@ export class OrderModule implements OnModuleInit {
     @InjectQueue('commission') private readonly queue: Queue,
   ) {}
 
+  private sweepTimers: NodeJS.Timeout[] = [];
+
   onModuleInit(): void {
     this.orders.commissionQueue = this.queue;
+    // Re-queue any delivered order whose payout never ran: shortly after boot, then every 10 minutes.
+    const run = () => void this.orders.sweepCommissions().catch(() => undefined);
+    const first = setTimeout(run, 60_000);
+    const every = setInterval(run, 10 * 60_000);
+    first.unref?.();
+    every.unref?.();
+    this.sweepTimers = [first, every];
   }
 }
 

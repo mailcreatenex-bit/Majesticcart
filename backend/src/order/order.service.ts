@@ -516,13 +516,37 @@ export class OrderService {
       'run',
       { orderId },
       {
-        jobId: `commission:${orderId}`,
+        // A dash, not a colon: BullMQ (v5+) refuses a custom job id containing ':', which made every
+        // delivery fail with a 500 after the order was already marked delivered - so no payout ran.
+        jobId: `commission-${orderId}`,
         attempts: 5,
         backoff: { type: 'exponential', delay: 5_000 },
         removeOnComplete: 1_000,
         removeOnFail: false, // a failed payout must stay visible for triage
       },
     );
+  }
+
+  /**
+   * Safety net for the payout: enqueue the commission run for any delivered order that has not had one.
+   *
+   * Delivery marks the order delivered first and hands the payout to the queue second, so a
+   * failure between the two (the queue down, a bad job id, a restart) leaves a delivered order
+   * that never paid anyone. This finds those and queues them again. It is safe to run any time:
+   * the job id dedupes the queue and `runForOrder` does nothing for an order that has already run.
+   */
+  async sweepCommissions(): Promise<number> {
+    const stuck = await this.prisma.order.findMany({
+      where: { status: 'DELIVERED', commissionRunAt: null, deliveredAt: { lt: new Date(Date.now() - 60_000) } },
+      orderBy: { deliveredAt: 'asc' },
+      take: 50,
+      select: { id: true },
+    });
+    for (const o of stuck) {
+      await this.enqueueCommission(o.id).catch((e) => this.log.error(`commission sweep: could not queue ${o.id}: ${e instanceof Error ? e.message : e}`));
+    }
+    if (stuck.length) this.log.warn(`commission sweep: re-queued ${stuck.length} delivered order(s) with no payout run`);
+    return stuck.length;
   }
 
   /** Set by OrderModule. Typed loosely so the queue is not a test dependency. */

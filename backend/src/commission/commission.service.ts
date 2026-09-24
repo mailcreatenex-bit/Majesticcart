@@ -170,7 +170,7 @@ export class CommissionService {
 
   /**
    * Apply an order's commission. Call from a BullMQ worker with jobId
-   * `commission:${orderId}` so the queue itself also dedupes.
+   * `commission-${orderId}` so the queue itself also dedupes.
    */
   async runForOrder(orderId: string): Promise<CommissionRunResult> {
     return this.prisma.$transaction(
