@@ -180,22 +180,20 @@
   .gold-foil:disabled { background-image: none; }
 
   /**
-   * Brand marquee. Logos are dark marks on transparency: muted to grey in the
-   * light theme and knocked out to white in Royal Night, full colour on hover.
+   * Brand marquee: one line of logos on a cream band, sliding slowly, paused on hover.
    */
   .brand-marquee {
     -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
     mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
   }
-  .brand-track { animation: brand-scroll 38s linear infinite; }
+  .brand-track { animation: brand-scroll 70s linear infinite; }
   .brand-marquee:hover .brand-track { animation-play-state: paused; }
   @keyframes brand-scroll { to { transform: translateX(-50%); } }
-  /* Each mark sits on a white chip in both themes: many are full-colour badges
-     (a blue disc with white lettering), which a light-on-dark knock-out would erase. */
-  .brand-logo { opacity: 0.92; transition: opacity 200ms; }
-  .brand-chip { transition: box-shadow 200ms, transform 200ms; }
-  .brand-chip:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); transform: translateY(-2px); }
-  .brand-chip:hover .brand-logo, .brand-chip:focus-visible .brand-logo { opacity: 1; }
+  /* The strip is a warm cream band in both themes, so every mark - dark wordmarks and full-colour
+     badges alike - reads on the same ground instead of fighting the page colour. */
+  .brand-band { background: linear-gradient(180deg, #fffdf8, #f8f0e1); }
+  .brand-logo { opacity: 0.9; transition: opacity 250ms, transform 250ms; }
+  .brand-chip:hover .brand-logo, .brand-chip:focus-visible .brand-logo { opacity: 1; transform: scale(1.08); }
 }
 
 /* Printing the ID card: only the card, at ID-card size, with no page chrome. */

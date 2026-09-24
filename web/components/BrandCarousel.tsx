@@ -21,22 +21,26 @@ export async function BrandCarousel() {
   if (brands.length === 0) return null;
 
   return (
-    <section aria-label="Brands we carry" className="border-b border-[var(--line)] bg-[var(--surface)] py-8">
-      <p className="text-center text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Brands we carry</p>
-      <div className="brand-marquee mt-6 overflow-hidden">
+    <section aria-label="Brands we carry" className="brand-band border-y border-[#e9dcc5] py-7 sm:py-9">
+      <div className="mx-auto flex max-w-6xl items-center justify-center gap-4 px-4">
+        <span aria-hidden="true" className="h-px w-10 bg-gradient-to-r from-transparent to-[#c9a75a] sm:w-20" />
+        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8a6a2b] sm:text-xs">Brands we carry</p>
+        <span aria-hidden="true" className="h-px w-10 bg-gradient-to-l from-transparent to-[#c9a75a] sm:w-20" />
+      </div>
+      <div className="brand-marquee mt-6 overflow-hidden sm:mt-7">
         <ul className="brand-track flex w-max items-center">
           {[0, 1].map((copy) =>
             brands.map((b) => (
-              <li key={`${copy}-${b.slug}`} className="flex shrink-0 items-center pr-6 sm:pr-8" aria-hidden={copy === 1 ? true : undefined}>
+              <li key={`${copy}-${b.slug}`} className="flex shrink-0 items-center" aria-hidden={copy === 1 ? true : undefined}>
                 <Link
                   href={`/brand/${b.slug}`}
                   tabIndex={copy === 1 ? -1 : undefined}
                   aria-label={copy === 1 ? undefined : `Shop ${b.name}`}
-                  className="brand-chip flex h-20 w-44 items-center justify-center rounded-xl bg-white px-5 sm:h-24 sm:w-56"
+                  className="brand-chip flex h-14 w-36 items-center justify-center px-4 sm:h-16 sm:w-44 sm:px-6"
                 >
                   {/* Plain <img>: small static marks, already sized by CSS. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={b.logoUrl as string} alt={copy === 1 ? '' : b.name} loading="lazy" className="brand-logo max-h-11 max-w-full object-contain sm:max-h-14" />
+                  <img src={b.logoUrl as string} alt={copy === 1 ? '' : b.name} loading="lazy" className="brand-logo max-h-9 max-w-full object-contain sm:max-h-11" />
                 </Link>
               </li>
             )),
