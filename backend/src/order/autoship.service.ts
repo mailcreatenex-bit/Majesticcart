@@ -238,7 +238,8 @@ export class AutoshipService implements OnModuleInit, OnModuleDestroy {
     const period = isoPeriod(now);
     const thisMonthPending = plan.lastRunPeriod !== period;
     const d = new Date(now.getFullYear(), now.getMonth() + (thisMonthPending ? 0 : 1), plan.dayOfMonth);
-    return d.toISOString().slice(0, 10);
+    // Local date parts: toISOString() is UTC, which shifts a midnight-IST date back a day.
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
   private async notify(memberId: string, title: string, body: string): Promise<void> {
