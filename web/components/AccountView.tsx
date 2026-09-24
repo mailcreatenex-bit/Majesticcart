@@ -54,6 +54,8 @@ function Overview({ data, reload }: { data: MemberSummary; reload: () => void })
         />
       </div>
 
+      <MessagesToggle initial={data.member.notifyExternal ?? true} />
+
       {/* Anything waiting on someone else, in one place. */}
       {(data.pending.recharges > 0 || data.pending.withdrawals > 0) && (
         <section className="rounded-2xl border border-[var(--notice-border)] bg-[var(--notice-bg)] p-5">
@@ -265,5 +267,43 @@ function Input({
       {error ? <p className="mt-1 text-xs text-[#C0392B]">{error}</p>
         : hint ? <p className="mt-1 text-xs text-[var(--faint)]">{hint}</p> : null}
     </div>
+  );
+}
+
+/** Whether to also get SMS / WhatsApp for orders, wallet credits and withdrawals. In-app notifications always show. */
+function MessagesToggle({ initial }: { initial: boolean }) {
+  const [on, setOn] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const flip = async () => {
+    const next = !on;
+    setBusy(true); setFailed(false); setOn(next);
+    try {
+      await api('/me/notification-prefs', { method: 'PATCH', body: { external: next } });
+    } catch {
+      setOn(!next); setFailed(true);
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
+      <div className="min-w-0">
+        <h2 className="font-serif text-lg text-[var(--ink)]">Messages on your phone</h2>
+        <p className="mt-1 text-xs text-[var(--muted)]">SMS and WhatsApp when an order ships, money reaches your wallet or a withdrawal is paid.</p>
+        {failed && <p role="alert" className="mt-1 text-xs text-[#C0392B]">Could not save that. Try again.</p>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label="SMS and WhatsApp messages"
+        disabled={busy}
+        onClick={flip}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition ${on ? 'bg-[var(--ink)]' : 'bg-[var(--line-strong)]'} disabled:opacity-60`}
+      >
+        <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
+      </button>
+    </section>
   );
 }

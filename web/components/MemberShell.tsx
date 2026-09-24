@@ -19,7 +19,7 @@ import { showMoney, type MoneyView } from '@/lib/money';
 export interface MemberSummary {
   member: {
     id: string; code: string; name: string; phone: string; email: string | null; status: string; joinedAt: string;
-    photoUrl: string | null; location: string | null;
+    photoUrl: string | null; location: string | null; notifyExternal?: boolean;
   };
   rank: RankInfo;
   wallets: { shopping: MoneyView; income: MoneyView };

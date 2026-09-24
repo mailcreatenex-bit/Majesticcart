@@ -59,7 +59,7 @@ export class MemberViewService {
           select: {
             id: true, memberCode: true, name: true, phone: true, email: true,
             status: true, rankIndex: true, selfBvCenti: true, groupBvCenti: true,
-            joinedAt: true, sponsorId: true, photoKey: true, city: true, state: true,
+            joinedAt: true, sponsorId: true, photoKey: true, city: true, state: true, notifyExternal: true,
           },
         }),
         this.prisma.wallet.findMany({
@@ -105,6 +105,7 @@ export class MemberViewService {
         // Turned into a public URL by the controller; the key itself is not sent on.
         photoKey: member.photoKey,
         location: [member.city, member.state].filter(Boolean).join(', ') || null,
+        notifyExternal: member.notifyExternal,
       },
       rank: {
         index: member.rankIndex,

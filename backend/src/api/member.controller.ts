@@ -474,6 +474,16 @@ export class MemberViewController {
     return this.profile.savedAddress(memberId);
   }
 
+  /** Switch SMS/WhatsApp messages about orders and money on or off. In-app notifications are unaffected. */
+  @Patch('notification-prefs')
+  async notificationPrefs(
+    @CurrentUser('sub') memberId: string,
+    @Body(zodBody(z.object({ external: z.boolean() }))) body: { external: boolean },
+  ) {
+    await this.profile.setNotifyExternal(memberId, body.external);
+    return { external: body.external };
+  }
+
   @Patch('profile')
   saveProfile(
     @CurrentUser('sub') memberId: string,

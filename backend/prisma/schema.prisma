@@ -61,6 +61,8 @@ model Member {
   photoKey    String?
 
   autoship    AutoshipPlan?
+  // Whether to also send SMS/WhatsApp for orders, wallet credits and withdrawals. On by default; the member can switch it off.
+  notifyExternal Boolean @default(true)
   reviews     Review[]
 
   payoutUpi          String?
@@ -931,6 +933,9 @@ model Notification {
   kind      String    @default("INFO")
   readAt    DateTime?
   createdAt DateTime  @default(now())
+  // Set when the SMS/WhatsApp relay has taken this one (see OutboundNotifier); an error is kept if a send failed.
+  outboundAt    DateTime?
+  outboundError String?
 
   @@index([memberId, createdAt])
   @@index([memberId, readAt])

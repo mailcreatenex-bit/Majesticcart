@@ -155,6 +155,10 @@ export class ProfileService {
     return { previous: current.photoKey };
   }
 
+  async setNotifyExternal(memberId: string, external: boolean): Promise<void> {
+    await this.prisma.member.update({ where: { id: memberId }, data: { notifyExternal: external } });
+  }
+
   async saveProfile(memberId: string, patch: { name?: string; email?: string }) {
     const data: Record<string, unknown> = {};
     if (patch.name !== undefined) {
