@@ -30,7 +30,7 @@ export class CatalogController {
   @Public()
   @Get('brands')
   brands() {
-    return this.catalog.activeBrands().then((rows) => rows.map((b) => ({ id: b.id, name: b.name, slug: b.slug, logoUrl: b.logoUrl })));
+    return this.catalog.activeBrands().then((rows) => rows.map((b) => ({ id: b.id, name: b.name, slug: b.slug, logoUrl: b.logoUrl, productCount: b.productCount })));
   }
 
   @Public()

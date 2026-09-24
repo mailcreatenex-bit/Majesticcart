@@ -47,6 +47,8 @@ export interface CatalogCategory {
 }
 
 export interface CatalogBrand {
+  /** Visible products under this brand; 0 for a brand the store carries but has not listed yet. */
+  productCount?: number;
   id: string;
   name: string;
   slug: string;
@@ -135,7 +137,7 @@ export async function getCategory(slug: string): Promise<CatalogCategory | null>
   return all.find((c) => c.slug === slug) ?? null;
 }
 
-/** Only brands with at least one visible product — see CatalogService.activeBrands(). */
+/** Every active brand, with its product count — see CatalogService.activeBrands(). */
 export async function listBrands(): Promise<CatalogBrand[]> {
   const data = await getJson<CatalogBrand[]>('/catalog/brands', { next: { tags: ['catalog'] } });
   return data ?? [];

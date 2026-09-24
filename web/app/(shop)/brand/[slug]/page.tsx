@@ -31,20 +31,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!brand) {
     return { title: pageTitle('Brand not found'), robots: { index: false, follow: true } };
   }
-  return buildMetadata({
-    title: pageTitle(brand.name),
-    description: metaDescription(`Shop the full ${brand.name} range on Majestic Cart.`),
-    pathname: `/brand/${slug}`,
-  });
+  return {
+    ...buildMetadata({
+      title: pageTitle(brand.name),
+      description: metaDescription(`Shop the full ${brand.name} range on Majestic Cart.`),
+      pathname: `/brand/${slug}`,
+    }),
+    // A brand the store carries but has not listed anything from yet is a thin page.
+    ...(brand.productCount === 0 ? { robots: { index: false, follow: true } } : {}),
+  };
 }
 
 export default async function BrandPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const [brand, products, allCategories] = await Promise.all([
+  const [brand, products, allCategories, allBrands] = await Promise.all([
     getBrand(slug),
     listProducts({ brand: slug }),
     listCategories(),
+    listBrands(),
   ]);
   // A slug that isn't a real (or currently visible) brand is a 404, not an
   // empty grid — same reasoning as the category page: an empty grid at a
@@ -96,7 +101,15 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         </p>
 
         <div className="mt-4">
-          <FilterableProductGrid products={products} allCategories={allCategories} />
+          {products.length > 0 ? (
+            <FilterableProductGrid products={products} allCategories={allCategories} allBrands={allBrands} />
+          ) : (
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-8 text-center">
+              <p className="font-serif text-lg text-[var(--ink)]">{brand.name} products are on their way</p>
+              <p className="mt-2 text-sm text-[var(--body)]">We carry {brand.name}, but nothing is listed just yet. Have a look at the rest of the range.</p>
+              <Link href="/shop" className="mt-4 inline-block rounded-xl gold-foil px-6 py-3 font-semibold text-white">Shop all products</Link>
+            </div>
+          )}
         </div>
 
         <div className="mt-12 border-t border-[var(--line)] pt-6">

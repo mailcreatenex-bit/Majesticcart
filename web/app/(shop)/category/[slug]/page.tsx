@@ -6,7 +6,7 @@ import {
 } from '@/lib/seo';
 import { absoluteUrl } from '@/lib/referral';
 import {
-  listProducts, listCategories, getCategory, categoryCopy, categoryTree,
+  listProducts, listCategories, listBrands, getCategory, categoryCopy, categoryTree,
 } from '@/lib/catalog';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
 
@@ -54,10 +54,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const [category, products, allCategories] = await Promise.all([
+  const [category, products, allCategories, allBrands] = await Promise.all([
     getCategory(slug),
     listProducts({ category: slug }),
     listCategories(),
+    listBrands(),
   ]);
   // A slug that is not a real category is a 404, not an empty grid. An empty
   // grid at a made-up URL is a soft 404: the crawler indexes it, and the site
@@ -152,7 +153,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
         <div className="mt-4">
           {products.length > 0 ? (
-            <FilterableProductGrid products={products} allCategories={allCategories} />
+            <FilterableProductGrid products={products} allCategories={allCategories} allBrands={allBrands} />
           ) : (
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-8 text-center">
               <p className="font-serif text-lg text-[var(--ink)]">Products are on their way</p>

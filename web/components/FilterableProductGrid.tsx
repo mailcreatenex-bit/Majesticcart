@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { categoryTree, type CatalogCategory, type CatalogProduct } from '@/lib/catalog';
+import { categoryTree, type CatalogBrand, type CatalogCategory, type CatalogProduct } from '@/lib/catalog';
 import { ProductGrid } from './ProductCard';
 
 type SortKey = 'featured' | 'price_asc' | 'price_desc' | 'discount' | 'bv_desc';
@@ -30,7 +30,7 @@ const parseBound = (v: string): number | null => {
  * category or brand page, where every product shares one value, that group
  * simply does not appear.
  */
-export function FilterableProductGrid({ products, allCategories }: { products: CatalogProduct[]; allCategories?: CatalogCategory[] }) {
+export function FilterableProductGrid({ products, allCategories, allBrands }: { products: CatalogProduct[]; allCategories?: CatalogCategory[]; allBrands?: CatalogBrand[] }) {
   // The catalogue's own category tree (departments and their sub-categories) when the
   // page supplies it; otherwise the filter falls back to whatever the products carry.
   const tree = useMemo(() => categoryTree(allCategories ?? []).filter((d) => d.children.length > 0), [allCategories]);
@@ -47,11 +47,13 @@ export function FilterableProductGrid({ products, allCategories }: { products: C
     return [...m].map(([slug, name]) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name));
   }, [products]);
 
+  // Every brand the store carries when the page supplies the list, so the filter shows the
+  // whole shelf; otherwise just the brands on the products in view.
   const brands = useMemo(() => {
-    const s = new Set<string>();
+    const s = new Set<string>(allBrands?.map((b) => b.name) ?? []);
     for (const p of products) if (p.brand) s.add(p.brand);
     return [...s].sort((a, b) => a.localeCompare(b));
-  }, [products]);
+  }, [products, allBrands]);
 
   const priceRange = useMemo(() => {
     const v = products.map((p) => rupees(p.price.paise));
@@ -195,7 +197,9 @@ export function FilterableProductGrid({ products, allCategories }: { products: C
               {brands.length > 1 && (
                 <fieldset>
                   <legend className={legend}>Brand</legend>
-                  {brands.map((b) => checkRow(b, b, brandCounts.get(b), selBrands.includes(b), () => toggle(selBrands, setSelBrands, b)))}
+                  <div className="max-h-72 overflow-y-auto pr-1">
+                    {brands.map((b) => checkRow(b, b, brandCounts.get(b) ?? 0, selBrands.includes(b), () => toggle(selBrands, setSelBrands, b)))}
+                  </div>
                 </fieldset>
               )}
 

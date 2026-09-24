@@ -15,7 +15,7 @@ import { absoluteUrl } from '@/lib/referral';
  */
 export const revalidate = 3600;
 
-interface CatalogEntry { slug: string; updatedAt?: string }
+interface CatalogEntry { slug: string; updatedAt?: string; productCount?: number }
 
 async function fetchEntries(path: string): Promise<CatalogEntry[]> {
   const origin = process.env.API_ORIGIN;
@@ -89,7 +89,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: absoluteUrl(`/product/${p.slug}`, SITE.origin),
       lastModified: p.updatedAt ? new Date(p.updatedAt) : now, changeFrequency: 'weekly' as const, priority: 0.7,
     })),
-    ...brands.map((b) => ({
+    ...brands.filter((b) => b.productCount !== 0).map((b) => ({
       url: absoluteUrl(`/brand/${b.slug}`, SITE.origin),
       lastModified: now, changeFrequency: 'weekly' as const, priority: 0.6,
     })),

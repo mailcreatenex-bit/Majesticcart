@@ -5,6 +5,7 @@ import { parse as parseCsv } from 'csv-parse/sync';
 import { rupeesToPaise, bvToCenti, formatInr, centiToBvString, Paise } from '../common/money';
 import { toCsvRow } from '../common/csv';
 import { CATEGORY_TREE, CATEGORY_TREE_KEY } from './category-tree';
+import { BRAND_SEED, BRAND_SEED_KEY } from './brand-seed';
 
 /**
  * Product catalogue.
@@ -103,6 +104,25 @@ export class CatalogService implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     // Never let a category problem stop the API from starting.
     await this.seedCategoryTree().catch((e) => this.log.error(`Category tree seed failed: ${e instanceof Error ? e.message : e}`));
+    await this.seedBrands().catch((e) => this.log.error(`Brand seed failed: ${e instanceof Error ? e.message : e}`));
+  }
+
+  /** Writes the starting brand list once; existing brands (matched by name or slug) are kept and only gain a logo if they had none. */
+  private async seedBrands(): Promise<void> {
+    const done = await this.prisma.storeSetting.findUnique({ where: { key: BRAND_SEED_KEY } });
+    if (done) return;
+    for (const b of BRAND_SEED) {
+      const slug = slugify(b.name);
+      const logoUrl = `/brands/${b.logo}`;
+      const existing = await this.prisma.brand.findFirst({ where: { OR: [{ name: b.name }, { slug }] } });
+      if (existing) {
+        if (!existing.logoUrl) await this.prisma.brand.update({ where: { id: existing.id }, data: { logoUrl } });
+      } else {
+        await this.prisma.brand.create({ data: { name: b.name, slug, logoUrl } });
+      }
+    }
+    await this.prisma.storeSetting.create({ data: { key: BRAND_SEED_KEY, value: { seededAt: new Date().toISOString() } as never } });
+    this.log.log(`Brands seeded: ${BRAND_SEED.length}`);
   }
 
   /**
@@ -467,21 +487,25 @@ export class CatalogService implements OnModuleInit {
     });
   }
 
-  /** Active brands only, for the shop's filter panel — a paused brand's products are also hidden, so listing it as a filter option would be a dead end. */
+  /**
+   * Every active brand with how many visible products it has. Brands with none are
+   * still returned: the storefront shows them in the filter and the "Brands we carry"
+   * strip (the store carries the brand even before a product is listed), and decides
+   * for itself what to do with an empty one. A paused brand is left out - its
+   * products are hidden too, so it would be a dead end.
+   */
   async activeBrands() {
     const brands = await this.prisma.brand.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
     });
-    // Only brands that currently have at least one visible product — an empty
-    // filter option is worse than no option.
     const counts = await this.prisma.product.groupBy({
       by: ['brandId'],
       where: { isActive: true, brandId: { not: null } },
       _count: true,
     });
-    const withStock = new Set(counts.map((c) => c.brandId));
-    return brands.filter((b) => withStock.has(b.id));
+    const countOf = new Map(counts.map((c) => [c.brandId, c._count]));
+    return brands.map((b) => ({ ...b, productCount: countOf.get(b.id) ?? 0 }));
   }
 
   async createBrand(input: { name: string; description?: string; logoUrl?: string }, actorId: string) {

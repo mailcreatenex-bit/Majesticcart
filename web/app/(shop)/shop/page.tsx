@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, metaDescription, breadcrumbJsonLd } from '@/lib/seo';
-import { listProducts, listCategories, categoryTree } from '@/lib/catalog';
+import { listProducts, listCategories, listBrands, categoryTree } from '@/lib/catalog';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
 
 /**
@@ -31,7 +31,7 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function ShopPage() {
-  const [products, categories] = await Promise.all([listProducts(), listCategories()]);
+  const [products, categories, allBrands] = await Promise.all([listProducts(), listCategories(), listBrands()]);
   const departments = categoryTree(categories).filter((d) => d.children.length > 0);
 
   const jsonLd = breadcrumbJsonLd([
@@ -78,7 +78,7 @@ export default async function ShopPage() {
         </p>
 
         <div className="mt-4">
-          <FilterableProductGrid products={products} allCategories={categories} />
+          <FilterableProductGrid products={products} allCategories={categories} allBrands={allBrands} />
         </div>
       </div>
     </>
