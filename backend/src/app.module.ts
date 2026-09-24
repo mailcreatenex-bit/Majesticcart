@@ -13,6 +13,8 @@ import { LedgerService } from './ledger/ledger.service';
 import { CommissionService } from './commission/commission.service';
 import { CommissionProcessor } from './commission/commission.processor';
 import { OrderService } from './order/order.service';
+import { AutoshipService } from './order/autoship.service';
+import { AutoshipController } from './api/autoship.controller';
 import { RechargeService } from './recharge/recharge.service';
 import { WithdrawalService } from './withdrawal/withdrawal.service';
 import { MobileRechargeService } from './mobile-recharge/mobile-recharge.service';
@@ -172,8 +174,8 @@ export class CommissionModule {}
  */
 @Module({
   imports: [LedgerModule, CommissionModule, BullModule.registerQueue({ name: 'commission' })],
-  controllers: [OrderController, AdminOrderController, AdminCouponController],
-  providers: [OrderService, CouponService],
+  controllers: [OrderController, AdminOrderController, AdminCouponController, AutoshipController],
+  providers: [OrderService, CouponService, AutoshipService],
   exports: [OrderService, CouponService],
 })
 export class OrderModule implements OnModuleInit {

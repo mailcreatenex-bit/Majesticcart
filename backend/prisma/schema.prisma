@@ -60,6 +60,8 @@ model Member {
   // card. Null until they upload one.
   photoKey    String?
 
+  autoship    AutoshipPlan?
+
   payoutUpi          String?
   payoutHolder       String?
   payoutBank         String?
@@ -868,6 +870,25 @@ model AuditLog {
 
   @@index([action, createdAt])
   @@index([actorId, createdAt])
+}
+
+// A member's standing monthly order (see AutoshipService). One per member.
+model AutoshipPlan {
+  id                 String   @id @default(cuid())
+  memberId           String   @unique
+  member             Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  active             Boolean  @default(true)
+  dayOfMonth         Int      @default(1)
+  lines              Json // [{ productId, quantity }]
+  // The month (YYYY-MM) an order has been placed for; the runner skips a plan that already has this month's.
+  lastRunPeriod      String?
+  lastOrderNo        String?
+  lastResult         String?
+  lastAttemptAt      DateTime?
+  // The month a "could not be placed" notice was sent for, so it goes out once a month, not hourly.
+  failNotifiedPeriod String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model Notification {

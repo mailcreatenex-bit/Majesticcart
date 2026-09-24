@@ -38,6 +38,7 @@ const NEVER_CACHE = [
   /^\/id-card/,
   /^\/statement/,
   /^\/share/,
+  /^\/autoship/,
   /^\/account/,
   /^\/recharge/,
   /^\/cart/,
