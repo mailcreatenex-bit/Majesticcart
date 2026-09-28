@@ -71,7 +71,8 @@ export interface ThemeSettingValue {
     primaryCtaHref: string;
     secondaryCtaLabel: string;
     secondaryCtaHref: string;
-    imageUrl: string;
+    /** Auto-rotating on the homepage when there's more than one; empty falls back to the storefront's own stock photos. */
+    imageUrls: string[];
   };
   /** A strip across the top of the storefront for a festival or an offer. Off until an admin turns it on. */
   announcement: {
@@ -85,10 +86,22 @@ export interface ThemeSettingValue {
     startsOn: string;
     endsOn: string;
   };
+  /** The full-width photo banner between the brand grid and the featured products. */
+  promoBanner: {
+    enabled: boolean;
+    images: string[];
+    heading: string;
+    ctaLabel: string;
+    ctaHref: string;
+  };
 }
 
 const DEFAULT_ANNOUNCEMENT: ThemeSettingValue['announcement'] = {
   enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '',
+};
+
+const DEFAULT_PROMO_BANNER: ThemeSettingValue['promoBanner'] = {
+  enabled: true, images: [], heading: '', ctaLabel: '', ctaHref: '/shop',
 };
 
 const DEFAULT_THEME: ThemeSettingValue = {
@@ -102,9 +115,10 @@ const DEFAULT_THEME: ThemeSettingValue = {
     primaryCtaHref: '/shop',
     secondaryCtaLabel: 'Become a member',
     secondaryCtaHref: '/join',
-    imageUrl: '',
+    imageUrls: [],
   },
   announcement: DEFAULT_ANNOUNCEMENT,
+  promoBanner: DEFAULT_PROMO_BANNER,
 };
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
@@ -225,6 +239,7 @@ export class SettingsService {
       logoUrl: stored?.logoUrl ?? DEFAULT_THEME.logoUrl,
       hero: { ...DEFAULT_THEME.hero, ...stored?.hero },
       announcement: { ...DEFAULT_ANNOUNCEMENT, ...stored?.announcement },
+      promoBanner: { ...DEFAULT_PROMO_BANNER, ...stored?.promoBanner },
     };
   }
 

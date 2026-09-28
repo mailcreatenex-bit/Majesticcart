@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AdminShell, Panel, TableSkeleton } from './AdminShell';
-import { ImageUploadField } from './ImageUploadField';
+import { ImageUploadField, ImageGalleryField } from './ImageUploadField';
 
 interface ThemeValue {
   colors: { ink: string; accent: string; gold: string };
@@ -12,15 +12,19 @@ interface ThemeValue {
     eyebrow: string; title: string; subtitle: string;
     primaryCtaLabel: string; primaryCtaHref: string;
     secondaryCtaLabel: string; secondaryCtaHref: string;
-    imageUrl: string;
+    imageUrls: string[];
   };
   announcement: {
     enabled: boolean; text: string; linkLabel: string; linkHref: string;
     couponCode: string; startsOn: string; endsOn: string;
   };
+  promoBanner: {
+    enabled: boolean; images: string[]; heading: string; ctaLabel: string; ctaHref: string;
+  };
 }
 
 const NO_BANNER: ThemeValue['announcement'] = { enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '' };
+const NO_PROMO: ThemeValue['promoBanner'] = { enabled: true, images: [], heading: '', ctaLabel: '', ctaHref: '/shop' };
 
 export function ThemeAdminView() {
   return (
@@ -37,7 +41,9 @@ function Theme() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    api<ThemeValue>('/admin/theme').then((v) => setValue({ ...v, announcement: { ...NO_BANNER, ...v.announcement } })).catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load theme settings.'));
+    api<ThemeValue>('/admin/theme')
+      .then((v) => setValue({ ...v, announcement: { ...NO_BANNER, ...v.announcement }, promoBanner: { ...NO_PROMO, ...v.promoBanner } }))
+      .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load theme settings.'));
   }, []);
 
   if (error && !value) return <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>;
@@ -46,6 +52,7 @@ function Theme() {
   const setColor = (key: keyof ThemeValue['colors'], v: string) => setValue({ ...value, colors: { ...value.colors, [key]: v } });
   const setBanner = <K extends keyof ThemeValue['announcement']>(key: K, v: ThemeValue['announcement'][K]) => setValue({ ...value, announcement: { ...value.announcement, [key]: v } });
   const setHero = <K extends keyof ThemeValue['hero']>(key: K, v: ThemeValue['hero'][K]) => setValue({ ...value, hero: { ...value.hero, [key]: v } });
+  const setPromo = <K extends keyof ThemeValue['promoBanner']>(key: K, v: ThemeValue['promoBanner'][K]) => setValue({ ...value, promoBanner: { ...value.promoBanner, [key]: v } });
 
   const save = async () => {
     setSaving(true);
@@ -92,7 +99,41 @@ function Theme() {
           <Field label="Secondary button label" value={value.hero.secondaryCtaLabel} onChange={(v) => setHero('secondaryCtaLabel', v)} />
           <Field label="Secondary button link" value={value.hero.secondaryCtaHref} onChange={(v) => setHero('secondaryCtaHref', v)} />
           <div className="sm:col-span-2">
-            <ImageUploadField label="Hero image (optional)" value={value.hero.imageUrl} onChange={(url) => setHero('imageUrl', url)} purpose="theme-asset" hint="Leave blank to keep the plain gradient background." />
+            <ImageGalleryField
+              label="Hero photos"
+              values={value.hero.imageUrls}
+              onChange={(urls) => setHero('imageUrls', urls)}
+              purpose="theme-asset"
+              max={8}
+            />
+            <p className="mt-1 text-xs text-neutral-500">
+              Two or more auto-rotate on the homepage (~5s each, no arrows). Leave empty to keep the site&apos;s own default photos.
+            </p>
+          </div>
+        </div>
+      </Panel>
+
+      <Panel title="Homepage banner">
+        <label className="flex items-center gap-2 text-sm font-medium text-neutral-800">
+          <input type="checkbox" checked={value.promoBanner.enabled} onChange={(e) => setPromo('enabled', e.target.checked)} className="h-4 w-4" />
+          Show the full-width photo banner between the brand grid and the featured products
+        </label>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm font-medium text-neutral-800 sm:col-span-2">
+            Heading
+            <textarea value={value.promoBanner.heading} onChange={(e) => setPromo('heading', e.target.value)} rows={2} placeholder="Skin care, makeup and more — picked from brands already on your shelf." className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+          </label>
+          <Field label="Button label" value={value.promoBanner.ctaLabel} onChange={(v) => setPromo('ctaLabel', v)} />
+          <Field label="Button link" value={value.promoBanner.ctaHref} onChange={(v) => setPromo('ctaHref', v)} />
+          <div className="sm:col-span-2">
+            <ImageGalleryField
+              label="Banner photos"
+              values={value.promoBanner.images}
+              onChange={(urls) => setPromo('images', urls)}
+              purpose="theme-asset"
+              max={8}
+            />
+            <p className="mt-1 text-xs text-neutral-500">Two or more auto-rotate the same way the hero does. Leave empty to keep the default photos.</p>
           </div>
         </div>
       </Panel>

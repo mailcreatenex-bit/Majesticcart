@@ -39,7 +39,7 @@ export interface ThemeSettings {
     primaryCtaHref: string;
     secondaryCtaLabel: string;
     secondaryCtaHref: string;
-    imageUrl: string;
+    imageUrls: string[];
   };
   announcement: {
     enabled: boolean;
@@ -50,10 +50,21 @@ export interface ThemeSettings {
     startsOn: string;
     endsOn: string;
   };
+  promoBanner: {
+    enabled: boolean;
+    images: string[];
+    heading: string;
+    ctaLabel: string;
+    ctaHref: string;
+  };
 }
 
 const DEFAULT_ANNOUNCEMENT: ThemeSettings['announcement'] = {
   enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '',
+};
+
+const DEFAULT_PROMO_BANNER: ThemeSettings['promoBanner'] = {
+  enabled: true, images: [], heading: '', ctaLabel: '', ctaHref: '/shop',
 };
 
 const DEFAULT_THEME: ThemeSettings = {
@@ -67,9 +78,10 @@ const DEFAULT_THEME: ThemeSettings = {
     primaryCtaHref: '/shop',
     secondaryCtaLabel: 'Become a member',
     secondaryCtaHref: '/join',
-    imageUrl: '',
+    imageUrls: [],
   },
   announcement: DEFAULT_ANNOUNCEMENT,
+  promoBanner: DEFAULT_PROMO_BANNER,
 };
 
 const API = () => {
@@ -124,5 +136,11 @@ export async function getTheme(): Promise<ThemeSettings> {
     if (stale[key].test(hero[key])) hero[key] = DEFAULT_THEME.hero[key];
   }
 
-  return { colors: { ...DEFAULT_THEME.colors, ...t.colors }, logoUrl: t.logoUrl ?? '', hero, announcement: { ...DEFAULT_ANNOUNCEMENT, ...t.announcement } };
+  return {
+    colors: { ...DEFAULT_THEME.colors, ...t.colors },
+    logoUrl: t.logoUrl ?? '',
+    hero,
+    announcement: { ...DEFAULT_ANNOUNCEMENT, ...t.announcement },
+    promoBanner: { ...DEFAULT_PROMO_BANNER, ...t.promoBanner },
+  };
 }

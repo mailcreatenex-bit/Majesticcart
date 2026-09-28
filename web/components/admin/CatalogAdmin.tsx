@@ -6,6 +6,7 @@ import { formatRupees } from '@/lib/money';
 import { centiToBv } from '@/lib/plan';
 import { AdminShell, Panel, AdminEmpty, AdminError, TableSkeleton } from './AdminShell';
 import { ImageUploadField, ImageGalleryField } from './ImageUploadField';
+import { uploadAdminImage } from '@/lib/adminUpload';
 
 /**
  * The catalogue.
@@ -53,7 +54,7 @@ interface AdminProduct {
   galleryImages: string[];
 }
 
-interface Category { id: string; name: string; slug: string; parentId?: string | null }
+interface Category { id: string; name: string; slug: string; parentId?: string | null; imageUrl?: string | null }
 
 /** Departments first, each followed by its sub-categories: the order a person expects in a picker. */
 function inTreeOrder(categories: Category[]): { c: Category; depth: number }[] {
@@ -813,17 +814,20 @@ function CategoryPanel({ categories, onChanged }: { categories: Category[]; onCh
     }
   };
 
+  const setImage = async (id: string, imageUrl: string) => {
+    await api(`/admin/catalog/categories/${id}/image`, { method: 'POST', body: { imageUrl } });
+    await onChanged();
+  };
+
   return (
     <Panel title="Categories">
-      <ul className="space-y-3">
+      <ul className="space-y-4">
         {inTreeOrder(categories).filter((x) => x.depth === 0).map(({ c: dept }) => (
           <li key={dept.id}>
-            <div className="flex flex-wrap items-center gap-2">
-              <CategoryChip c={dept} strong busy={busy} onRemove={remove} />
-            </div>
-            <ul className="mt-1.5 flex flex-wrap gap-2 pl-4">
+            <CategoryRow c={dept} strong busy={busy} onRemove={remove} onImage={setImage} />
+            <ul className="mt-2 space-y-2 pl-6">
               {categories.filter((k) => k.parentId === dept.id).map((k) => (
-                <li key={k.id}><CategoryChip c={k} busy={busy} onRemove={remove} /></li>
+                <li key={k.id}><CategoryRow c={k} busy={busy} onRemove={remove} onImage={setImage} /></li>
               ))}
             </ul>
           </li>
@@ -861,27 +865,90 @@ function CategoryPanel({ categories, onChanged }: { categories: Category[]; onCh
 
       <p className="mt-3 text-xs leading-relaxed text-neutral-500">
         Each category is a public page with copy of its own — they carry most of the catalogue&apos;s
-        search traffic, so adding one is a page to write, not just a filter.
+        search traffic, so adding one is a page to write, not just a filter. The photo shows on this
+        category&apos;s own page and, for a top-level department, its homepage tile too.
       </p>
     </Panel>
   );
 }
 
-function CategoryChip({ c, strong, busy, onRemove }: { c: Category; strong?: boolean; busy: boolean; onRemove: (id: string, label: string) => void }) {
+function CategoryRow({
+  c, strong, busy, onRemove, onImage,
+}: {
+  c: Category;
+  strong?: boolean;
+  busy: boolean;
+  onRemove: (id: string, label: string) => void;
+  onImage: (id: string, imageUrl: string) => Promise<void>;
+}) {
   return (
-    <span className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm ${strong ? 'border-neutral-400 bg-neutral-50 font-semibold' : 'border-neutral-200'}`}>
-      <span className="text-neutral-800">{c.name}</span>
-      <span className="font-mono text-xs font-normal text-neutral-400">/{c.slug}</span>
+    <div className={`flex items-center gap-3 rounded-lg border px-3 py-2 ${strong ? 'border-neutral-400 bg-neutral-50' : 'border-neutral-200'}`}>
+      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-neutral-300 bg-white">
+        {c.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={c.imageUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center text-[10px] text-neutral-400">No photo</span>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className={`text-sm text-neutral-800 ${strong ? 'font-semibold' : ''}`}>{c.name}</span>
+          <span className="font-mono text-xs text-neutral-400">/{c.slug}</span>
+        </div>
+        <div className="mt-1">
+          <CompactImagePicker value={c.imageUrl ?? ''} onChange={(url) => onImage(c.id, url)} />
+        </div>
+      </div>
       <button
         type="button"
         onClick={() => onRemove(c.id, c.name)}
         disabled={busy}
         aria-label={`Remove ${c.name}`}
-        className="text-xs font-semibold text-red-700 hover:underline disabled:text-neutral-300"
+        className="shrink-0 self-start text-xs font-semibold text-red-700 hover:underline disabled:text-neutral-300"
       >
-        ×
+        Remove
       </button>
-    </span>
+    </div>
+  );
+}
+
+/** A one-line photo picker for a list row — upload/replace/remove without the full ImageUploadField's own label and preview box. */
+function CompactImagePicker({ value, onChange }: { value: string; onChange: (url: string) => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const url = await uploadAdminImage(file, 'product-image');
+      await onChange(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={(e) => { void pick(e.target.files?.[0]); e.target.value = ''; }}
+        disabled={busy}
+        className="text-xs text-neutral-500 file:mr-2 file:rounded-md file:border-0 file:bg-neutral-900 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-white hover:file:bg-neutral-700"
+      />
+      {busy && <span className="text-xs text-neutral-500">Uploading…</span>}
+      {!busy && value && (
+        <button type="button" onClick={() => void onChange('')} className="text-xs font-semibold text-red-700 hover:underline">
+          Remove photo
+        </button>
+      )}
+      {error && <span className="text-xs text-red-700">{error}</span>}
+    </div>
   );
 }
 

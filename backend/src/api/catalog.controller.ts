@@ -222,6 +222,16 @@ export class AdminCatalogController {
     return this.catalog.deleteCategory(id, adminId);
   }
 
+  @Post('categories/:id/image')
+  @HttpCode(200)
+  updateCategoryImage(
+    @Param('id') id: string,
+    @Body(zodBody(z.object({ imageUrl: z.string().trim().max(500) }))) body: { imageUrl: string },
+    @CurrentUser('sub') adminId: string,
+  ) {
+    return this.catalog.updateCategoryImage(id, body.imageUrl, adminId);
+  }
+
   /* ----------------------------------------------------------- brands */
 
   @Get('brands')

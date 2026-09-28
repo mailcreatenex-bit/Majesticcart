@@ -82,6 +82,13 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
       ))}
 
+      {brand.logoUrl && (
+        <div className="flex items-center justify-center border-b border-[var(--line)] bg-gradient-to-br from-[var(--accent-soft)] to-[var(--surface)] py-14">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={brand.logoUrl} alt={brand.name} className="h-16 max-w-[60%] object-contain sm:h-20" />
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl px-4 py-10">
         <nav aria-label="Breadcrumb" className="text-xs text-[var(--faint)]">
           <Link href="/" className="hover:text-[var(--ink)]">Home</Link>

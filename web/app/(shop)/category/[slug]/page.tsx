@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import {
@@ -8,6 +9,7 @@ import { absoluteUrl } from '@/lib/referral';
 import {
   listProducts, listCategories, listBrands, getCategory, categoryCopy, categoryTree,
 } from '@/lib/catalog';
+import { categoryImage } from '@/lib/categoryImages';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
 
 /**
@@ -101,6 +103,16 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       {jsonLd.map((graph, i) => (
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }} />
       ))}
+
+      {(() => {
+        const image = categoryImage(slug, category.imageUrl);
+        return image ? (
+          <div className="relative aspect-[21/9] w-full overflow-hidden sm:aspect-[3/1]">
+            <Image src={image} alt="" fill sizes="100vw" priority className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)]/60 via-transparent to-transparent" />
+          </div>
+        ) : null;
+      })()}
 
       <div className="mx-auto max-w-6xl px-4 py-10">
         <nav aria-label="Breadcrumb" className="text-xs text-[var(--faint)]">

@@ -748,7 +748,7 @@ const ThemeSettingSchema = z.object({
     primaryCtaHref: z.string().trim().max(200),
     secondaryCtaLabel: z.string().trim().max(40),
     secondaryCtaHref: z.string().trim().max(200),
-    imageUrl: z.string().trim().max(500).default(''),
+    imageUrls: z.array(z.string().trim().max(500)).max(8).default([]),
   }),
   announcement: z.object({
     enabled: z.boolean().default(false),
@@ -759,6 +759,13 @@ const ThemeSettingSchema = z.object({
     startsOn: z.string().trim().max(10).default(''),
     endsOn: z.string().trim().max(10).default(''),
   }).default({ enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '' }),
+  promoBanner: z.object({
+    enabled: z.boolean().default(true),
+    images: z.array(z.string().trim().max(500)).max(8).default([]),
+    heading: z.string().trim().max(200).default(''),
+    ctaLabel: z.string().trim().max(40).default(''),
+    ctaHref: z.string().trim().max(200).default('/shop'),
+  }).default({ enabled: true, images: [], heading: '', ctaLabel: '', ctaHref: '/shop' }),
 });
 
 /** Read by the storefront on every homepage render — public, since it's exactly what the page already shows every visitor. */

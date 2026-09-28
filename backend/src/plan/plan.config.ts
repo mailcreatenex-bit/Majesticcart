@@ -112,15 +112,22 @@ export type RoyaltyFund = z.infer<typeof RoyaltyFundSchema>;
 
 /* ---------------------------------------------------------------- defaults */
 
-/** Straight from the client's plan document, September 2026. */
+/**
+ * Straight from the client's video walkthrough, September 2026 (supersedes the
+ * earlier written plan.txt numbers — rates and the Diamond threshold both
+ * moved). Diamond is where the royalty funds and the generation bonus turn
+ * on, via `minRankIndex: 4` below, so raising its BV target here is also what
+ * moves the ₹1,00,000 lifetime-bonus/royalty qualifying line described in the
+ * walkthrough — there is no separate number to keep in sync.
+ */
 export const CLIENT_DEFAULT_PLAN: PlanConfig = {
   rankBasis: 'GROUP_BV',
   ranks: [
     { name: 'Star', minBvCenti: bvToCenti(0), selfPctBp: percentToBp(10), teamPctBp: percentToBp(5) },
     { name: 'Bronze', minBvCenti: bvToCenti(1000), selfPctBp: percentToBp(15), teamPctBp: percentToBp(5) },
-    { name: 'Silver', minBvCenti: bvToCenti(5000), selfPctBp: percentToBp(19), teamPctBp: percentToBp(5) },
-    { name: 'Gold', minBvCenti: bvToCenti(15000), selfPctBp: percentToBp(22), teamPctBp: percentToBp(5) },
-    { name: 'Diamond', minBvCenti: bvToCenti(40000), selfPctBp: percentToBp(25), teamPctBp: percentToBp(5) },
+    { name: 'Silver', minBvCenti: bvToCenti(5000), selfPctBp: percentToBp(20), teamPctBp: percentToBp(5) },
+    { name: 'Gold', minBvCenti: bvToCenti(15000), selfPctBp: percentToBp(25), teamPctBp: percentToBp(5) },
+    { name: 'Diamond', minBvCenti: bvToCenti(100000), selfPctBp: percentToBp(30), teamPctBp: percentToBp(5) },
   ],
   joining: { mode: 'MIN_FIRST_PURCHASE', minFirstPurchase: bvToCenti(2000), unit: 'BV' },
   self: { enabled: true },

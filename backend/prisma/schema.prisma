@@ -211,6 +211,7 @@ model Category {
   name     String    @unique
   slug     String    @unique
   sortkey  Int       @default(0)
+  imageUrl String?
   products Product[]
 
   // One level of nesting: a department (no parent) holds sub-categories. Products

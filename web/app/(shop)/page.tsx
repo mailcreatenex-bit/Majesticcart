@@ -1,11 +1,15 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
 import { buildMetadata, metaDescription, SITE } from '@/lib/seo';
-import { listProducts, listCategories, categoryCopy, categoryTree } from '@/lib/catalog';
+import { listProducts, listCategories, listBrands, categoryCopy, categoryTree } from '@/lib/catalog';
 import { getTheme } from '@/lib/content';
 import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
 import { BrandCarousel } from '@/components/BrandCarousel';
+import { HeroSlider } from '@/components/HeroSlider';
+import { PromoBanner } from '@/components/PromoBanner';
+import { CATEGORY_IMAGES } from '@/lib/categoryImages';
 
 /**
  * Home.
@@ -30,13 +34,23 @@ export const metadata: Metadata = buildMetadata({
   pathname: '/',
 });
 
+/** Default rotation when the admin hasn't uploaded hero photos in Theme. */
+const DEFAULT_HERO_IMAGES = ['/home/hero-1.jpg', '/home/hero-2.jpg', '/home/hero-3.jpg', '/home/category-makeup.jpg'];
+const DEFAULT_PROMO_IMAGES = ['/home/hero-3.jpg', '/home/about-1.jpg', '/home/category-fragrance.jpg'];
+const DEFAULT_PROMO_HEADING = 'Skin care, makeup and more — picked from brands already on your shelf.';
+
 export default async function HomePage() {
-  const [featured, categories, theme] = await Promise.all([
+  const [featured, categories, brands, theme] = await Promise.all([
     listProducts({ limit: 8 }),
     listCategories(),
+    listBrands(),
     getTheme(),
   ]);
   const hero = theme.hero;
+  const heroImages = hero.imageUrls.length > 0 ? hero.imageUrls : DEFAULT_HERO_IMAGES;
+  const promo = theme.promoBanner;
+  const promoImages = promo.images.length > 0 ? promo.images : DEFAULT_PROMO_IMAGES;
+  const spotlightBrands = brands.filter((b) => b.logoUrl).slice(0, 6);
 
   // WebSite markup enables the sitelinks search box, and ItemList tells a
   // crawler these are products rather than an unlabelled set of links.
@@ -62,7 +76,7 @@ export default async function HomePage() {
 
       {/* ------------------------------------------------------------ hero */}
       <section className="relative overflow-hidden border-b border-[var(--line)] bg-gradient-to-b from-[var(--accent-soft)] via-[var(--page)] to-[var(--page)]">
-        <div className={`mx-auto max-w-6xl px-4 py-16 sm:py-24 ${hero.imageUrl ? 'grid gap-10 md:grid-cols-2 md:items-center' : ''}`}>
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:py-24 md:grid-cols-2 md:items-center">
           <div className="max-w-2xl">
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--accent)]">{hero.eyebrow}</p>
             {/* The only h1 on the page. It carries the brand and what is sold,
@@ -92,12 +106,7 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-          {hero.imageUrl && (
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={hero.imageUrl} alt="" className="h-full w-full object-cover" />
-            </div>
-          )}
+          <HeroSlider images={heroImages} fallback="/home/hero-1.jpg" />
         </div>
       </section>
 
@@ -107,28 +116,83 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-14">
         <h2 className="font-serif text-2xl text-[var(--ink)]">Shop by category</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {categoryTree(categories).map((c) => (
-            <Link
-              key={c.slug}
-              href={`/category/${c.slug}`}
-              className="group rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 transition hover:border-[var(--line-strong)] hover:shadow-lg hover:shadow-rose-900/5"
-            >
-              <h3 className="font-serif text-lg text-[var(--ink)]">{c.name}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-                {c.description ?? categoryCopy(c.slug).blurb}
-              </p>
-              <span className="mt-4 inline-block text-sm font-semibold text-[var(--accent)] group-hover:underline">
-                Browse →
-              </span>
-            </Link>
-          ))}
+          {categoryTree(categories).map((c) => {
+            const image = c.imageUrl || CATEGORY_IMAGES[c.slug];
+            return (
+              <Link
+                key={c.slug}
+                href={`/category/${c.slug}`}
+                className="group overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition hover:border-[var(--line-strong)] hover:shadow-lg hover:shadow-rose-900/5"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden bg-[var(--accent-soft)]">
+                  {image && (
+                    <Image
+                      src={image}
+                      alt=""
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                    />
+                  )}
+                </div>
+                <div className="p-6">
+                  <h3 className="font-serif text-lg text-[var(--ink)]">{c.name}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+                    {c.description ?? categoryCopy(c.slug).blurb}
+                  </p>
+                  <span className="mt-4 inline-block text-sm font-semibold text-[var(--accent)] group-hover:underline">
+                    Browse →
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
       <MandalaRule />
 
+      {/* ------------------------------------------------------ brand spotlight */}
+      {spotlightBrands.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 py-14">
+          <div className="flex items-end justify-between">
+            <h2 className="font-serif text-2xl text-[var(--ink)]">Brand spotlight</h2>
+            <Link href="/shop" className="text-sm font-semibold text-[var(--accent)] hover:underline">
+              See all brands
+            </Link>
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+            {spotlightBrands.map((b, i) => (
+              <Link
+                key={b.slug}
+                href={`/brand/${b.slug}`}
+                className={`group flex flex-col items-center justify-center gap-4 rounded-2xl px-6 py-10 text-center transition hover:shadow-lg hover:shadow-rose-900/10 ${
+                  ['bg-gradient-to-br from-[var(--accent-soft)] to-[var(--surface)]', 'bg-gradient-to-br from-[#f4e9d8] to-[var(--surface)]', 'bg-gradient-to-br from-[#f6e3e6] to-[var(--surface)]'][i % 3]
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={b.logoUrl as string} alt={b.name} className="h-10 max-w-[70%] object-contain" />
+                <span className="text-sm font-semibold text-[var(--ink)] group-hover:underline">
+                  Shop {b.name} →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ------------------------------------------------------ banner */}
+      {promo.enabled && (
+        <PromoBanner
+          images={promoImages}
+          heading={promo.heading || DEFAULT_PROMO_HEADING}
+          ctaLabel={promo.ctaLabel || 'Shop the range'}
+          ctaHref={promo.ctaHref || '/shop'}
+        />
+      )}
+
       {/* -------------------------------------------------------- featured */}
-      <section className="mx-auto max-w-6xl px-4 pb-16">
+      <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="flex items-end justify-between">
           <h2 className="font-serif text-2xl text-[var(--ink)]">New this season</h2>
           <Link href="/shop" className="text-sm font-semibold text-[var(--accent)] hover:underline">
@@ -142,8 +206,16 @@ export default async function HomePage() {
 
       {/* ------------------------------------------------------- about us */}
       <section className="border-y border-[var(--line)] bg-[var(--accent-soft)]">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:flex sm:items-center sm:justify-between sm:gap-10">
-          <div className="max-w-xl">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 sm:items-center">
+          <div className="order-2 flex gap-4 sm:order-1">
+            <div className="relative mt-8 aspect-[3/4] w-1/2 overflow-hidden rounded-2xl shadow-lg">
+              <Image src="/home/about-1.jpg" alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+            </div>
+            <div className="relative aspect-[3/4] w-1/2 overflow-hidden rounded-2xl shadow-lg">
+              <Image src="/home/about-2.jpg" alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+            </div>
+          </div>
+          <div className="order-1 max-w-xl sm:order-2">
             <h2 className="font-serif text-2xl text-[var(--ink)]">About Majestic Cart</h2>
             <p className="mt-3 text-sm leading-relaxed text-[var(--body)]">
               Majestic Cart brings beauty and personal-care products from established brands together in one
@@ -151,13 +223,13 @@ export default async function HomePage() {
               not make products or sell under a brand of our own. Here&apos;s how the business works, and just
               as importantly, what it does not do.
             </p>
+            <Link
+              href="/about"
+              className="mt-6 inline-block shrink-0 rounded-xl border border-[var(--ink)]/15 bg-[var(--surface)] px-6 py-3 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]"
+            >
+              Read our story →
+            </Link>
           </div>
-          <Link
-            href="/about"
-            className="mt-6 inline-block shrink-0 rounded-xl border border-[var(--ink)]/15 bg-[var(--surface)] px-6 py-3 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)] sm:mt-0"
-          >
-            Read our story →
-          </Link>
         </div>
       </section>
 

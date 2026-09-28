@@ -44,7 +44,7 @@ assertNoIncomeClaims(
 export default function AboutPage() {
   return (
     <>
-      <PageHeader title="About Majestic Cart" lead={COPY.lead} />
+      <PageHeader title="About Majestic Cart" lead={COPY.lead} image="/home/hero-2.jpg" />
 
       <div className="mx-auto max-w-4xl px-4 py-10">
         <section>

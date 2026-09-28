@@ -19,7 +19,7 @@ export default async function BlogIndexPage() {
 
   return (
     <>
-      <PageHeader title="Blog" lead={DESCRIPTION} />
+      <PageHeader title="Blog" lead={DESCRIPTION} image="/home/category-makeup.jpg" />
 
       <div className="mx-auto max-w-4xl px-4 py-10">
         {posts.length === 0 ? (

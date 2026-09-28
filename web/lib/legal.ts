@@ -55,19 +55,26 @@ export interface LegalDocument {
   sections: LegalSection[];
 }
 
-/** Filled in from the business's actual registration details before launch. */
+/**
+ * Filled in from the business's Udyam registration certificate (UDYAM-WB-10-0115972)
+ * and West Bengal Profession Tax Enrolment certificate (No. 194001404336), both
+ * dated 28/09/2026. `entityType` and `gstin` are left as placeholders: Udyam
+ * registration confirms the enterprise name and address but not the legal
+ * structure, and neither certificate is a GST registration — get those from
+ * the client before this can go live (see `assertLegalPagesReady`).
+ */
 export const ENTITY = {
   tradeName: 'Majestic Cart',
-  legalName: '[REGISTERED LEGAL NAME]',
+  legalName: 'Majestic Cart',
   entityType: '[Private Limited / LLP / Proprietorship]',
-  cin: '[CIN or registration number]',
+  registrationNumber: 'UDYAM-WB-10-0115972',
   gstin: '[GSTIN]',
-  registeredAddress: '[Registered office address, with PIN code]',
+  registeredAddress: 'Bagdahar Supermarket, Jiaganj, Raichandpur, Lalbag Block, Jiaganj–Fultala Road, Jiaganj, West Bengal 742123',
   supportEmail: 'care@majesticcart.in',
-  supportPhone: '+91 90000 00000',
+  supportPhone: '+91 90916 02559',
   supportHours: 'Monday to Saturday, 10am to 7pm IST',
   grievanceOfficer: {
-    name: '[GRIEVANCE OFFICER NAME]',
+    name: 'Bijoy Saha',
     designation: 'Grievance Officer',
     email: 'grievance@majesticcart.in',
     phone: '[direct number]',

@@ -467,6 +467,15 @@ export class CatalogService implements OnModuleInit {
     }
   }
 
+  /** The tile photo shown for this category on the homepage and its own page. Empty string clears it. */
+  async updateCategoryImage(id: string, imageUrl: string, actorId: string) {
+    const cat = await this.prisma.category.findUnique({ where: { id } });
+    if (!cat) throw new NotFoundException('That category does not exist.');
+    const updated = await this.prisma.category.update({ where: { id }, data: { imageUrl: imageUrl || null } });
+    await this.audit(actorId, 'category.image', { name: cat.name, imageUrl: imageUrl || null });
+    return updated;
+  }
+
   /** Refuses to remove a category that still holds products. */
   async deleteCategory(id: string, actorId: string) {
     const kids = await this.prisma.category.count({ where: { parentId: id } });

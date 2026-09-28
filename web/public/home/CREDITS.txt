@@ -1,0 +1,17 @@
+Homepage photography is stock photography from Pexels (https://www.pexels.com), used
+under the Pexels License (free for commercial and non-commercial use, no attribution
+required, may not be resold unaltered). Chosen to be unbranded — none of these show a
+readable third-party product name, so they don't imply the site stocks that brand.
+Replace with real product/lifestyle photography once the client supplies it.
+
+hero-1.jpg: https://www.pexels.com/photo/29755259/
+category-skin-care.jpg: https://www.pexels.com/photo/36339062/
+category-makeup.jpg: https://www.pexels.com/photo/7290089/
+category-hair-care.jpg: https://www.pexels.com/photo/7428098/
+category-fragrance.jpg: https://www.pexels.com/photo/36389336/
+category-personal-care.jpg: https://www.pexels.com/photo/4202918/
+category-bath-body.jpg: https://www.pexels.com/photo/4055794/
+about-1.jpg: https://www.pexels.com/photo/7321656/
+about-2.jpg: https://www.pexels.com/photo/7256108/
+hero-2.jpg: https://www.pexels.com/photo/3762482/
+hero-3.jpg: https://www.pexels.com/photo/6543142/

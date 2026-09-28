@@ -25,7 +25,7 @@ export default function ContactPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <PageHeader title="Contact us" lead="Real people, reachable during business hours. Every complaint gets an acknowledgement." />
+      <PageHeader title="Contact us" lead="Real people, reachable during business hours. Every complaint gets an acknowledgement." image="/home/about-1.jpg" />
 
       <div className="mx-auto grid max-w-4xl gap-6 px-4 py-10 md:grid-cols-2">
         <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6">
@@ -70,7 +70,7 @@ export default function ContactPage() {
             <div className="font-medium text-[var(--ink)]">{ENTITY.legalName}</div>
             <div className="text-sm">{ENTITY.entityType}</div>
             <div className="text-sm whitespace-pre-line">{ENTITY.registeredAddress}</div>
-            <div className="mt-2 text-sm">CIN {ENTITY.cin} · GSTIN {ENTITY.gstin}</div>
+            <div className="mt-2 text-sm">Udyam Reg. No. {ENTITY.registrationNumber} · GSTIN {ENTITY.gstin}</div>
           </address>
         </section>
       </div>

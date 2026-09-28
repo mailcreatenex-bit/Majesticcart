@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, metaDescription, breadcrumbJsonLd } from '@/lib/seo';
 import { listProducts, listCategories, listBrands, categoryTree } from '@/lib/catalog';
@@ -42,6 +43,11 @@ export default async function ShopPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
+      <div className="relative aspect-[21/9] w-full overflow-hidden sm:aspect-[3/1]">
+        <Image src="/home/about-2.jpg" alt="" fill sizes="100vw" priority className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)]/60 via-transparent to-transparent" />
+      </div>
 
       <div className="mx-auto max-w-6xl px-4 py-10">
         <nav aria-label="Breadcrumb" className="text-xs text-[var(--faint)]">
