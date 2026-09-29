@@ -272,7 +272,10 @@ export const TERMS: LegalDocument = {
     {
       id: 'liability',
       heading: 'Our liability',
-      body: ['[TO BE DRAFTED BY COUNSEL — limitation of liability, indemnity, force majeure.]'],
+      body: [
+        `This site is built and maintained by Cre8nex, a technology services provider engaged by ${ENTITY.legalName} to develop and operate it to the specifications and instructions given by its owners. Cre8nex holds no ownership interest in ${ENTITY.tradeName}, does not determine the products sold, the compensation plan, or any other business or commercial decision reflected on this site, and is not liable for their operation or outcome.`,
+        '[TO BE DRAFTED BY COUNSEL — remaining limitation of liability, indemnity, force majeure.]',
+      ],
       needs: TODO('drafted by a lawyer'),
     },
     {

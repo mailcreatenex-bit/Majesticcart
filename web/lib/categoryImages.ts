@@ -6,20 +6,20 @@
  * for the same category.
  */
 export const CATEGORY_IMAGES: Record<string, string> = {
-  'skin-care': '/home/category-skin-care.jpg',
-  skincare: '/home/category-skin-care.jpg',
-  makeup: '/home/category-makeup.jpg',
-  cosmetics: '/home/category-makeup.jpg',
-  'hair-care': '/home/category-hair-care.jpg',
-  haircare: '/home/category-hair-care.jpg',
-  'personal-care': '/home/category-personal-care.jpg',
-  personalcare: '/home/category-personal-care.jpg',
-  fragrance: '/home/category-fragrance.jpg',
-  perfume: '/home/category-fragrance.jpg',
-  'bath-body': '/home/category-bath-body.jpg',
-  'bath-and-body': '/home/category-bath-body.jpg',
-  'body-care': '/home/category-bath-body.jpg',
-  bodycare: '/home/category-bath-body.jpg',
+  'skin-care': '/home/skin-4.jpg',
+  skincare: '/home/skin-4.jpg',
+  makeup: '/home/editorial-6.jpg',
+  cosmetics: '/home/editorial-6.jpg',
+  'hair-care': '/home/hero-4.jpg',
+  haircare: '/home/hero-4.jpg',
+  'personal-care': '/home/category-personal-care-model.jpg',
+  personalcare: '/home/category-personal-care-model.jpg',
+  fragrance: '/home/editorial-5.jpg',
+  perfume: '/home/editorial-5.jpg',
+  'bath-body': '/home/category-bath-body-model.jpg',
+  'bath-and-body': '/home/category-bath-body-model.jpg',
+  'body-care': '/home/category-bath-body-model.jpg',
+  bodycare: '/home/category-bath-body-model.jpg',
 };
 
 export const categoryImage = (slug: string, imageUrl?: string | null): string | undefined =>

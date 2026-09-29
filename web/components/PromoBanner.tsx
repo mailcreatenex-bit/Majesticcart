@@ -10,6 +10,11 @@ import Image from 'next/image';
  * one photo it was tuned for — the moment the slide rotates to a brighter or
  * differently-composed shot, the same gradient can leave text unreadable.
  * A solid panel is contrast-safe against every slide by construction.
+ *
+ * The panel is a literal black, not a `--ink`-based token: `--ink` flips to
+ * a light cream in the site's dark theme (it means "primary text colour"
+ * there, not "dark surface"), which would turn this panel light and leave
+ * the white heading on it unreadable in exactly that mode.
  */
 export function PromoBanner({
   images,
@@ -26,7 +31,7 @@ export function PromoBanner({
 
   return (
     <section className="relative overflow-hidden">
-      <div className="relative aspect-[4/5] w-full sm:aspect-[16/9] lg:aspect-[3/1]">
+      <div className="relative aspect-video w-full">
         {images.map((src, i) => (
           <div
             key={src}
@@ -63,7 +68,7 @@ export function PromoBanner({
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
         <div className="absolute inset-x-0 bottom-0 flex justify-center p-4 sm:inset-y-0 sm:left-0 sm:right-auto sm:items-center sm:justify-start sm:p-10">
-          <div className="w-full max-w-sm rounded-2xl bg-[var(--ink)]/75 p-5 backdrop-blur-sm sm:p-6">
+          <div className="w-full max-w-sm rounded-2xl bg-black/70 p-5 backdrop-blur-sm sm:p-6">
             <p className="font-serif text-xl leading-snug text-white sm:text-2xl">{heading}</p>
             <Link
               href={ctaHref}

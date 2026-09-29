@@ -86,7 +86,7 @@ test("the client's plan document validates", () => {
   const plan = parsePlan(CLIENT_DEFAULT_PLAN);
   assert.equal(plan.ranks.length, 5);
   assert.equal(plan.ranks[4].name, 'Diamond');
-  assert.equal(plan.ranks[4].selfPctBp, 2500);
+  assert.equal(plan.ranks[4].selfPctBp, 3000);
   assert.equal(plan.joining.minFirstPurchase, bvToCenti(2000));
 });
 
@@ -96,14 +96,15 @@ test('members land in the right rank band', () => {
   assert.equal(rankIndexFor(p, bvToCenti(999)), 0);
   assert.equal(rankIndexFor(p, bvToCenti(1000)), 1); // Bronze, exactly on the line
   assert.equal(rankIndexFor(p, bvToCenti(14_999)), 2); // Silver
-  assert.equal(rankIndexFor(p, bvToCenti(40_000)), 4); // Diamond
+  assert.equal(rankIndexFor(p, bvToCenti(99_999)), 3); // Gold, just under Diamond
+  assert.equal(rankIndexFor(p, bvToCenti(100_000)), 4); // Diamond
   assert.equal(rankIndexFor(p, bvToCenti(999_999)), 4);
 });
 
-test('the default plan commits 45% of BV and is sustainable', () => {
+test('the default plan commits 50% of BV and is sustainable', () => {
   const { totalBp } = payoutExposure(CLIENT_DEFAULT_PLAN);
-  // 25 self + 10 direct + 0 team (gap is carved out of self) + 5 generation + 5 royalty
-  assert.equal(totalBp, percentToBp(45));
+  // 30 self + 10 direct + 0 team (gap is carved out of self) + 5 generation + 5 royalty
+  assert.equal(totalBp, percentToBp(50));
   assert.doesNotThrow(() => assertSustainable(CLIENT_DEFAULT_PLAN));
 });
 
@@ -122,7 +123,7 @@ test('a plan over the payout ceiling is refused', () => {
     ...CLIENT_DEFAULT_PLAN,
     team: { enabled: true, mode: 'FLAT', depth: 8 }, // 5% x 8 levels = 40% on top
   };
-  assert.throws(() => assertSustainable(greedy), /commits 85% of BV/);
+  assert.throws(() => assertSustainable(greedy), /commits 90% of BV/);
 });
 
 test('a rank ladder that does not start at zero is rejected', () => {
@@ -171,21 +172,21 @@ const totalBp = (payouts: { pctBp: number }[]) => payouts.reduce((a, p) => a + p
 
 test('gap mode: each upline earns only the difference above the best rate below', () => {
   const buyer = member({ id: 'buyer', rankIndex: 0 }); // Star 10%
-  const gold = member({ id: 'gold', rankIndex: 3 }); // Gold 22%
-  const dia1 = member({ id: 'dia1', rankIndex: 4 }); // Diamond 25%
+  const gold = member({ id: 'gold', rankIndex: 3 }); // Gold 25%
+  const dia1 = member({ id: 'dia1', rankIndex: 4 }); // Diamond 30%
   const dia2 = member({ id: 'dia2', rankIndex: 4 }); // Diamond, already capped out
 
   const payouts = run(CLIENT_DEFAULT_PLAN, buyer, [gold, dia1, dia2]);
   const team = payouts.filter((p) => p.type === 'TEAM');
 
   assert.equal(payouts.find((p) => p.type === 'SELF')!.pctBp, percentToBp(10));
-  assert.equal(team.find((p) => p.memberId === 'gold')!.pctBp, percentToBp(12)); // 22 - 10
-  assert.equal(team.find((p) => p.memberId === 'dia1')!.pctBp, percentToBp(3)); // 25 - 22
+  assert.equal(team.find((p) => p.memberId === 'gold')!.pctBp, percentToBp(15)); // 25 - 10
+  assert.equal(team.find((p) => p.memberId === 'dia1')!.pctBp, percentToBp(5)); // 30 - 25
   assert.equal(team.find((p) => p.memberId === 'dia2'), undefined); // nothing left to give
 });
 
 test('gap mode never pays out more than the top rank rate, at any depth', () => {
-  const top = percentToBp(25);
+  const top = percentToBp(30);
   const plan: PlanConfig = { ...CLIENT_DEFAULT_PLAN, direct: { ...CLIENT_DEFAULT_PLAN.direct, enabled: false }, generation: { ...CLIENT_DEFAULT_PLAN.generation, enabled: false } };
   for (let trial = 0; trial < 200; trial++) {
     const buyer = member({ rankIndex: Math.floor(Math.random() * 5) });
@@ -270,7 +271,7 @@ test('an orphan buyer with no sponsor still earns self income and nothing breaks
   const payouts = run(CLIENT_DEFAULT_PLAN, member({ rankIndex: 4 }), [], 800, true);
   assert.equal(payouts.length, 1);
   assert.equal(payouts[0].type, 'SELF');
-  assert.equal(payouts[0].pctBp, percentToBp(25));
+  assert.equal(payouts[0].pctBp, percentToBp(30));
 });
 
 test('switching off every component pays nobody', () => {
@@ -292,9 +293,9 @@ test('a real order pays the exact rupee amounts the plan promises', () => {
   const byWho = Object.fromEntries(payouts.map((p) => [`${p.memberId}:${p.type}`, p.amountPaise]));
   assert.equal(byWho['buyer:SELF'], rupeesToPaise(80)); // 10% of 800
   assert.equal(byWho['gold:DIRECT'], rupeesToPaise(80)); // 10% of 800
-  assert.equal(byWho['gold:TEAM'], rupeesToPaise(96)); // 12% gap
-  assert.equal(byWho['dia:TEAM'], rupeesToPaise(24)); // 3% gap
+  assert.equal(byWho['gold:TEAM'], rupeesToPaise(120)); // 15% gap (25 - 10)
+  assert.equal(byWho['dia:TEAM'], rupeesToPaise(40)); // 5% gap (30 - 25)
   assert.equal(byWho['dia:GENERATION'], rupeesToPaise(16)); // 2% generation 1
 
-  assert.equal(sumPaise(payouts.map((p) => p.amountPaise)), rupeesToPaise(296)); // 37% of 800
+  assert.equal(sumPaise(payouts.map((p) => p.amountPaise)), rupeesToPaise(336)); // 42% of 800
 });

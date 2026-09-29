@@ -15,3 +15,15 @@ about-1.jpg: https://www.pexels.com/photo/7321656/
 about-2.jpg: https://www.pexels.com/photo/7256108/
 hero-2.jpg: https://www.pexels.com/photo/3762482/
 hero-3.jpg: https://www.pexels.com/photo/6543142/
+category-personal-care-model.jpg: https://www.pexels.com/photo/13843957/
+category-bath-body-model.jpg: https://www.pexels.com/photo/8891969/
+explore-shop.jpg: https://www.pexels.com/photo/34719524/
+explore-shade-finder.jpg: https://www.pexels.com/photo/30703874/
+explore-wallet.jpg: https://www.pexels.com/photo/34211603/
+explore-join.jpg: https://www.pexels.com/photo/29125196/
+explore-network.jpg: https://www.pexels.com/photo/5370185/
+explore-account.jpg: https://www.pexels.com/photo/33824989/
+explore-faq.jpg: https://www.pexels.com/photo/34265174/
+
+editorial-1.jpg through editorial-9.jpg and skin-1.jpg through skin-4.jpg: supplied by
+the client, generated with Google Gemini (AI-generated, not photographs of real people).

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import { buildMetadata, metaDescription, SITE } from '@/lib/seo';
-import { listProducts, listCategories, listBrands, categoryCopy, categoryTree } from '@/lib/catalog';
+import { listProducts, listCategories, categoryCopy, categoryTree } from '@/lib/catalog';
 import { getTheme } from '@/lib/content';
 import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
@@ -35,22 +35,20 @@ export const metadata: Metadata = buildMetadata({
 });
 
 /** Default rotation when the admin hasn't uploaded hero photos in Theme. */
-const DEFAULT_HERO_IMAGES = ['/home/hero-1.jpg', '/home/hero-2.jpg', '/home/hero-3.jpg', '/home/category-makeup.jpg'];
-const DEFAULT_PROMO_IMAGES = ['/home/hero-3.jpg', '/home/about-1.jpg', '/home/category-fragrance.jpg'];
+const DEFAULT_HERO_IMAGES = ['/home/skin-1.jpg', '/home/skin-2.jpg', '/home/skin-3.jpg', '/home/skin-4.jpg'];
+const DEFAULT_PROMO_IMAGES = ['/home/editorial-8.jpg', '/home/editorial-9.jpg'];
 const DEFAULT_PROMO_HEADING = 'Skin care, makeup and more — picked from brands already on your shelf.';
 
 export default async function HomePage() {
-  const [featured, categories, brands, theme] = await Promise.all([
+  const [featured, categories, theme] = await Promise.all([
     listProducts({ limit: 8 }),
     listCategories(),
-    listBrands(),
     getTheme(),
   ]);
   const hero = theme.hero;
   const heroImages = hero.imageUrls.length > 0 ? hero.imageUrls : DEFAULT_HERO_IMAGES;
   const promo = theme.promoBanner;
   const promoImages = promo.images.length > 0 ? promo.images : DEFAULT_PROMO_IMAGES;
-  const spotlightBrands = brands.filter((b) => b.logoUrl).slice(0, 6);
 
   // WebSite markup enables the sitelinks search box, and ItemList tells a
   // crawler these are products rather than an unlabelled set of links.
@@ -115,7 +113,7 @@ export default async function HomePage() {
       {/* ------------------------------------------------------ categories */}
       <section className="mx-auto max-w-6xl px-4 py-14">
         <h2 className="font-serif text-2xl text-[var(--ink)]">Shop by category</h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categoryTree(categories).map((c) => {
             const image = c.imageUrl || CATEGORY_IMAGES[c.slug];
             return (
@@ -131,7 +129,7 @@ export default async function HomePage() {
                       alt=""
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      className="object-cover transition duration-500 group-hover:scale-105"
+                      className="object-cover object-top transition duration-500 group-hover:scale-105"
                     />
                   )}
                 </div>
@@ -151,35 +149,6 @@ export default async function HomePage() {
       </section>
 
       <MandalaRule />
-
-      {/* ------------------------------------------------------ brand spotlight */}
-      {spotlightBrands.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-14">
-          <div className="flex items-end justify-between">
-            <h2 className="font-serif text-2xl text-[var(--ink)]">Brand spotlight</h2>
-            <Link href="/shop" className="text-sm font-semibold text-[var(--accent)] hover:underline">
-              See all brands
-            </Link>
-          </div>
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {spotlightBrands.map((b, i) => (
-              <Link
-                key={b.slug}
-                href={`/brand/${b.slug}`}
-                className={`group flex flex-col items-center justify-center gap-4 rounded-2xl px-6 py-10 text-center transition hover:shadow-lg hover:shadow-rose-900/10 ${
-                  ['bg-gradient-to-br from-[var(--accent-soft)] to-[var(--surface)]', 'bg-gradient-to-br from-[#f4e9d8] to-[var(--surface)]', 'bg-gradient-to-br from-[#f6e3e6] to-[var(--surface)]'][i % 3]
-                }`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={b.logoUrl as string} alt={b.name} className="h-10 max-w-[70%] object-contain" />
-                <span className="text-sm font-semibold text-[var(--ink)] group-hover:underline">
-                  Shop {b.name} →
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* ------------------------------------------------------ banner */}
       {promo.enabled && (
@@ -212,7 +181,7 @@ export default async function HomePage() {
               <Image src="/home/about-1.jpg" alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
             </div>
             <div className="relative aspect-[3/4] w-1/2 overflow-hidden rounded-2xl shadow-lg">
-              <Image src="/home/about-2.jpg" alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+              <Image src="/home/editorial-3.jpg" alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
             </div>
           </div>
           <div className="order-1 max-w-xl sm:order-2">
@@ -243,24 +212,35 @@ export default async function HomePage() {
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { href: '/shop', title: 'Shop the range', body: 'Makeup, skin care, body care and fragrance — the full catalogue, or browse by category.' },
-            { href: '/shade-finder', title: 'AI shade finder', body: 'Upload a selfie and get shade suggestions from the current makeup range.' },
-            { href: '/wallet', title: 'Wallet & recharge', body: 'Add funds by UPI, track both wallets, or recharge a mobile number instead of buying right now.' },
-            { href: '/join', title: 'Become a member', body: 'Free to register. What it costs, what is expected, and what you are paid on.' },
-            { href: '/network', title: 'Your network', body: 'Your team and your referral link, once you are a member.' },
-            { href: '/account', title: 'Your account', body: 'Rank, volume, payout details and order history in one place.' },
-            { href: '/faq', title: 'Help & policies', body: 'Ordering, delivery, returns and membership — answered plainly, with every policy linked below.' },
+            { href: '/shop', title: 'Shop the range', body: 'Makeup, skin care, body care and fragrance — the full catalogue, or browse by category.', image: '/home/explore-shop.jpg' },
+            { href: '/shade-finder', title: 'AI shade finder', body: 'Upload a selfie and get shade suggestions from the current makeup range.', image: '/home/explore-shade-finder.jpg' },
+            { href: '/wallet', title: 'Wallet & recharge', body: 'Add funds by UPI, track both wallets, or recharge a mobile number instead of buying right now.', image: '/home/explore-wallet.jpg' },
+            { href: '/join', title: 'Become a member', body: 'Free to register. What it costs, what is expected, and what you are paid on.', image: '/home/explore-join.jpg' },
+            { href: '/network', title: 'Your network', body: 'Your team and your referral link, once you are a member.', image: '/home/explore-network.jpg' },
+            { href: '/account', title: 'Your account', body: 'Rank, volume, payout details and order history in one place.', image: '/home/explore-account.jpg' },
+            { href: '/faq', title: 'Help & policies', body: 'Ordering, delivery, returns and membership — answered plainly, with every policy linked below.', image: '/home/explore-faq.jpg' },
           ].map((c) => (
             <Link
               key={c.href}
               href={c.href}
-              className="group rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 transition hover:border-[var(--line-strong)] hover:shadow-lg hover:shadow-rose-900/5"
+              className="group overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition hover:border-[var(--line-strong)] hover:shadow-lg hover:shadow-rose-900/5"
             >
-              <h3 className="font-serif text-lg text-[var(--ink)]">{c.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{c.body}</p>
-              <span className="mt-4 inline-block text-sm font-semibold text-[var(--accent)] group-hover:underline">
-                Open →
-              </span>
+              <div className="relative aspect-[4/3] overflow-hidden bg-[var(--accent-soft)]">
+                <Image
+                  src={c.image}
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-cover object-top transition duration-500 group-hover:scale-105"
+                />
+              </div>
+              <div className="p-6">
+                <h3 className="font-serif text-lg text-[var(--ink)]">{c.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{c.body}</p>
+                <span className="mt-4 inline-block text-sm font-semibold text-[var(--accent)] group-hover:underline">
+                  Open →
+                </span>
+              </div>
             </Link>
           ))}
         </div>

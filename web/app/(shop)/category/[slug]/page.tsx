@@ -108,7 +108,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         const image = categoryImage(slug, category.imageUrl);
         return image ? (
           <div className="relative aspect-[21/9] w-full overflow-hidden sm:aspect-[3/1]">
-            <Image src={image} alt="" fill sizes="100vw" priority className="object-cover" />
+            <Image src={image} alt="" fill sizes="100vw" priority className="object-cover object-top" />
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)]/60 via-transparent to-transparent" />
           </div>
         ) : null;

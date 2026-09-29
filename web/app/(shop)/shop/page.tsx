@@ -45,7 +45,7 @@ export default async function ShopPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="relative aspect-[21/9] w-full overflow-hidden sm:aspect-[3/1]">
-        <Image src="/home/about-2.jpg" alt="" fill sizes="100vw" priority className="object-cover" />
+        <Image src="/home/editorial-1.jpg" alt="" fill sizes="100vw" priority className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)]/60 via-transparent to-transparent" />
       </div>
 
