@@ -31,7 +31,7 @@ export function PromoBanner({
 
   return (
     <section className="relative overflow-hidden">
-      <div className="relative aspect-video w-full">
+      <div className="relative aspect-[4/5] w-full sm:aspect-video">
         {images.map((src, i) => (
           <div
             key={src}
