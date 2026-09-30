@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { StatementView } from '@/components/StatementView';
 import { MemberSkeleton } from '@/components/MemberShell';
+import { getTheme } from '@/lib/content';
 
 export const metadata: Metadata = {
   ...buildMetadata({
@@ -13,10 +14,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function Page() {
+export default async function Page() {
+  const { statementCopy } = await getTheme();
   return (
     <Suspense fallback={<MemberSkeleton />}>
-      <StatementView />
+      <StatementView rejectedNote={statementCopy.rejectedNote} />
     </Suspense>
   );
 }

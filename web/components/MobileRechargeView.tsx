@@ -41,15 +41,17 @@ interface PlanOption {
   data: string;
 }
 
-export function MobileRechargeView() {
+export interface MobileRechargeCopy { successNote: string; processingNote: string; goodToKnow: [string, string, string] }
+
+export function MobileRechargeView({ copy }: { copy: MobileRechargeCopy }) {
   return (
     <MemberShell title="Mobile recharge">
-      {(data, reload) => <Recharge shoppingBalance={data.wallets.shopping} onDone={reload} />}
+      {(data, reload) => <Recharge shoppingBalance={data.wallets.shopping} onDone={reload} copy={copy} />}
     </MemberShell>
   );
 }
 
-function Recharge({ shoppingBalance, onDone }: { shoppingBalance: MoneyView; onDone: () => void }) {
+function Recharge({ shoppingBalance, onDone, copy }: { shoppingBalance: MoneyView; onDone: () => void; copy: MobileRechargeCopy }) {
   const [mobileNumber, setMobileNumber] = useState('');
   const [operator, setOperator] = useState<Operator>('JIO');
   const [amount, setAmount] = useState('');
@@ -126,8 +128,7 @@ function Recharge({ shoppingBalance, onDone }: { shoppingBalance: MoneyView; onD
       <div className="rounded-2xl border border-[#9DC5B0] bg-[#E9F5EF] p-6">
         <h2 className="font-serif text-xl text-[#2C6B52]">Recharge requested</h2>
         <p className="mt-2 text-sm leading-relaxed text-[#2C6B52]">
-          {showMoney(done.amount)} has been held from your shopping wallet to recharge {done.mobileNumber}.
-          It usually completes within a few hours — you&apos;ll get a notification either way.
+          {copy.successNote.replace('{amount}', showMoney(done.amount)).replace('{number}', done.mobileNumber)}
         </p>
         <button type="button" onClick={() => setDone(null)} className="mt-4 text-sm font-semibold text-[#2C6B52] underline">
           Request another →
@@ -256,8 +257,7 @@ function Recharge({ shoppingBalance, onDone }: { shoppingBalance: MoneyView; onD
         </button>
 
         <p className="mt-3 text-center text-xs leading-relaxed text-[var(--muted)]">
-          The amount is held from your shopping wallet the moment you submit. If we can&apos;t complete the
-          recharge, it goes straight back to your wallet.
+          {copy.processingNote}
         </p>
       </section>
 
@@ -265,9 +265,7 @@ function Recharge({ shoppingBalance, onDone }: { shoppingBalance: MoneyView; onD
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--page)] p-5">
           <h2 className="text-sm font-semibold text-[var(--ink)]">Good to know</h2>
           <ul className="mt-2 space-y-2 text-xs leading-relaxed text-[var(--muted)]">
-            <li>This spends your shopping wallet — the same balance an order would spend.</li>
-            <li>₹10 minimum, ₹5,000 maximum per recharge, one in progress at a time.</li>
-            <li>Recharges are fulfilled by our team, usually within a few hours.</li>
+            {copy.goodToKnow.map((item, i) => <li key={i}>{item}</li>)}
           </ul>
         </div>
 

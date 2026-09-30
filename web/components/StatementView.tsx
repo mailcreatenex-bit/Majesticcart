@@ -51,15 +51,15 @@ function recentPeriods(): string[] {
 
 const STATUS_TEXT: Record<string, string> = { PENDING: 'Pending', PAID: 'Paid', REJECTED: 'Rejected (returned to wallet)' };
 
-export function StatementView() {
+export function StatementView({ rejectedNote }: { rejectedNote: string }) {
   return (
     <MemberShell title="Income statement">
-      {() => <Statement />}
+      {() => <Statement rejectedNote={rejectedNote} />}
     </MemberShell>
   );
 }
 
-function Statement() {
+function Statement({ rejectedNote }: { rejectedNote: string }) {
   const periods = useMemo(recentPeriods, []);
   const [period, setPeriod] = useState(periods[0]);
   const [data, setData] = useState<Statement | null>(null);
@@ -180,7 +180,7 @@ function Statement() {
               </div>
             )}
             <p className="mt-3 text-[11px] leading-relaxed text-[var(--faint)]">
-              Rejected withdrawals are returned to your wallet and are not counted in the totals.
+              {rejectedNote}
             </p>
           </section>
 

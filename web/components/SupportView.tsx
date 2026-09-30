@@ -26,15 +26,15 @@ interface Ticket {
 const STATUS_TEXT = { OPEN: 'Open', IN_PROGRESS: 'We are on it', RESOLVED: 'Resolved' } as const;
 const STATUS_STYLE = { OPEN: 'bg-[#FDF3DC] text-[#9A6A08]', IN_PROGRESS: 'bg-[#E6F0FB] text-[#1F5DA8]', RESOLVED: 'bg-[#E8F5EC] text-[#1F7A3D]' } as const;
 
-export function SupportView() {
+export function SupportView({ intro }: { intro: string }) {
   return (
     <MemberShell title="Support">
-      {() => <Support />}
+      {() => <Support intro={intro} />}
     </MemberShell>
   );
 }
 
-function Support() {
+function Support({ intro }: { intro: string }) {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -48,7 +48,7 @@ function Support() {
   return (
     <div className="max-w-2xl space-y-6">
       <p className="text-sm leading-relaxed text-[var(--body)]">
-        Ask a question or raise a complaint. We acknowledge every ticket within 48 hours and aim to resolve it within a month.
+        {intro}
       </p>
       {error && <p role="alert" className="rounded-xl bg-[#FDECEA] px-4 py-3 text-sm text-[#C0392B]">{error}</p>}
 

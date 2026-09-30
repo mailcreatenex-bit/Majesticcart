@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { WithdrawView } from '@/components/WithdrawView';
 import { MemberSkeleton } from '@/components/MemberShell';
+import { getTheme } from '@/lib/content';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Withdraw income'),
@@ -10,10 +11,11 @@ export const metadata: Metadata = buildMetadata({
   pathname: '/wallet/withdraw',
 });
 
-export default function Page() {
+export default async function Page() {
+  const { withdrawCopy } = await getTheme();
   return (
     <Suspense fallback={<MemberSkeleton />}>
-      <WithdrawView />
+      <WithdrawView copy={withdrawCopy} />
     </Suspense>
   );
 }

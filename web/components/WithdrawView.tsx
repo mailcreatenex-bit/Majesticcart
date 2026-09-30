@@ -40,17 +40,19 @@ interface PayoutSummary {
   accountLast4: string | null;
 }
 
-export function WithdrawView() {
+export interface WithdrawCopy { successNote: string; processingNote: string; goodToKnow: [string, string, string] }
+
+export function WithdrawView({ copy }: { copy: WithdrawCopy }) {
   return (
     <MemberShell title="Withdraw income">
       {(data, reload) => (
-        <Withdraw incomeBalance={data.wallets.income} onDone={reload} />
+        <Withdraw incomeBalance={data.wallets.income} onDone={reload} copy={copy} />
       )}
     </MemberShell>
   );
 }
 
-function Withdraw({ incomeBalance, onDone }: { incomeBalance: MoneyView; onDone: () => void }) {
+function Withdraw({ incomeBalance, onDone, copy }: { incomeBalance: MoneyView; onDone: () => void; copy: WithdrawCopy }) {
   const [amount, setAmount] = useState('');
   const [quote, setQuote] = useState<Quote | null>(null);
   const [payout, setPayout] = useState<PayoutSummary | null>(null);
@@ -122,8 +124,7 @@ function Withdraw({ incomeBalance, onDone }: { incomeBalance: MoneyView; onDone:
       <div className="rounded-2xl border border-[#9DC5B0] bg-[#E9F5EF] p-6">
         <h2 className="font-serif text-xl text-[#2C6B52]">Withdrawal requested</h2>
         <p className="mt-2 text-sm leading-relaxed text-[#2C6B52]">
-          {showMoney(done)} will be transferred to your account. The amount has been held from
-          your income wallet already, so it cannot be spent twice while the transfer is processed.
+          {copy.successNote.replace('{amount}', showMoney(done))}
         </p>
         <Link href="/wallet?kind=income" className="mt-4 inline-block text-sm font-semibold text-[#2C6B52] underline">
           See your statement →
@@ -200,8 +201,7 @@ function Withdraw({ incomeBalance, onDone }: { incomeBalance: MoneyView; onDone:
         </button>
 
         <p className="mt-3 text-center text-xs leading-relaxed text-[var(--muted)]">
-          Withdrawals are checked and paid by our team. The amount is held from your wallet as soon
-          as you request it, so it cannot be spent twice while it is processed.
+          {copy.processingNote}
         </p>
       </section>
 
@@ -243,9 +243,7 @@ function Withdraw({ incomeBalance, onDone }: { incomeBalance: MoneyView; onDone:
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--page)] p-5">
           <h2 className="text-sm font-semibold text-[var(--ink)]">Good to know</h2>
           <ul className="mt-2 space-y-2 text-xs leading-relaxed text-[var(--muted)]">
-            <li>Payouts go only to an account in your own name.</li>
-            <li>Your shopping wallet cannot be withdrawn — it buys products only.</li>
-            <li>TDS is deducted where it applies, and shown on your statement.</li>
+            {copy.goodToKnow.map((item, i) => <li key={i}>{item}</li>)}
           </ul>
         </div>
       </aside>

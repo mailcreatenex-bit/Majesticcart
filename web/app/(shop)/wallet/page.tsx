@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { WalletView } from '@/components/WalletView';
 import { MemberSkeleton } from '@/components/MemberShell';
+import { getTheme } from '@/lib/content';
 
 /**
  * `noindex, nofollow, nocache` via buildMetadata, and on the service worker's
@@ -15,12 +16,13 @@ export const metadata: Metadata = buildMetadata({
   pathname: '/wallet',
 });
 
-export default function Page() {
+export default async function Page() {
+  const { walletCopy } = await getTheme();
   return (
     // useSearchParams needs a Suspense boundary, or the whole route opts out
     // of static rendering and the shell stops being served from the edge.
     <Suspense fallback={<MemberSkeleton />}>
-      <WalletView />
+      <WalletView copy={walletCopy} />
     </Suspense>
   );
 }

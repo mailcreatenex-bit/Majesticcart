@@ -43,7 +43,9 @@ interface Statement {
   nextCursor: string | null;
 }
 
-export function WalletView() {
+export interface WalletCopy { shoppingWalletBody: string; incomeWalletBody: string; shoppingEmptyBody: string; incomeEmptyBody: string }
+
+export function WalletView({ copy }: { copy: WalletCopy }) {
   const params = useSearchParams();
   const kind = params.get('kind') === 'income' ? 'INCOME' : 'SHOPPING';
 
@@ -55,7 +57,7 @@ export function WalletView() {
             <WalletCard
               title="Shopping wallet"
               balance={showMoney(data.wallets.shopping)}
-              body="Funded by UPI payments you submit for approval. Spends on orders — or on a mobile recharge, if you'd rather not shop right now. Cannot be withdrawn as cash."
+              body={copy.shoppingWalletBody}
               action={{ href: '/recharge', label: 'Add money' }}
               secondaryAction={{ href: '/wallet/mobile-recharge', label: 'Recharge mobile instead' }}
               active={kind === 'SHOPPING'}
@@ -64,14 +66,14 @@ export function WalletView() {
             <WalletCard
               title="Income wallet"
               balance={showMoney(data.wallets.income)}
-              body="Earned on orders that have been delivered. Withdraws to your bank account, or moves into your shopping wallet."
+              body={copy.incomeWalletBody}
               action={{ href: '/wallet/withdraw', label: 'Withdraw' }}
               active={kind === 'INCOME'}
               href="/wallet?kind=income"
             />
           </div>
 
-          <Statement kind={kind} />
+          <Statement kind={kind} copy={copy} />
         </div>
       )}
     </MemberShell>
@@ -117,7 +119,7 @@ function WalletCard({
   );
 }
 
-function Statement({ kind }: { kind: 'SHOPPING' | 'INCOME' }) {
+function Statement({ kind, copy }: { kind: 'SHOPPING' | 'INCOME'; copy: WalletCopy }) {
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,11 +180,7 @@ function Statement({ kind }: { kind: 'SHOPPING' | 'INCOME' }) {
     return (
       <EmptyState
         title="Nothing here yet"
-        body={
-          kind === 'SHOPPING'
-            ? 'Once a recharge is approved it will appear here, along with every order it pays for.'
-            : 'Income appears here once an order you or your team placed has been delivered.'
-        }
+        body={kind === 'SHOPPING' ? copy.shoppingEmptyBody : copy.incomeEmptyBody}
         action={
           kind === 'SHOPPING' ? (
             <Link href="/recharge" className="rounded-xl bg-[var(--ink)] px-6 py-3 text-sm font-semibold text-[var(--gold-pale)]">

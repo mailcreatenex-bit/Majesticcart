@@ -20,7 +20,9 @@ const MAX_DIMENSION = 640;
 interface ShadeMatch { name: string; slug: string; reason: string }
 interface ShadeResult { summary: string; matches: ShadeMatch[] }
 
-export function ShadeFinderView() {
+export interface ShadeFinderCopy { intro: string; privacyNote: string }
+
+export function ShadeFinderView({ copy }: { copy: ShadeFinderCopy }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [payload, setPayload] = useState<{ base64: string; mimeType: string } | null>(null);
@@ -69,8 +71,7 @@ export function ShadeFinderView() {
         <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">AI shade finder</p>
         <h1 className="mt-2 font-serif text-2xl text-[var(--ink)]">Find your shade</h1>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          A clear photo in good light — front-facing, no filter — works best. Your photo is
-          analysed and then discarded; it is never saved.
+          {copy.intro} {copy.privacyNote}
         </p>
       </div>
 

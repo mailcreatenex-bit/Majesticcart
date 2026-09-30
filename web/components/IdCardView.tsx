@@ -24,10 +24,12 @@ import { useT } from './LocaleProvider';
 
 const PHOTO_SIZE = 720;
 
-export function IdCardView() {
+export interface IdCardCopy { welcome: string; tagline: string }
+
+export function IdCardView({ copy }: { copy: IdCardCopy }) {
   return (
     <MemberShell title="Your ID card">
-      {(data, reload) => <IdCard data={data} reload={reload} />}
+      {(data, reload) => <IdCard data={data} reload={reload} copy={copy} />}
     </MemberShell>
   );
 }
@@ -68,7 +70,7 @@ async function toDataUrl(url: string): Promise<string | null> {
   }
 }
 
-function IdCard({ data, reload }: { data: MemberSummary; reload: () => void }) {
+function IdCard({ data, reload, copy }: { data: MemberSummary; reload: () => void; copy: IdCardCopy }) {
   const params = useSearchParams();
   const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -202,7 +204,7 @@ function IdCard({ data, reload }: { data: MemberSummary; reload: () => void }) {
       <aside className="space-y-5 print:hidden">
         {welcome && !data.member.photoUrl && (
           <p className="rounded-xl border border-[var(--notice-border)] bg-[var(--notice-bg)] p-4 text-sm text-[var(--body)]">
-            Welcome to Majestic Cart! Add your photo below and your ID card is ready to print.
+            {copy.welcome}
           </p>
         )}
 
@@ -221,7 +223,7 @@ function IdCard({ data, reload }: { data: MemberSummary; reload: () => void }) {
         {variants.length > 1 && (
           <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
             <h2 className="font-serif text-lg text-[var(--ink)]">{t('idcard.design')}</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">Unlocked by what you have achieved.</p>
+            <p className="mt-1 text-sm text-[var(--muted)]">{copy.tagline}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {variants.map((v) => {
                 const on = v.variant === variant;

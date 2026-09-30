@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { MobileRechargeView } from '@/components/MobileRechargeView';
 import { MemberSkeleton } from '@/components/MemberShell';
+import { getTheme } from '@/lib/content';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Mobile recharge'),
@@ -10,10 +11,11 @@ export const metadata: Metadata = buildMetadata({
   pathname: '/wallet/mobile-recharge',
 });
 
-export default function Page() {
+export default async function Page() {
+  const { mobileRechargeCopy } = await getTheme();
   return (
     <Suspense fallback={<MemberSkeleton />}>
-      <MobileRechargeView />
+      <MobileRechargeView copy={mobileRechargeCopy} />
     </Suspense>
   );
 }

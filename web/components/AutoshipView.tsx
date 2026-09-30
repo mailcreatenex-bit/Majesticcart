@@ -30,10 +30,12 @@ interface Plan {
 }
 interface Line { productId: string; quantity: number }
 
-export function AutoshipView() {
+export interface AutoshipCopy { intro: string; deliveryNote: string }
+
+export function AutoshipView({ copy }: { copy: AutoshipCopy }) {
   return (
     <MemberShell title="Autoship">
-      {(data, reload) => <Autoship data={data} reload={reload} />}
+      {(data, reload) => <Autoship data={data} reload={reload} copy={copy} />}
     </MemberShell>
   );
 }
@@ -41,7 +43,7 @@ export function AutoshipView() {
 const DAYS = Array.from({ length: 28 }, (_, i) => i + 1);
 const ordinal = (n: number) => `${n}${['th', 'st', 'nd', 'rd'][(n % 100 >> 3) ^ 1 && n % 10 < 4 ? n % 10 : 0]}`;
 
-function Autoship({ data }: { data: MemberSummary; reload: () => void }) {
+function Autoship({ data, copy }: { data: MemberSummary; reload: () => void; copy: AutoshipCopy }) {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [plan, setPlan] = useState<Plan | null | undefined>(undefined);
   const [lines, setLines] = useState<Line[]>([]);
@@ -104,9 +106,7 @@ function Autoship({ data }: { data: MemberSummary; reload: () => void }) {
   return (
     <div className="max-w-2xl space-y-6">
       <p className="text-sm leading-relaxed text-[var(--body)]">
-        Pick what you buy every month and the day you want it. On that day the order is placed from your
-        shopping wallet, exactly like an order you place yourself - so it counts toward your monthly target
-        {target ? ` of ${target.display}` : ''}. If your wallet is short, nothing is charged and we let you know.
+        {copy.intro.replace('{targetClause}', target ? ` of ${target.display}` : '')}
       </p>
 
       {error && <p role="alert" className="rounded-xl bg-[#FDECEA] px-4 py-3 text-sm text-[#C0392B]">{error}</p>}
@@ -206,7 +206,7 @@ function Autoship({ data }: { data: MemberSummary; reload: () => void }) {
             {plan && <button type="button" onClick={() => { setEditing(false); void load(); }} className="rounded-xl border border-[var(--line-strong)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]">Cancel</button>}
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-[var(--faint)]">
-            Delivered to your saved address. Prices include GST; the order is priced on the day. Add money to your shopping wallet before the day so the order can be paid.
+            {copy.deliveryNote}
           </p>
         </section>
       )}

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { IdCardView } from '@/components/IdCardView';
 import { MemberSkeleton } from '@/components/MemberShell';
+import { getTheme } from '@/lib/content';
 
 export const metadata: Metadata = {
   ...buildMetadata({
@@ -14,10 +15,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function Page() {
+export default async function Page() {
+  const { idCardCopy } = await getTheme();
   return (
     <Suspense fallback={<MemberSkeleton />}>
-      <IdCardView />
+      <IdCardView copy={idCardCopy} />
     </Suspense>
   );
 }

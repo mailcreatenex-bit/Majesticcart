@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { AccountView } from '@/components/AccountView';
 import { MemberSkeleton } from '@/components/MemberShell';
+import { getTheme } from '@/lib/content';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Your account'),
@@ -10,10 +11,11 @@ export const metadata: Metadata = buildMetadata({
   pathname: '/account',
 });
 
-export default function Page() {
+export default async function Page() {
+  const { accountCopy } = await getTheme();
   return (
     <Suspense fallback={<MemberSkeleton />}>
-      <AccountView />
+      <AccountView copy={accountCopy} />
     </Suspense>
   );
 }

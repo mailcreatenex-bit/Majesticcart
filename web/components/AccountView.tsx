@@ -27,15 +27,17 @@ interface PayoutSummary {
   ifsc: string | null;
 }
 
-export function AccountView() {
+export interface AccountCopy { payoutNote: string; payoutDisclaimer: string }
+
+export function AccountView({ copy }: { copy: AccountCopy }) {
   return (
     <MemberShell title="Your account">
-      {(data, reload) => <Overview data={data} reload={reload} />}
+      {(data, reload) => <Overview data={data} reload={reload} copy={copy} />}
     </MemberShell>
   );
 }
 
-function Overview({ data, reload }: { data: MemberSummary; reload: () => void }) {
+function Overview({ data, reload, copy }: { data: MemberSummary; reload: () => void; copy: AccountCopy }) {
   return (
     <div className="space-y-6">
       <RankPanel rank={data.rank} joinedLabel={formatDate(data.member.joinedAt)} />
@@ -78,7 +80,7 @@ function Overview({ data, reload }: { data: MemberSummary; reload: () => void })
       )}
 
       <ContactDetails data={data} />
-      <PayoutDetails onSaved={reload} />
+      <PayoutDetails onSaved={reload} copy={copy} />
     </div>
   );
 }
@@ -124,7 +126,7 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
   );
 }
 
-function PayoutDetails({ onSaved }: { onSaved: () => void }) {
+function PayoutDetails({ onSaved, copy }: { onSaved: () => void; copy: AccountCopy }) {
   const [payout, setPayout] = useState<PayoutSummary | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ upi: '', holder: '', bank: '', account: '', ifsc: '' });
@@ -165,7 +167,7 @@ function PayoutDetails({ onSaved }: { onSaved: () => void }) {
         <div>
           <h2 className="font-serif text-lg text-[var(--ink)]">Payout details</h2>
           <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-            Where income withdrawals are sent. Must be an account in your own name.
+            {copy.payoutNote}
           </p>
         </div>
         {!editing && (
@@ -239,8 +241,7 @@ function PayoutDetails({ onSaved }: { onSaved: () => void }) {
 
           {/* Said before they submit, not after it is rejected. */}
           <p className="text-xs leading-relaxed text-[var(--muted)]">
-            Payouts are only made to an account in the member&apos;s own name. An account that already
-            belongs to another member will be refused.
+            {copy.payoutDisclaimer}
           </p>
         </div>
       )}
