@@ -49,6 +49,34 @@
   /* pending/waiting callouts ("a request is being checked") */
   --notice-bg: #FDF6E7;
   --notice-border: rgba(228, 179, 99, 0.5);
+
+  /*
+   * Playful accents.
+   *
+   * A second, louder palette used only for badges, tags and the small offer
+   * tiles that want a Purplle-style pop of colour — never for chrome (header,
+   * footer, body text), which stays on the ink/gold/rose system above. Kept
+   * as its own named set rather than random hexes in components so the same
+   * five colours repeat everywhere they're used instead of drifting.
+   */
+  --play-coral: #FF6F5E;
+  --play-coral-soft: #FFE8E4;
+  --play-teal: #12A594;
+  --play-teal-soft: #DFF7F2;
+  --play-violet: #8B5CF6;
+  --play-violet-soft: #EFE7FE;
+  --play-lime: #7CB518;
+  --play-lime-soft: #EAF6D6;
+  --play-pink: #EC4899;
+  --play-pink-soft: #FCE4F1;
+}
+
+:root[data-theme='night'] {
+  --play-coral-soft: #4A241F;
+  --play-teal-soft: #123B36;
+  --play-violet-soft: #2E2450;
+  --play-lime-soft: #2B3512;
+  --play-pink-soft: #4A1F38;
 }
 
 /**
@@ -195,6 +223,28 @@
   .brand-logo { opacity: 0.9; transition: opacity 250ms, transform 250ms; }
   .brand-chip:hover .brand-logo, .brand-chip:focus-visible .brand-logo { opacity: 1; transform: scale(1.08); }
 }
+
+/**
+ * Playful chips and tiles: five colour "slots" cycled by index (see
+ * lib/playColors.ts) so a grid of categories, brands or tags reads as
+ * deliberately colourful rather than randomly tinted.
+ *
+ * Kept OUTSIDE `@layer components`: the class names are assembled at
+ * runtime (`chip-play-${index}`), so the literal strings never appear in
+ * any file Tailwind's content scanner reads, and anything inside `@layer`
+ * that the scanner can't see gets tree-shaken out of the build.
+ */
+.chip-play-0 { background: var(--play-coral-soft); color: var(--play-coral); }
+.chip-play-1 { background: var(--play-teal-soft); color: var(--play-teal); }
+.chip-play-2 { background: var(--play-violet-soft); color: var(--play-violet); }
+.chip-play-3 { background: var(--play-lime-soft); color: var(--play-lime); }
+.chip-play-4 { background: var(--play-pink-soft); color: var(--play-pink); }
+
+.tile-play-0 { background: linear-gradient(140deg, var(--play-coral-soft), var(--surface)); }
+.tile-play-1 { background: linear-gradient(140deg, var(--play-teal-soft), var(--surface)); }
+.tile-play-2 { background: linear-gradient(140deg, var(--play-violet-soft), var(--surface)); }
+.tile-play-3 { background: linear-gradient(140deg, var(--play-lime-soft), var(--surface)); }
+.tile-play-4 { background: linear-gradient(140deg, var(--play-pink-soft), var(--surface)); }
 
 /* Printing the ID card: only the card, at ID-card size, with no page chrome. */
 @media print {

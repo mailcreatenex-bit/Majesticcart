@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { CatalogProduct } from '@/lib/catalog';
 import { discountPercent, showMoney, showVolume } from '@/lib/money';
+import { playChipClass } from '@/lib/playColors';
 import { CardAddToBag } from './CardAddToBag';
 
 /**
@@ -38,8 +39,13 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
         )}
 
         {off !== null && (
-          <span className="absolute left-3 top-3 rounded-full bg-[var(--ink)] px-2.5 py-1 text-[11px] font-semibold text-[var(--gold-pale)]">
+          <span className="absolute left-3 top-3 rounded-full bg-[var(--play-coral)] px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
             {off}% off
+          </span>
+        )}
+        {off !== null && off >= 20 && (
+          <span className="absolute right-3 top-3 rounded-full bg-[var(--play-violet)] px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
+            Hot deal
           </span>
         )}
         {!product.inStock && (
@@ -50,9 +56,14 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
       </div>
 
       <div className="p-4 pb-3">
-        <p className="text-[11px] uppercase tracking-wider text-[var(--faint)]">
-          {product.brand ? `${product.brand} · ${product.category}` : product.category}
-        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${playChipClass(product.category)}`}>
+            {product.category}
+          </span>
+          {product.brand && (
+            <span className="text-[11px] uppercase tracking-wider text-[var(--faint)]">{product.brand}</span>
+          )}
+        </div>
         {/* line-clamp keeps a long name from pushing the price out of alignment
             across the row. */}
         <h3 className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-[var(--ink)]">
