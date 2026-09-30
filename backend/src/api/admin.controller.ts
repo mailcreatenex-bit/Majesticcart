@@ -777,10 +777,17 @@ const ThemeSettingSchema = z.object({
   }).default({ images: [] }),
   homeSections: z.object({
     categoriesBg: z.enum(PLAY_COLORS),
+    categoriesHeading: z.string().trim().max(60),
     featuredBg: z.enum(PLAY_COLORS),
+    featuredHeading: z.string().trim().max(60),
     aboutBg: z.enum(PLAY_COLORS),
     exploreBg: z.enum(PLAY_COLORS),
+    exploreHeading: z.string().trim().max(60),
+    exploreSubtitle: z.string().trim().max(200),
   }),
+  trustRibbon: z.tuple([
+    z.string().trim().max(40), z.string().trim().max(40), z.string().trim().max(40),
+  ]),
   trustBadges: z.tuple([TitleBodySchema, TitleBodySchema, TitleBodySchema]),
   pinkBadges: z.tuple([TitleBodySchema, TitleBodySchema, TitleBodySchema]),
   exploreTiles: z.tuple([TitleBodySchema, TitleBodySchema, TitleBodySchema, TitleBodySchema, TitleBodySchema, TitleBodySchema, TitleBodySchema]),

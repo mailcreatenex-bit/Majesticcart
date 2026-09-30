@@ -163,7 +163,7 @@ export default async function HomePage() {
       {/* ------------------------------------------------------ categories */}
       <section className={`${SECTION_BG[sections.categoriesBg]} px-4 py-14`}>
         <div className="mx-auto max-w-6xl">
-        <h2 className="font-serif text-2xl text-[var(--ink)]">Shop by category</h2>
+        <h2 className="font-serif text-2xl text-[var(--ink)]">{sections.categoriesHeading}</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categoryTree(categories).map((c) => {
             const image = c.imageUrl || CATEGORY_IMAGES[c.slug];
@@ -206,9 +206,7 @@ export default async function HomePage() {
       {/* ---------------------------------------------------- trust ribbon */}
       <div className="bg-[var(--play-pink)] px-4 py-3">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-1 text-xs font-semibold uppercase tracking-wide text-white sm:text-sm">
-          <span>Secure wallet payments</span>
-          <span>Authentic brands only</span>
-          <span>Delivered pan-India</span>
+          {theme.trustRibbon.map((label) => <span key={label}>{label}</span>)}
         </div>
       </div>
 
@@ -228,7 +226,7 @@ export default async function HomePage() {
       <section className={`${SECTION_BG[sections.featuredBg]} px-4 py-16`}>
         <div className="mx-auto max-w-6xl">
         <div className="flex items-end justify-between">
-          <h2 className="font-serif text-2xl text-[var(--ink)]">New this season</h2>
+          <h2 className="font-serif text-2xl text-[var(--ink)]">{sections.featuredHeading}</h2>
           <Link href="/shop" className="text-sm font-semibold text-[var(--accent)] hover:underline">
             See all
           </Link>
@@ -268,10 +266,8 @@ export default async function HomePage() {
       {/* ----------------------------------------------------- explore */}
       <section className={`${SECTION_BG[sections.exploreBg]} px-4 py-14`}>
         <div className="mx-auto max-w-6xl">
-        <h2 className="font-serif text-2xl text-[var(--ink)]">Explore Majestic Cart</h2>
-        <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">
-          A quick map of the site — everything below has its own page with more detail.
-        </p>
+        <h2 className="font-serif text-2xl text-[var(--ink)]">{sections.exploreHeading}</h2>
+        <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">{sections.exploreSubtitle}</p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* Only the words and photo of each tile are theme-editable — the
               href points at a real app route, so it stays fixed in code

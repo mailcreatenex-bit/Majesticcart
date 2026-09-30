@@ -98,13 +98,24 @@ export interface ThemeSettingValue {
   promoStrip: {
     images: string[];
   };
-  /** One of the site's five-then-seven "playful" accent colours (see web/app/globals.css) — a closed set rather than a free hex field, so a section always lands on a colour the rest of the palette already uses. */
+  /**
+   * One of the site's five-then-seven "playful" accent colours (see
+   * web/app/globals.css) — a closed set rather than a free hex field, so a
+   * section always lands on a colour the rest of the palette already uses —
+   * plus each section's own heading text.
+   */
   homeSections: {
     categoriesBg: PlayColorKey;
+    categoriesHeading: string;
     featuredBg: PlayColorKey;
+    featuredHeading: string;
     aboutBg: PlayColorKey;
     exploreBg: PlayColorKey;
+    exploreHeading: string;
+    exploreSubtitle: string;
   };
+  /** The three short labels on the solid-colour strip just under the category grid. Plain marketing copy, not a claim about the business, so it carries no income-claim risk. */
+  trustRibbon: [string, string, string];
   /** The three cards on the dark "how this works" strip near the footer. Icon and colour per card are fixed in the frontend; only the words are editable here. */
   trustBadges: [TitleBody, TitleBody, TitleBody];
   /** The pink circular badges above the fraud notice. Only the first three are editable — the fourth always shows the catalogue's live brand/product counts, never a typed-in number. */
@@ -142,8 +153,16 @@ const DEFAULT_PROMO_STRIP: ThemeSettingValue['promoStrip'] = {
 };
 
 const DEFAULT_HOME_SECTIONS: ThemeSettingValue['homeSections'] = {
-  categoriesBg: 'pink', featuredBg: 'yellow', aboutBg: 'violet', exploreBg: 'sky',
+  categoriesBg: 'pink', categoriesHeading: 'Shop by category',
+  featuredBg: 'yellow', featuredHeading: 'New this season',
+  aboutBg: 'violet',
+  exploreBg: 'sky', exploreHeading: 'Explore Majestic Cart',
+  exploreSubtitle: 'A quick map of the site — everything below has its own page with more detail.',
 };
+
+const DEFAULT_TRUST_RIBBON: ThemeSettingValue['trustRibbon'] = [
+  'Secure wallet payments', 'Authentic brands only', 'Delivered pan-India',
+];
 
 const DEFAULT_TRUST_BADGES: ThemeSettingValue['trustBadges'] = [
   { title: 'Brands you already know', body: 'Everything we sell is made by other established beauty brands. We do not manufacture products or sell under our own brand name.' },
@@ -190,6 +209,7 @@ const DEFAULT_THEME: ThemeSettingValue = {
   promoBanner: DEFAULT_PROMO_BANNER,
   promoStrip: DEFAULT_PROMO_STRIP,
   homeSections: DEFAULT_HOME_SECTIONS,
+  trustRibbon: DEFAULT_TRUST_RIBBON,
   trustBadges: DEFAULT_TRUST_BADGES,
   pinkBadges: DEFAULT_PINK_BADGES,
   exploreTiles: DEFAULT_EXPLORE_TILES,
@@ -322,6 +342,7 @@ export class SettingsService {
       promoBanner: { ...DEFAULT_PROMO_BANNER, ...stored?.promoBanner },
       promoStrip: { ...DEFAULT_PROMO_STRIP, ...stored?.promoStrip },
       homeSections: { ...DEFAULT_HOME_SECTIONS, ...stored?.homeSections },
+      trustRibbon: DEFAULT_TRUST_RIBBON.map((d, i) => stored?.trustRibbon?.[i] ?? d) as ThemeSettingValue['trustRibbon'],
       // Fixed-length tuples: a saved array shorter than the default (e.g. from
       // a settings row written before a tile was added) would otherwise leave
       // `undefined` holes instead of falling back per-item.

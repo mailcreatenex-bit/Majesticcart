@@ -27,7 +27,13 @@ interface ThemeValue {
     enabled: boolean; images: string[]; heading: string; ctaLabel: string; ctaHref: string;
   };
   promoStrip: { images: string[] };
-  homeSections: { categoriesBg: PlayColorKey; featuredBg: PlayColorKey; aboutBg: PlayColorKey; exploreBg: PlayColorKey };
+  homeSections: {
+    categoriesBg: PlayColorKey; categoriesHeading: string;
+    featuredBg: PlayColorKey; featuredHeading: string;
+    aboutBg: PlayColorKey;
+    exploreBg: PlayColorKey; exploreHeading: string; exploreSubtitle: string;
+  };
+  trustRibbon: [string, string, string];
   trustBadges: [TitleBody, TitleBody, TitleBody];
   pinkBadges: [TitleBody, TitleBody, TitleBody];
   exploreTiles: [TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody];
@@ -37,7 +43,13 @@ interface ThemeValue {
 const NO_BANNER: ThemeValue['announcement'] = { enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '' };
 const NO_PROMO: ThemeValue['promoBanner'] = { enabled: true, images: [], heading: '', ctaLabel: '', ctaHref: '/shop' };
 const NO_STRIP: ThemeValue['promoStrip'] = { images: [] };
-const NO_SECTIONS: ThemeValue['homeSections'] = { categoriesBg: 'pink', featuredBg: 'yellow', aboutBg: 'violet', exploreBg: 'sky' };
+const NO_SECTIONS: ThemeValue['homeSections'] = {
+  categoriesBg: 'pink', categoriesHeading: '',
+  featuredBg: 'yellow', featuredHeading: '',
+  aboutBg: 'violet',
+  exploreBg: 'sky', exploreHeading: '', exploreSubtitle: '',
+};
+const NO_RIBBON: ThemeValue['trustRibbon'] = ['', '', ''];
 const EMPTY_TB: TitleBody = { title: '', body: '', image: '' };
 const NO_TRUST: ThemeValue['trustBadges'] = [EMPTY_TB, EMPTY_TB, EMPTY_TB];
 const NO_PINK: ThemeValue['pinkBadges'] = [EMPTY_TB, EMPTY_TB, EMPTY_TB];
@@ -71,6 +83,7 @@ function Theme() {
         promoBanner: { ...NO_PROMO, ...v.promoBanner },
         promoStrip: { ...NO_STRIP, ...v.promoStrip },
         homeSections: { ...NO_SECTIONS, ...v.homeSections },
+        trustRibbon: NO_RIBBON.map((d, i) => v.trustRibbon?.[i] ?? d) as ThemeValue['trustRibbon'],
         trustBadges: mergeTuple(NO_TRUST, v.trustBadges),
         pinkBadges: mergeTuple(NO_PINK, v.pinkBadges),
         exploreTiles: mergeTuple(NO_EXPLORE, v.exploreTiles),
@@ -92,6 +105,11 @@ function Theme() {
     const next = [...value[field]] as ThemeValue[F];
     next[i] = { ...next[i], ...patch };
     setValue({ ...value, [field]: next });
+  };
+  const setRibbon = (i: number, v: string) => {
+    const next = [...value.trustRibbon] as ThemeValue['trustRibbon'];
+    next[i] = v;
+    setValue({ ...value, trustRibbon: next });
   };
 
   const save = async () => {
@@ -189,14 +207,27 @@ function Theme() {
         <p className="mt-1 text-xs text-neutral-500">Up to four. Shown in one row on desktop, two rows of two on phones.</p>
       </Panel>
 
-      <Panel title="Homepage section colours">
+      <Panel title="Homepage sections: headings and colours">
         <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Category grid heading" value={value.homeSections.categoriesHeading} onChange={(v) => setSection('categoriesHeading', v)} />
           <ColorSelect label="Category grid background" value={value.homeSections.categoriesBg} onChange={(v) => setSection('categoriesBg', v)} />
+          <Field label={'"New this season" heading'} value={value.homeSections.featuredHeading} onChange={(v) => setSection('featuredHeading', v)} />
           <ColorSelect label={'"New this season" background'} value={value.homeSections.featuredBg} onChange={(v) => setSection('featuredBg', v)} />
           <ColorSelect label="About-us background" value={value.homeSections.aboutBg} onChange={(v) => setSection('aboutBg', v)} />
+          <div />
+          <Field label="Explore-tiles heading" value={value.homeSections.exploreHeading} onChange={(v) => setSection('exploreHeading', v)} />
           <ColorSelect label="Explore-tiles background" value={value.homeSections.exploreBg} onChange={(v) => setSection('exploreBg', v)} />
+          <Field label="Explore-tiles subheading" value={value.homeSections.exploreSubtitle} onChange={(v) => setSection('exploreSubtitle', v)} span2 />
         </div>
-        <p className="mt-3 text-xs text-neutral-500">Picked from the site's own playful accent palette, so a section always lands on a colour the rest of the page already uses.</p>
+        <p className="mt-3 text-xs text-neutral-500">Colours are picked from the site's own playful accent palette, so a section always lands on one the rest of the page already uses.</p>
+      </Panel>
+
+      <Panel title="Trust ribbon (solid-colour strip under the category grid)">
+        <div className="grid gap-3 sm:grid-cols-3">
+          {value.trustRibbon.map((label, i) => (
+            <Field key={i} label={`Label ${i + 1}`} value={label} onChange={(v) => setRibbon(i, v)} />
+          ))}
+        </div>
       </Panel>
 
       <Panel title={'"How this works" strip (dark, near the footer)'}>

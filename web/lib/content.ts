@@ -60,10 +60,15 @@ export interface ThemeSettings {
   promoStrip: { images: string[] };
   homeSections: {
     categoriesBg: PlayColorKey;
+    categoriesHeading: string;
     featuredBg: PlayColorKey;
+    featuredHeading: string;
     aboutBg: PlayColorKey;
     exploreBg: PlayColorKey;
+    exploreHeading: string;
+    exploreSubtitle: string;
   };
+  trustRibbon: [string, string, string];
   trustBadges: [TitleBody, TitleBody, TitleBody];
   pinkBadges: [TitleBody, TitleBody, TitleBody];
   exploreTiles: [TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody];
@@ -92,8 +97,16 @@ const DEFAULT_PROMO_STRIP: ThemeSettings['promoStrip'] = {
 };
 
 const DEFAULT_HOME_SECTIONS: ThemeSettings['homeSections'] = {
-  categoriesBg: 'pink', featuredBg: 'yellow', aboutBg: 'violet', exploreBg: 'sky',
+  categoriesBg: 'pink', categoriesHeading: 'Shop by category',
+  featuredBg: 'yellow', featuredHeading: 'New this season',
+  aboutBg: 'violet',
+  exploreBg: 'sky', exploreHeading: 'Explore Majestic Cart',
+  exploreSubtitle: 'A quick map of the site — everything below has its own page with more detail.',
 };
+
+const DEFAULT_TRUST_RIBBON: ThemeSettings['trustRibbon'] = [
+  'Secure wallet payments', 'Authentic brands only', 'Delivered pan-India',
+];
 
 const DEFAULT_TRUST_BADGES: ThemeSettings['trustBadges'] = [
   { title: 'Brands you already know', body: 'Everything we sell is made by other established beauty brands. We do not manufacture products or sell under our own brand name.' },
@@ -144,6 +157,7 @@ const DEFAULT_THEME: ThemeSettings = {
   promoBanner: DEFAULT_PROMO_BANNER,
   promoStrip: DEFAULT_PROMO_STRIP,
   homeSections: DEFAULT_HOME_SECTIONS,
+  trustRibbon: DEFAULT_TRUST_RIBBON,
   trustBadges: DEFAULT_TRUST_BADGES,
   pinkBadges: DEFAULT_PINK_BADGES,
   exploreTiles: DEFAULT_EXPLORE_TILES,
@@ -213,6 +227,7 @@ export async function getTheme(): Promise<ThemeSettings> {
     // payload with these keys simply missing, not present-but-empty.
     promoStrip: { ...DEFAULT_PROMO_STRIP, ...t.promoStrip },
     homeSections: { ...DEFAULT_HOME_SECTIONS, ...t.homeSections },
+    trustRibbon: DEFAULT_TRUST_RIBBON.map((d, i) => t.trustRibbon?.[i] ?? d) as ThemeSettings['trustRibbon'],
     trustBadges: mergeTuple(DEFAULT_TRUST_BADGES, t.trustBadges),
     pinkBadges: mergeTuple(DEFAULT_PINK_BADGES, t.pinkBadges),
     exploreTiles: mergeTuple(DEFAULT_EXPLORE_TILES, t.exploreTiles),
