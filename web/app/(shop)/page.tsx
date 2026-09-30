@@ -7,7 +7,7 @@ import { getTheme } from '@/lib/content';
 import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
 import { BrandCarousel } from '@/components/BrandCarousel';
-import { HeroSlider } from '@/components/HeroSlider';
+import { HeroCarousel } from '@/components/HeroCarousel';
 import { PromoBanner } from '@/components/PromoBanner';
 import { CATEGORY_IMAGES } from '@/lib/categoryImages';
 import { playChipClass, playTileClass } from '@/lib/playColors';
@@ -36,7 +36,11 @@ export const metadata: Metadata = buildMetadata({
 });
 
 /** Default rotation when the admin hasn't uploaded hero photos in Theme. */
-const DEFAULT_HERO_IMAGES = ['/home/skin-1.jpg', '/home/skin-2.jpg', '/home/skin-3.jpg', '/home/skin-4.jpg'];
+const DEFAULT_HERO_IMAGES = [
+  '/home/hero-1.jpg', '/home/hero-2.jpg', '/home/hero-3.jpg', '/home/hero-4.jpg',
+  '/home/skin-1.jpg', '/home/skin-2.jpg', '/home/skin-3.jpg', '/home/skin-4.jpg',
+  '/home/editorial-1.jpg', '/home/editorial-2.jpg',
+];
 const DEFAULT_PROMO_IMAGES = ['/home/editorial-8.jpg', '/home/editorial-9.jpg'];
 const DEFAULT_PROMO_HEADING = 'Skin care, makeup and more — picked from brands already on your shelf.';
 
@@ -74,45 +78,38 @@ export default async function HomePage() {
       ))}
 
       {/* ------------------------------------------------------------ hero */}
-      <section className="relative overflow-hidden border-b border-[var(--line)] bg-gradient-to-br from-[var(--play-pink-soft)] via-[var(--play-violet-soft)] to-[var(--play-teal-soft)]">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:py-24 md:grid-cols-2 md:items-center">
-          <div className="max-w-2xl">
-            <p className="inline-block rounded-full bg-[var(--play-pink)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white">{hero.eyebrow}</p>
-            {/* The only h1 on the page. It carries the brand and what is sold,
-                because that is the query it has to answer. Editable from the
-                console's Theme page — see lib/content.ts's getTheme(). */}
-            <h1 className="mt-3 font-serif text-4xl leading-[1.1] text-[var(--ink)] sm:text-6xl">
-              {hero.title.split('\n').map((line, i) => (
-                <span key={i}>
-                  {i > 0 && <br />}
-                  {line}
-                </span>
-              ))}
-            </h1>
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--body)]">{hero.subtitle}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href={hero.primaryCtaHref}
-                className="rounded-xl gold-foil px-7 py-3.5 font-semibold text-white shadow-lg shadow-amber-900/20"
-              >
-                {hero.primaryCtaLabel}
-              </Link>
-              <Link
-                href={hero.secondaryCtaHref}
-                className="rounded-xl border border-[var(--ink)]/15 bg-[var(--surface)] px-7 py-3.5 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]"
-              >
-                {hero.secondaryCtaLabel}
-              </Link>
-            </div>
-          </div>
-          <HeroSlider images={heroImages} fallback="/home/hero-1.jpg" />
+      <section className="relative overflow-hidden border-b border-[var(--line)]">
+        {/* The client wants the hero itself to be pure imagery — no heading,
+            no copy, just the carousel and the two buttons. That copy still
+            has to live somewhere for SEO/crawlability, so it moved to
+            AuthIntro on the login and signup pages, and this stays as a
+            visually-hidden h1 so the page still has exactly one crawlable
+            heading naming the brand and what it sells. */}
+        <h1 className="sr-only">{SITE.name} — {SITE.tagline}</h1>
+
+        <HeroCarousel images={heroImages} fallback="/home/hero-1.jpg" />
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center gap-3 sm:bottom-12">
+          <Link
+            href={hero.primaryCtaHref}
+            className="pointer-events-auto rounded-xl gold-foil px-6 py-3 font-semibold text-white shadow-lg shadow-amber-900/20 sm:px-8 sm:py-4 sm:text-lg"
+          >
+            {hero.primaryCtaLabel}
+          </Link>
+          <Link
+            href={hero.secondaryCtaHref}
+            className="pointer-events-auto rounded-xl bg-[var(--surface)] px-6 py-3 font-semibold text-[var(--ink)] shadow-lg hover:bg-[var(--surface-tint)] sm:px-8 sm:py-4 sm:text-lg"
+          >
+            {hero.secondaryCtaLabel}
+          </Link>
         </div>
       </section>
 
       <BrandCarousel />
 
       {/* ------------------------------------------------------ categories */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
+      <section className="bg-[var(--play-pink-soft)] px-4 py-14">
+        <div className="mx-auto max-w-6xl">
         <h2 className="font-serif text-2xl text-[var(--ink)]">Shop by category</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categoryTree(categories).map((c) => {
@@ -150,7 +147,17 @@ export default async function HomePage() {
             );
           })}
         </div>
+        </div>
       </section>
+
+      {/* ---------------------------------------------------- trust ribbon */}
+      <div className="bg-[var(--play-pink)] px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-1 text-xs font-semibold uppercase tracking-wide text-white sm:text-sm">
+          <span>Secure wallet payments</span>
+          <span>Authentic brands only</span>
+          <span>Delivered pan-India</span>
+        </div>
+      </div>
 
       <MandalaRule />
 
@@ -165,7 +172,8 @@ export default async function HomePage() {
       )}
 
       {/* -------------------------------------------------------- featured */}
-      <section className="mx-auto max-w-6xl px-4 py-16">
+      <section className="bg-[var(--play-yellow-soft)] px-4 py-16">
+        <div className="mx-auto max-w-6xl">
         <div className="flex items-end justify-between">
           <h2 className="font-serif text-2xl text-[var(--ink)]">New this season</h2>
           <Link href="/shop" className="text-sm font-semibold text-[var(--accent)] hover:underline">
@@ -175,10 +183,11 @@ export default async function HomePage() {
         <div className="mt-6">
           <ProductGrid products={featured} />
         </div>
+        </div>
       </section>
 
       {/* ------------------------------------------------------- about us */}
-      <section className="border-y border-[var(--line)] bg-[var(--accent-soft)]">
+      <section className="border-y border-[var(--line)] bg-[var(--play-violet-soft)]">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 sm:items-center">
           <div className="order-2 flex gap-4 sm:order-1">
             <div className="relative mt-8 aspect-[3/4] w-1/2 overflow-hidden rounded-2xl shadow-lg">
@@ -209,7 +218,8 @@ export default async function HomePage() {
       <MandalaRule />
 
       {/* ----------------------------------------------------- explore */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
+      <section className="bg-[var(--play-sky-soft)] px-4 py-14">
+        <div className="mx-auto max-w-6xl">
         <h2 className="font-serif text-2xl text-[var(--ink)]">Explore Majestic Cart</h2>
         <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">
           A quick map of the site — everything below has its own page with more detail.
@@ -248,10 +258,11 @@ export default async function HomePage() {
             </Link>
           ))}
         </div>
+        </div>
       </section>
 
       {/* ----------------------------------------------------------- trust */}
-      <section className="border-y border-[var(--line)] bg-[var(--surface)]">
+      <section className="bg-[#111111]">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3">
           {[
             {
@@ -259,30 +270,33 @@ export default async function HomePage() {
               body: 'Everything we sell is made by other established beauty brands. We do not manufacture products or sell under our own brand name.',
               icon: BrandBadgeIcon,
               tone: 'var(--play-coral)',
+              glow: 'glow-coral',
             },
             {
               title: 'Wallet-based ordering',
               body: 'Add funds to your wallet by UPI, and every order draws from that balance — or recharge your own mobile number if you change your mind about shopping. No card details ever touch the site.',
               icon: WalletBadgeIcon,
               tone: 'var(--play-teal)',
+              glow: 'glow-teal',
             },
             {
               title: 'Delivered across India',
               body: 'Tracking on every order, and a returns window set out in full in the refund policy.',
               icon: TruckBadgeIcon,
               tone: 'var(--play-violet)',
+              glow: 'glow-violet',
             },
           ].map((f) => (
             <div key={f.title} className="flex gap-4">
               <span
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white"
+                className={`${f.glow} flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white`}
                 style={{ background: f.tone }}
               >
                 <f.icon />
               </span>
               <div>
-                <h3 className="font-semibold text-[var(--ink)]">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{f.body}</p>
+                <h3 className="font-semibold text-white">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/70">{f.body}</p>
               </div>
             </div>
           ))}

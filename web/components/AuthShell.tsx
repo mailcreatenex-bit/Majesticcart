@@ -14,6 +14,28 @@ import { SITE } from '@/lib/seo';
  * about to fund is a business they recognise, so the mark carries more
  * weight here than anywhere else in the shop.
  */
+/**
+ * The brand pitch that used to run across the homepage hero. Moved here so
+ * the homepage banner can be pure imagery, while someone actually deciding
+ * whether to log in or join still sees why the store is worth trusting.
+ */
+export function AuthIntro() {
+  return (
+    <div className="mx-auto mb-10 max-w-2xl px-4 text-center">
+      <p className="inline-block rounded-full bg-[var(--play-pink)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white">
+        Beauty from brands you know
+      </p>
+      <h2 className="mt-3 font-serif text-2xl leading-tight text-[var(--ink)] sm:text-3xl">
+        Beauty brands you love,<br />under one roof
+      </h2>
+      <p className="mt-3 text-sm leading-relaxed text-[var(--body)]">
+        Shop makeup, skin care, body care and fragrance from brands you already trust — Lakmé, Lotus
+        Herbals, Pond&rsquo;s, Dot &amp; Key, Himalaya and more — delivered to your door.
+      </p>
+    </div>
+  );
+}
+
 export function AuthShell({ title, lead, children, footer }: {
   title: string; lead: string; children: React.ReactNode; footer?: React.ReactNode;
 }) {

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { buildMetadata, pageTitle } from '@/lib/seo';
-import { AuthShell, Field, inputClass, primaryButtonClass } from '@/components/AuthShell';
+import { AuthShell, AuthIntro, Field, inputClass, primaryButtonClass } from '@/components/AuthShell';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Log in'),
@@ -21,6 +21,8 @@ export default async function LoginPage({
   const { next, error, identifier } = await searchParams;
 
   return (
+    <>
+    <AuthIntro />
     <AuthShell
       title="Welcome back"
       lead="Log in to shop from your wallet and follow your team."
@@ -62,5 +64,6 @@ export default async function LoginPage({
         We will never ask you for your password or an OTP.
       </p>
     </AuthShell>
+    </>
   );
 }

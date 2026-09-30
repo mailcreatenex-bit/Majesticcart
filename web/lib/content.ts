@@ -74,7 +74,7 @@ const DEFAULT_THEME: ThemeSettings = {
     eyebrow: 'Beauty from brands you know',
     title: 'Beauty brands you love,\nunder one roof',
     subtitle: 'Shop makeup, skin care, body care and fragrance from brands you already trust — Lakmé, Lotus Herbals, Pond’s, Dot & Key, Himalaya and more — delivered to your door.',
-    primaryCtaLabel: 'Shop the range',
+    primaryCtaLabel: 'Shop Now',
     primaryCtaHref: '/shop',
     secondaryCtaLabel: 'Become a member',
     secondaryCtaHref: '/join',

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { REF_COOKIE, normaliseRefCode } from '@/lib/referral';
-import { AuthShell, Field, inputClass, primaryButtonClass } from '@/components/AuthShell';
+import { AuthShell, AuthIntro, Field, inputClass, primaryButtonClass } from '@/components/AuthShell';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Join free'),
@@ -27,6 +27,8 @@ export default async function SignupPage({
   const sponsorFieldValue = sponsorCode ?? sponsor ?? '';
 
   return (
+    <>
+    <AuthIntro />
     <AuthShell
       title="Join Majestic Cart"
       lead="Free to register. No registration fee."
@@ -73,5 +75,6 @@ export default async function SignupPage({
         Income is earned only on products sold and delivered. We make no guarantee of earnings.
       </p>
     </AuthShell>
+    </>
   );
 }

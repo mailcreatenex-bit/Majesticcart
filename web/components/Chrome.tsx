@@ -144,8 +144,7 @@ export async function Footer() {
           </div>
           <p className="mt-2 text-sm text-[var(--muted)]">{SITE.tagline}</p>
           <p className="mt-4 text-xs leading-relaxed text-[var(--muted)]">
-            {ENTITY.legalName}<br />{ENTITY.registeredAddress}<br />
-            GSTIN {ENTITY.gstin}
+            {ENTITY.legalName}<br />{ENTITY.registeredAddress}
           </p>
         </div>
 

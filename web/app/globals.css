@@ -59,16 +59,20 @@
    * as its own named set rather than random hexes in components so the same
    * five colours repeat everywhere they're used instead of drifting.
    */
-  --play-coral: #FF6F5E;
+  --play-coral: #FF4B4B;
   --play-coral-soft: #FFE8E4;
-  --play-teal: #12A594;
+  --play-teal: #00BFA6;
   --play-teal-soft: #DFF7F2;
-  --play-violet: #8B5CF6;
+  --play-violet: #8A2BE2;
   --play-violet-soft: #EFE7FE;
-  --play-lime: #7CB518;
+  --play-lime: #8BC53F;
   --play-lime-soft: #EAF6D6;
-  --play-pink: #EC4899;
+  --play-pink: #FF2D95;
   --play-pink-soft: #FCE4F1;
+  --play-yellow: #F5B700;
+  --play-yellow-soft: #FFF3D1;
+  --play-sky: #00A9E0;
+  --play-sky-soft: #DFF4FC;
 }
 
 :root[data-theme='night'] {
@@ -77,6 +81,8 @@
   --play-violet-soft: #2E2450;
   --play-lime-soft: #2B3512;
   --play-pink-soft: #4A1F38;
+  --play-yellow-soft: #4A3A0D;
+  --play-sky-soft: #123240;
 }
 
 /**
@@ -241,12 +247,27 @@
 .chip-play-2 { background: var(--play-violet-soft); color: var(--play-violet); }
 .chip-play-3 { background: var(--play-lime-soft); color: var(--play-lime); }
 .chip-play-4 { background: var(--play-pink-soft); color: var(--play-pink); }
+.chip-play-5 { background: var(--play-yellow-soft); color: #8A6400; }
+.chip-play-6 { background: var(--play-sky-soft); color: var(--play-sky); }
 
 .tile-play-0 { background: linear-gradient(140deg, var(--play-coral-soft), var(--surface)); }
 .tile-play-1 { background: linear-gradient(140deg, var(--play-teal-soft), var(--surface)); }
 .tile-play-2 { background: linear-gradient(140deg, var(--play-violet-soft), var(--surface)); }
 .tile-play-3 { background: linear-gradient(140deg, var(--play-lime-soft), var(--surface)); }
 .tile-play-4 { background: linear-gradient(140deg, var(--play-pink-soft), var(--surface)); }
+.tile-play-5 { background: linear-gradient(140deg, var(--play-yellow-soft), var(--surface)); }
+.tile-play-6 { background: linear-gradient(140deg, var(--play-sky-soft), var(--surface)); }
+
+/**
+ * Glow: a soft, colour-matched shadow behind a badge, button or card so it
+ * reads as lit from within rather than just tinted — the "glowy" half of the
+ * Purplle-style playful look, as distinct from the flat chip/tile colours.
+ */
+.glow-coral { box-shadow: 0 10px 32px -8px rgba(255, 75, 75, 0.55); }
+.glow-teal { box-shadow: 0 10px 32px -8px rgba(0, 191, 166, 0.5); }
+.glow-violet { box-shadow: 0 10px 32px -8px rgba(138, 43, 226, 0.5); }
+.glow-lime { box-shadow: 0 10px 32px -8px rgba(139, 197, 63, 0.5); }
+.glow-pink { box-shadow: 0 10px 32px -8px rgba(255, 45, 149, 0.55); }
 
 /* Printing the ID card: only the card, at ID-card size, with no page chrome. */
 @media print {

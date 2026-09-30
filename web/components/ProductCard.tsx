@@ -39,12 +39,12 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
         )}
 
         {off !== null && (
-          <span className="absolute left-3 top-3 rounded-full bg-[var(--play-coral)] px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
+          <span className="glow-coral absolute left-3 top-3 rounded-full bg-[var(--play-coral)] px-2.5 py-1 text-[11px] font-semibold text-white">
             {off}% off
           </span>
         )}
         {off !== null && off >= 20 && (
-          <span className="absolute right-3 top-3 rounded-full bg-[var(--play-violet)] px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
+          <span className="glow-violet absolute right-3 top-3 rounded-full bg-[var(--play-violet)] px-2.5 py-1 text-[11px] font-semibold text-white">
             Hot deal
           </span>
         )}

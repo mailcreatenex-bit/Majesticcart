@@ -9,5 +9,5 @@ function hashIndex(key: string, mod: number): number {
   return h % mod;
 }
 
-export const playChipClass = (key: string): string => `chip-play-${hashIndex(key, 5)}`;
-export const playTileClass = (key: string): string => `tile-play-${hashIndex(key, 5)}`;
+export const playChipClass = (key: string): string => `chip-play-${hashIndex(key, 7)}`;
+export const playTileClass = (key: string): string => `tile-play-${hashIndex(key, 7)}`;
