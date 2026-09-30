@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
-import { AdminShell, AdminError } from './AdminShell';
+import { AdminShell, AdminError, TableSkeleton } from './AdminShell';
 
 /**
  * Store-level settings. Just AI for now — see `StoreSetting` in the schema,
@@ -31,6 +31,7 @@ export function SettingsView() {
     <AdminShell title="Settings" subtitle="Store-level configuration." permission="settings.manage">
       <div className="space-y-6">
         <TwoFactorSettings />
+        <CompanySettings />
         <PaymentSettings />
         <AiSettings />
       </div>
@@ -348,6 +349,120 @@ function PaymentSettings() {
           <p className="text-xs text-neutral-500">No UPI ID saved yet — members see &quot;payment is not configured&quot; instead of a QR.</p>
         )}
       </div>
+    </div>
+  );
+}
+
+interface CompanyInfo {
+  tradeName: string;
+  legalName: string;
+  entityType: string;
+  registrationNumber: string;
+  gstin: string;
+  registeredAddress: string;
+  supportEmail: string;
+  supportPhone: string;
+  supportHours: string;
+  grievanceOfficer: { name: string; designation: string; email: string; phone: string; address: string };
+}
+
+const EMPTY_COMPANY: CompanyInfo = {
+  tradeName: '', legalName: '', entityType: '', registrationNumber: '', gstin: '', registeredAddress: '',
+  supportEmail: '', supportPhone: '', supportHours: '',
+  grievanceOfficer: { name: '', designation: '', email: '', phone: '', address: '' },
+};
+
+/**
+ * The business's legal identity and grievance contact — shown on the contact
+ * page, the site footer, the FAQ, and spliced into the Terms and Privacy
+ * Policy. This used to be a hardcoded constant a developer had to edit and
+ * redeploy; it's the last of the identified "everything should be editable"
+ * gaps that carries real legal weight (Consumer Protection E-Commerce Rules
+ * disclosures), so getting a field wrong here is worth double-checking
+ * before saving.
+ */
+function CompanySettings() {
+  const [form, setForm] = useState<CompanyInfo>(EMPTY_COMPANY);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const load = () => api<CompanyInfo>('/admin/settings/company').then((c) => { setForm(c); setLoaded(true); }).catch(() => setLoaded(true));
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (saving) return;
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      await api('/admin/settings/company', { method: 'POST', body: form });
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not save company details.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const field = (key: keyof Omit<CompanyInfo, 'grievanceOfficer'>) => ({
+    value: form[key],
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [key]: e.target.value })),
+  });
+  const officerField = (key: keyof CompanyInfo['grievanceOfficer']) => ({
+    value: form.grievanceOfficer[key],
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, grievanceOfficer: { ...f.grievanceOfficer, [key]: e.target.value } })),
+  });
+  const inputClass = 'mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:border-neutral-900 focus:outline-none';
+  const labelClass = 'block text-sm font-medium text-neutral-800';
+
+  if (!loaded) return <div className="max-w-xl rounded-xl border border-neutral-200 bg-white p-5"><TableSkeleton rows={3} /></div>;
+
+  return (
+    <div className="max-w-2xl rounded-xl border border-neutral-200 bg-white p-5">
+      <h2 className="text-sm font-semibold text-neutral-900">Company &amp; legal details</h2>
+      <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+        Shown on the contact page, the site footer, the FAQ, and spliced into the Terms and Privacy
+        Policy. This is regulator-facing information under the Consumer Protection (E-Commerce)
+        Rules — keep it accurate.
+      </p>
+
+      {error && <AdminError message={error} />}
+      {saved && !error && (
+        <p className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-xs font-medium text-green-700">Saved. Changes are live immediately.</p>
+      )}
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className={labelClass}>Trade name<input {...field('tradeName')} className={inputClass} /></label>
+        <label className={labelClass}>Legal name<input {...field('legalName')} className={inputClass} /></label>
+        <label className={labelClass}>Entity type<input {...field('entityType')} placeholder="Private Limited / LLP / Proprietorship" className={inputClass} /></label>
+        <label className={labelClass}>Registration number<input {...field('registrationNumber')} placeholder="Udyam / CIN" className={inputClass} /></label>
+        <label className={labelClass}>GSTIN<input {...field('gstin')} className={inputClass} /></label>
+        <label className={labelClass}>Support hours<input {...field('supportHours')} className={inputClass} /></label>
+        <label className={`${labelClass} sm:col-span-2`}>Registered address<input {...field('registeredAddress')} className={inputClass} /></label>
+        <label className={labelClass}>Support email<input {...field('supportEmail')} type="email" className={inputClass} /></label>
+        <label className={labelClass}>Support phone<input {...field('supportPhone')} className={inputClass} /></label>
+      </div>
+
+      <h3 className="mt-6 text-sm font-semibold text-neutral-900">Grievance officer</h3>
+      <p className="mt-1 text-xs text-neutral-500">Named contact required by the E-Commerce and Direct Selling Rules.</p>
+      <div className="mt-3 grid gap-4 sm:grid-cols-2">
+        <label className={labelClass}>Name<input {...officerField('name')} className={inputClass} /></label>
+        <label className={labelClass}>Designation<input {...officerField('designation')} className={inputClass} /></label>
+        <label className={labelClass}>Email<input {...officerField('email')} type="email" className={inputClass} /></label>
+        <label className={labelClass}>Phone<input {...officerField('phone')} className={inputClass} /></label>
+        <label className={`${labelClass} sm:col-span-2`}>Address for written complaints<input {...officerField('address')} className={inputClass} /></label>
+      </div>
+
+      <button
+        type="button"
+        onClick={save}
+        disabled={!form.legalName.trim() || !form.supportEmail.trim() || saving}
+        className="mt-5 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-neutral-300"
+      >
+        {saving ? 'Saving…' : 'Save'}
+      </button>
     </div>
   );
 }

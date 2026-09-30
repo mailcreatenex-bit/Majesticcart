@@ -5,8 +5,7 @@ import { PwaRegister, installCaptureScript } from '@/components/PwaRegister';
 import { InstallPromptPopup } from '@/components/InstallPrompt';
 import { CartProvider } from '@/components/CartProvider';
 import { SITE, organizationJsonLd } from '@/lib/seo';
-import { ENTITY } from '@/lib/legal';
-import { getTheme } from '@/lib/content';
+import { getTheme, getCompanyInfo } from '@/lib/content';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { MobileSplash } from '@/components/MobileSplash';
 import { LocaleProvider } from '@/components/LocaleProvider';
@@ -47,8 +46,8 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const [ENTITY, theme] = await Promise.all([getCompanyInfo(), getTheme()]);
   const org = organizationJsonLd({ phone: ENTITY.supportPhone, email: ENTITY.supportEmail });
-  const theme = await getTheme();
 
   return (
     <html lang="en-IN" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>

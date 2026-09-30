@@ -20,6 +20,7 @@ import { assertNoIncomeClaims } from '../common/income-claims';
 
 const SETTING_KEY = 'ai';
 const PAYMENT_SETTING_KEY = 'payment';
+const COMPANY_SETTING_KEY = 'company';
 const THEME_SETTING_KEY = 'theme';
 
 interface AiSettingValue {
@@ -49,6 +50,55 @@ const DEFAULT_PAYMENT: PaymentSettingValue = {
   minRechargePaise: '50000',
   maxRechargePaise: '10000000',
   note: 'Scan the QR with any UPI app and pay the exact amount. Then enter the 12-digit UTR and upload the payment screenshot.',
+};
+
+/**
+ * The business's legal identity and support/grievance contact details. Read
+ * by the storefront's contact page, footer, FAQ, homepage structured data,
+ * and spliced into the Terms and Privacy Policy documents (see
+ * web/lib/legal.ts's buildTerms/buildPrivacyPolicy). This used to be a
+ * hardcoded `ENTITY` constant in that same file — genuinely static in one
+ * sense (a company's legal name doesn't change often) but regulator-facing
+ * information that does change independently of any content refresh (a new
+ * grievance officer, a corrected GSTIN), so it belongs here rather than
+ * requiring a code deploy each time.
+ */
+export interface CompanyInfoValue {
+  tradeName: string;
+  legalName: string;
+  entityType: string;
+  registrationNumber: string;
+  gstin: string;
+  registeredAddress: string;
+  supportEmail: string;
+  supportPhone: string;
+  supportHours: string;
+  grievanceOfficer: {
+    name: string;
+    designation: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+}
+
+const DEFAULT_COMPANY: CompanyInfoValue = {
+  tradeName: 'Majestic Cart',
+  legalName: 'Majestic Cart',
+  entityType: '[Private Limited / LLP / Proprietorship]',
+  registrationNumber: 'UDYAM-WB-10-0115972',
+  gstin: '[GSTIN]',
+  registeredAddress: 'Bagdahar Supermarket, Jiaganj, Raichandpur, Lalbag Block, Jiaganj–Fultala Road, Jiaganj, West Bengal 742123',
+  supportEmail: 'care@majesticcart.in',
+  supportPhone: '+91 90916 02559',
+  supportHours: 'Monday to Saturday, 10am to 7pm IST',
+  grievanceOfficer: {
+    name: 'Bijoy Saha',
+    designation: 'Grievance Officer',
+    email: 'grievance@majesticcart.in',
+    phone: '[direct number]',
+    address: '[address for written complaints]',
+  },
 };
 
 /**
@@ -416,6 +466,53 @@ export class SettingsService {
     });
     await this.prisma.auditLog.create({
       data: { actorType: 'ADMIN', actorId: adminId, action: 'settings.payment.set', detail: { upiId, payeeName } },
+    });
+  }
+
+  /** Deep-merged over the default for the same reason `theme()` is: a row saved before a field existed should not leave it undefined. */
+  async companyInfo(): Promise<CompanyInfoValue> {
+    const row = await this.prisma.storeSetting.findUnique({ where: { key: COMPANY_SETTING_KEY } });
+    const stored = row?.value as Partial<CompanyInfoValue> | undefined;
+    return {
+      ...DEFAULT_COMPANY,
+      ...stored,
+      grievanceOfficer: { ...DEFAULT_COMPANY.grievanceOfficer, ...stored?.grievanceOfficer },
+    };
+  }
+
+  async setCompanyInfo(input: CompanyInfoValue, adminId: string): Promise<void> {
+    const value: CompanyInfoValue = {
+      tradeName: input.tradeName.trim(),
+      legalName: input.legalName.trim(),
+      entityType: input.entityType.trim(),
+      registrationNumber: input.registrationNumber.trim(),
+      gstin: input.gstin.trim(),
+      registeredAddress: input.registeredAddress.trim(),
+      supportEmail: input.supportEmail.trim(),
+      supportPhone: input.supportPhone.trim(),
+      supportHours: input.supportHours.trim(),
+      grievanceOfficer: {
+        name: input.grievanceOfficer.name.trim(),
+        designation: input.grievanceOfficer.designation.trim(),
+        email: input.grievanceOfficer.email.trim(),
+        phone: input.grievanceOfficer.phone.trim(),
+        address: input.grievanceOfficer.address.trim(),
+      },
+    };
+    if (!value.legalName) throw new BadRequestException('Enter the legal name.');
+    if (!value.registeredAddress) throw new BadRequestException('Enter the registered address.');
+    if (!value.supportEmail) throw new BadRequestException('Enter a support email.');
+    if (!value.supportPhone) throw new BadRequestException('Enter a support phone number.');
+    if (!value.grievanceOfficer.name) throw new BadRequestException("Enter the grievance officer's name.");
+    if (!value.grievanceOfficer.email) throw new BadRequestException("Enter the grievance officer's email.");
+
+    await this.prisma.storeSetting.upsert({
+      where: { key: COMPANY_SETTING_KEY },
+      create: { key: COMPANY_SETTING_KEY, value: value as never },
+      update: { value: value as never },
+    });
+    await this.prisma.auditLog.create({
+      data: { actorType: 'ADMIN', actorId: adminId, action: 'settings.company.set', detail: { legalName: value.legalName, gstin: value.gstin } },
     });
   }
 

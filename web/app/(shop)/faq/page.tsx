@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { buildMetadata, pageTitle, breadcrumbJsonLd } from '@/lib/seo';
-import { getTheme } from '@/lib/content';
+import { getTheme, getCompanyInfo } from '@/lib/content';
 import { PageHeader } from '@/components/Chrome';
-import { ENTITY } from '@/lib/legal';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Frequently asked questions'),
@@ -23,7 +22,7 @@ export const metadata: Metadata = buildMetadata({
  * runtime equivalent now that the constant lives in the CMS instead.
  */
 export default async function FaqPage() {
-  const theme = await getTheme();
+  const [theme, ENTITY] = await Promise.all([getTheme(), getCompanyInfo()]);
   const FAQS = theme.faqPage;
 
   const jsonLd = [

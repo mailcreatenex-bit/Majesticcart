@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { SITE } from '@/lib/seo';
-import { ENTITY, LEGAL_DOCUMENTS } from '@/lib/legal';
+import { LEGAL_DOCUMENTS } from '@/lib/legal';
+import { getCompanyInfo } from '@/lib/content';
 import { InstallButton } from './InstallPrompt';
 import { CartCount } from './CartProvider';
 import { MobileMenu } from './MobileMenu';
@@ -172,7 +173,7 @@ function WalletIcon() {
 }
 
 export async function Footer() {
-  const { links: shopLinks } = await shopMenu();
+  const [{ links: shopLinks }, ENTITY] = await Promise.all([shopMenu(), getCompanyInfo()]);
   return (
     <footer className="chrome-bright mt-20 border-t border-[var(--line)] bg-[var(--surface)]">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">

@@ -45,7 +45,7 @@ import {
   AdminAuthController, AdminRechargeController, AdminOrderController, AdminWithdrawalController,
   AdminMobileRechargeController, AdminPlanController, AdminDashboardController, ReportController,
   AdminSecurityController, AdminSettingsController, AdminCouponController,
-  ThemeController, AdminThemeController,
+  ThemeController, AdminThemeController, CompanyController,
 } from './api/admin.controller';
 import { RbacService } from './rbac/rbac.service';
 import { RoleController, AdminUserController } from './rbac/rbac.controller';
@@ -218,7 +218,7 @@ export class WalletOpsModule {}
   imports: [CommissionModule, SettingsModule],
   controllers: [
     AdminPlanController, AdminDashboardController, ReportController, AdminSecurityController,
-    AdminSettingsController, ThemeController, AdminThemeController, AdminReportsController,
+    AdminSettingsController, ThemeController, AdminThemeController, CompanyController, AdminReportsController,
     MemberSupportController, PublicSupportController, AdminSupportController, AdminAuditController,
   ],
   providers: [DashboardService, ReportService, SecurityAlertService, AdminReportsService, SupportService],

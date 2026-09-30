@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, organizationJsonLd } from '@/lib/seo';
-import { ENTITY } from '@/lib/legal';
+import { getCompanyInfo } from '@/lib/content';
 import { PageHeader } from '@/components/Chrome';
 import { ContactForm } from '@/components/ContactForm';
 
@@ -19,7 +19,8 @@ export const metadata: Metadata = buildMetadata({
  * or a consumer forum will look, so the details are presented plainly rather
  * than behind a contact form.
  */
-export default function ContactPage() {
+export default async function ContactPage() {
+  const ENTITY = await getCompanyInfo();
   const jsonLd = organizationJsonLd({ phone: ENTITY.supportPhone, email: ENTITY.supportEmail });
 
   return (

@@ -1,4 +1,5 @@
 import { paiseReviver } from './paise';
+import { DEFAULT_ENTITY, type EntityInfo } from './legal';
 
 /**
  * Blog, pages and theme settings — editorial content, not the catalogue.
@@ -323,5 +324,23 @@ export async function getTheme(): Promise<ThemeSettings> {
     aboutPage: { ...DEFAULT_ABOUT_PAGE, ...t.aboutPage },
     joinPage: { ...DEFAULT_JOIN_PAGE, ...t.joinPage },
     faqPage: t.faqPage && t.faqPage.length > 0 ? t.faqPage : DEFAULT_FAQ_PAGE,
+  };
+}
+
+/**
+ * The business's legal identity and support/grievance contact details —
+ * admin-editable (Settings > Company), read by the contact page, the
+ * footer, the FAQ, the homepage's structured data, and the Terms/Privacy
+ * legal documents. Falls back to the same DEFAULT_ENTITY the legal-document
+ * build-time audit checks, so a content-API outage never breaks a page that
+ * is legally required to show this information.
+ */
+export async function getCompanyInfo(): Promise<EntityInfo> {
+  const c = await getJson<EntityInfo>('/company');
+  if (!c) return DEFAULT_ENTITY;
+  return {
+    ...DEFAULT_ENTITY,
+    ...c,
+    grievanceOfficer: { ...DEFAULT_ENTITY.grievanceOfficer, ...c.grievanceOfficer },
   };
 }

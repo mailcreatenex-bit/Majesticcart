@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, metaDescription } from '@/lib/seo';
-import { getLegalDocument, LEGAL_DOCUMENTS, auditDocument, ENTITY } from '@/lib/legal';
+import { getLegalDocument, LEGAL_DOCUMENTS, auditDocument } from '@/lib/legal';
+import { getCompanyInfo } from '@/lib/content';
 import { PageHeader } from '@/components/Chrome';
 
 /**
@@ -28,7 +29,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const doc = getLegalDocument(slug);
+  const ENTITY = await getCompanyInfo();
+  const doc = getLegalDocument(slug, ENTITY);
   if (!doc) notFound();
 
   const audit = auditDocument(doc);

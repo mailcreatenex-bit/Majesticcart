@@ -55,15 +55,40 @@ export interface LegalDocument {
   sections: LegalSection[];
 }
 
+export interface EntityInfo {
+  tradeName: string;
+  legalName: string;
+  entityType: string;
+  registrationNumber: string;
+  gstin: string;
+  registeredAddress: string;
+  supportEmail: string;
+  supportPhone: string;
+  supportHours: string;
+  grievanceOfficer: {
+    name: string;
+    designation: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+}
+
 /**
- * Filled in from the business's Udyam registration certificate (UDYAM-WB-10-0115972)
- * and West Bengal Profession Tax Enrolment certificate (No. 194001404336), both
- * dated 28/09/2026. `entityType` and `gstin` are left as placeholders: Udyam
- * registration confirms the enterprise name and address but not the legal
- * structure, and neither certificate is a GST registration — get those from
- * the client before this can go live (see `assertLegalPagesReady`).
+ * The seed values, filled in from the business's Udyam registration
+ * certificate (UDYAM-WB-10-0115972) and West Bengal Profession Tax Enrolment
+ * certificate (No. 194001404336), both dated 28/09/2026. `entityType` and
+ * `gstin` are left as placeholders: Udyam registration confirms the
+ * enterprise name and address but not the legal structure, and neither
+ * certificate is a GST registration — get those from the client before this
+ * can go live (see `assertLegalPagesReady`).
+ *
+ * This is admin-editable now (Settings > Company), via
+ * `web/lib/content.ts`'s `getCompanyInfo()` — DEFAULT_ENTITY is only the
+ * fallback the console starts from and what the build-time legal-document
+ * audit below checks, not what a live page necessarily renders.
  */
-export const ENTITY = {
+export const DEFAULT_ENTITY: EntityInfo = {
   tradeName: 'Majestic Cart',
   legalName: 'Majestic Cart',
   entityType: '[Private Limited / LLP / Proprietorship]',
@@ -80,13 +105,17 @@ export const ENTITY = {
     phone: '[direct number]',
     address: '[address for written complaints]',
   },
-} as const;
+};
+
+/** @deprecated Use `getCompanyInfo()` from `@/lib/content` for live data. Kept as the static fallback. */
+export const ENTITY = DEFAULT_ENTITY;
 
 const TODO = (...needs: string[]) => needs;
 
 /* ------------------------------------------------------------- documents */
 
-export const PRIVACY_POLICY: LegalDocument = {
+export function buildPrivacyPolicy(entity: EntityInfo): LegalDocument {
+  return {
   slug: 'privacy-policy',
   title: 'Privacy Policy',
   summary: 'What personal data we collect, why we collect it, and the rights you have over it.',
@@ -97,7 +126,7 @@ export const PRIVACY_POLICY: LegalDocument = {
       heading: 'Who we are',
       statutory: { basis: 'DPDP Act, 2023 s.5', requirement: 'Identify the Data Fiduciary and give contact details' },
       body: [
-        `${ENTITY.tradeName} is operated by ${ENTITY.legalName}, ${ENTITY.entityType}, registered at ${ENTITY.registeredAddress}. For the purposes of the Digital Personal Data Protection Act, 2023, we are the Data Fiduciary for the personal data described in this policy.`,
+        `${entity.tradeName} is operated by ${entity.legalName}, ${entity.entityType}, registered at ${entity.registeredAddress}. For the purposes of the Digital Personal Data Protection Act, 2023, we are the Data Fiduciary for the personal data described in this policy.`,
       ],
       needs: TODO('legal name', 'entity type', 'registered address', 'CIN'),
     },
@@ -183,14 +212,16 @@ export const PRIVACY_POLICY: LegalDocument = {
       heading: 'Contacting us about your data',
       statutory: { basis: 'DPDP Act, 2023 s.13 and IT Rules, 2021 r.3(2)', requirement: 'Publish a named grievance contact' },
       body: [
-        `Write to ${ENTITY.grievanceOfficer.name}, ${ENTITY.grievanceOfficer.designation}, at ${ENTITY.grievanceOfficer.email}. We acknowledge within 24 hours and aim to resolve within 15 days.`,
+        `Write to ${entity.grievanceOfficer.name}, ${entity.grievanceOfficer.designation}, at ${entity.grievanceOfficer.email}. We acknowledge within 24 hours and aim to resolve within 15 days.`,
       ],
       needs: TODO('appoint a named grievance officer', 'confirm the resolution timeline you can actually meet'),
     },
   ],
-};
+  };
+}
 
-export const TERMS: LegalDocument = {
+export function buildTerms(entity: EntityInfo): LegalDocument {
+  return {
   slug: 'terms',
   title: 'Terms and Conditions',
   summary: 'The rules for using Majestic Cart, as a customer and as a direct seller.',
@@ -200,7 +231,7 @@ export const TERMS: LegalDocument = {
       id: 'about-these-terms',
       heading: 'About these terms',
       body: [
-        `These terms are between you and ${ENTITY.legalName}, which operates ${ENTITY.tradeName}. By registering or placing an order you accept them.`,
+        `These terms are between you and ${entity.legalName}, which operates ${entity.tradeName}. By registering or placing an order you accept them.`,
       ],
       needs: TODO('legal name', 'jurisdiction and governing law clause'),
     },
@@ -273,7 +304,7 @@ export const TERMS: LegalDocument = {
       id: 'liability',
       heading: 'Our liability',
       body: [
-        `This site is built and maintained by Cre8nex, a technology services provider engaged by ${ENTITY.legalName} to develop and operate it to the specifications and instructions given by its owners. Cre8nex holds no ownership interest in ${ENTITY.tradeName}, does not determine the products sold, the compensation plan, or any other business or commercial decision reflected on this site, and is not liable for their operation or outcome.`,
+        `This site is built and maintained by Cre8nex, a technology services provider engaged by ${entity.legalName} to develop and operate it to the specifications and instructions given by its owners. Cre8nex holds no ownership interest in ${entity.tradeName}, does not determine the products sold, the compensation plan, or any other business or commercial decision reflected on this site, and is not liable for their operation or outcome.`,
         '[TO BE DRAFTED BY COUNSEL — remaining limitation of liability, indemnity, force majeure.]',
       ],
       needs: TODO('drafted by a lawyer'),
@@ -283,13 +314,14 @@ export const TERMS: LegalDocument = {
       heading: 'Complaints and disputes',
       statutory: { basis: 'Consumer Protection (E-Commerce) Rules, 2020 r.4(5)', requirement: 'Name a grievance officer and publish a resolution timeline' },
       body: [
-        `Contact ${ENTITY.grievanceOfficer.name} at ${ENTITY.grievanceOfficer.email}. We acknowledge within 48 hours and aim to resolve within one month.`,
+        `Contact ${entity.grievanceOfficer.name} at ${entity.grievanceOfficer.email}. We acknowledge within 48 hours and aim to resolve within one month.`,
         'Nothing in these terms limits your rights under the Consumer Protection Act, 2019.',
       ],
       needs: TODO('governing law and jurisdiction clause'),
     },
   ],
-};
+  };
+}
 
 export const REFUND_POLICY: LegalDocument = {
   slug: 'refund-policy',
@@ -365,10 +397,29 @@ export const SHIPPING_POLICY: LegalDocument = {
   ],
 };
 
+/**
+ * The static, DEFAULT_ENTITY-built versions — what `auditDocument` checks in
+ * CI, what tests import by reference, and the fallback `getLegalDocument`
+ * returns when no live entity is supplied.
+ */
+export const PRIVACY_POLICY: LegalDocument = buildPrivacyPolicy(DEFAULT_ENTITY);
+export const TERMS: LegalDocument = buildTerms(DEFAULT_ENTITY);
+
 export const LEGAL_DOCUMENTS: LegalDocument[] = [PRIVACY_POLICY, TERMS, REFUND_POLICY, SHIPPING_POLICY];
 
-export const getLegalDocument = (slug: string): LegalDocument | undefined =>
-  LEGAL_DOCUMENTS.find((d) => d.slug === slug);
+/**
+ * Pass the live company info (from `getCompanyInfo()`) to get a document with
+ * today's actual GSTIN/address/grievance-officer spliced in; omit it to get
+ * the same static object every other caller (tests included) already relies
+ * on by reference.
+ */
+export const getLegalDocument = (slug: string, entity?: EntityInfo): LegalDocument | undefined => {
+  if (entity) {
+    if (slug === 'privacy-policy') return buildPrivacyPolicy(entity);
+    if (slug === 'terms') return buildTerms(entity);
+  }
+  return LEGAL_DOCUMENTS.find((d) => d.slug === slug);
+};
 
 /* --------------------------------------------------------------- audit */
 

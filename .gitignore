@@ -4,6 +4,7 @@ node_modules/
 !.env.example
 dist/
 backend/dist-tests/
+web/dist-tests/
 .next/
 *.log
 .vercel/

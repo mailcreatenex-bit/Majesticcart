@@ -677,6 +677,25 @@ const PaymentSettingsSchema = z.object({
   note: z.string().max(500).optional(),
 });
 
+const CompanyInfoSchema = z.object({
+  tradeName: z.string().trim().min(1).max(80),
+  legalName: z.string().trim().min(1).max(160),
+  entityType: z.string().trim().min(1).max(80),
+  registrationNumber: z.string().trim().max(80),
+  gstin: z.string().trim().max(30),
+  registeredAddress: z.string().trim().min(1).max(400),
+  supportEmail: z.string().trim().email('Enter a valid support email'),
+  supportPhone: z.string().trim().min(1).max(30),
+  supportHours: z.string().trim().max(120),
+  grievanceOfficer: z.object({
+    name: z.string().trim().min(1, "Enter the grievance officer's name").max(80),
+    designation: z.string().trim().max(80),
+    email: z.string().trim().email('Enter a valid grievance email'),
+    phone: z.string().trim().max(30),
+    address: z.string().trim().max(400),
+  }),
+});
+
 @RequirePermission('settings.manage')
 @Controller('admin/settings')
 export class AdminSettingsController {
@@ -732,6 +751,36 @@ export class AdminSettingsController {
       note: body.note ?? '',
     }, adminId);
     return { ok: true as const };
+  }
+
+  /**
+   * The business's legal identity and grievance contact — shown on the
+   * contact page, the site footer, the FAQ, and spliced into the Terms and
+   * Privacy Policy. Previously hardcoded; see CompanyInfoValue's comment in
+   * settings.service.ts.
+   */
+  @Get('company')
+  company() {
+    return this.settings.companyInfo();
+  }
+
+  @Post('company')
+  @HttpCode(200)
+  async setCompany(@Body(zodBody(CompanyInfoSchema)) body: z.infer<typeof CompanyInfoSchema>, @CurrentUser('sub') adminId: string) {
+    await this.settings.setCompanyInfo(body, adminId);
+    return { ok: true as const };
+  }
+}
+
+/** Read by the storefront (contact page, footer, FAQ, legal pages, structured data) on every render — public, same reasoning as ThemeController. */
+@Controller('company')
+export class CompanyController {
+  constructor(private readonly settings: SettingsService) {}
+
+  @Public()
+  @Get()
+  get() {
+    return this.settings.companyInfo();
   }
 }
 
