@@ -32,7 +32,7 @@ export interface SignupInput {
   phone: string;
   email?: string;
   password: string;
-  sponsorCode?: string;
+  sponsorCode: string;
   deviceId?: string;
   otpCode?: string;
 }
@@ -289,15 +289,10 @@ export class AuthService {
       throw e;
     }
   }
-  private async resolveSponsor(tx: Prisma.TransactionClient, sponsorCode?: string) {
-    const code = (sponsorCode ?? '').trim().toUpperCase();
-    if (!code) {
-      const company = await tx.member.findFirst({ where: { isCompany: true }, orderBy: { joinedAt: 'asc' } });
-      if (!company) throw new BadRequestException('The network is not set up yet. Contact support.');
-      return company;
-    }
+  private async resolveSponsor(tx: Prisma.TransactionClient, sponsorCode: string) {
+    const code = sponsorCode.trim().toUpperCase();
     const sponsor = await tx.member.findUnique({ where: { memberCode: code } });
-    if (!sponsor) throw new BadRequestException(`Sponsor ID ${code} doesn't exist. Check it, or leave it blank to join under the company.`);
+    if (!sponsor) throw new BadRequestException(`Sponsor ID ${code} doesn't exist. Check it with whoever invited you.`);
     if (sponsor.status !== 'ACTIVE') throw new BadRequestException('That sponsor account is on hold. Use a different sponsor ID.');
     return sponsor;
   }

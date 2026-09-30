@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { T } from './LocaleProvider';
+import { T, LanguageSwitcher } from './LocaleProvider';
 import type { TKey } from '@/lib/i18n';
 
 /**
@@ -50,10 +50,30 @@ export function MobileMenu({ links }: { links: MenuGroup[] }) {
           {/* Click-outside target, not a visual scrim — the panel below already
               reads as attached to the header. */}
           <div className="fixed inset-0 top-16 z-30" onClick={() => setOpen(false)} aria-hidden="true" />
-          <ul
+          <div
             id="mobile-shop-menu"
-            className="absolute inset-x-0 top-full z-40 max-h-[80vh] overflow-y-auto border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 shadow-lg"
+            className="absolute inset-x-0 top-full z-40 max-h-[80vh] overflow-y-auto border-b border-[var(--line)] bg-[var(--surface)] px-4 py-3 shadow-lg"
           >
+            {/* A real GET form: it works before hydration and needs no client
+                search state of its own — /search reads the query string. */}
+            <form action="/search" method="get" role="search" className="flex items-center gap-2">
+              <input
+                type="search"
+                name="q"
+                placeholder="Search products, brands…"
+                aria-label="Search"
+                className="w-full rounded-full border border-[var(--line-strong)] bg-[var(--page)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[#B8862B]"
+              />
+              <button
+                type="submit"
+                aria-label="Search"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--muted)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
+              >
+                <SearchIcon />
+              </button>
+            </form>
+
+            <ul className="mt-2">
             {links.map((l) => (
               <li key={l.href}>
                 {l.children && l.children.length > 0 ? (
@@ -88,10 +108,24 @@ export function MobileMenu({ links }: { links: MenuGroup[] }) {
                 )}
               </li>
             ))}
-          </ul>
+            </ul>
+
+            <div className="mt-2 flex justify-end border-t border-[var(--line)] pt-3">
+              <LanguageSwitcher />
+            </div>
+          </div>
         </>
       )}
     </div>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
   );
 }
 

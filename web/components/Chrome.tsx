@@ -93,8 +93,30 @@ export async function Header() {
             ))}
           </ul>
         )}
+        {/* Only reachable at xl+, where the hamburger (and the search bar and
+            language switcher inside it) is hidden in favour of the pill nav —
+            this is the desktop replacement for both. */}
+        <form action="/search" method="get" role="search" className="hidden max-w-xs flex-1 xl:flex">
+          <label className="relative w-full">
+            <span className="sr-only">Search</span>
+            <input
+              type="search"
+              name="q"
+              placeholder="Search products, brands…"
+              className="w-full rounded-full border border-[var(--line-strong)] bg-[var(--page)] py-2 pl-4 pr-9 text-sm text-[var(--ink)] outline-none focus:border-[#B8862B]"
+            />
+            <button
+              type="submit"
+              aria-label="Search"
+              className="absolute inset-y-0 right-1 flex items-center px-2 text-[var(--muted)] hover:text-[var(--ink)]"
+            >
+              <SearchIcon />
+            </button>
+          </label>
+        </form>
+
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-          <LanguageSwitcher />
+          <div className="hidden xl:inline-flex"><LanguageSwitcher /></div>
           {/* Renders nothing where installing is impossible, so the nav does
               not carry a dead control on Firefox or inside WhatsApp. */}
           <InstallButton variant="header" />
@@ -109,14 +131,33 @@ export async function Header() {
           >
             <WalletIcon />
           </Link>
-          <Link href="/cart" className="inline-flex items-center rounded-full px-2 py-2 text-sm text-[var(--muted)] hover:text-[var(--ink)] sm:px-3">
-            <T k="nav.bag" />
+          <Link href="/cart" aria-label="Bag" title="Bag" className="inline-flex items-center rounded-full px-2 py-2 text-[var(--muted)] hover:text-[var(--ink)] sm:px-3">
+            <CartIcon />
             <CartCount />
           </Link>
           <AccountLink />
         </div>
       </nav>
     </header>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
+
+function CartIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 4h2l.4 2M7 13h10l3-7H6" />
+      <circle cx="9" cy="19" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="17" cy="19" r="1.4" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 

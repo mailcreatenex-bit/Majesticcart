@@ -58,11 +58,11 @@ export default async function SignupPage({
         </Field>
 
         <Field
-          label="Sponsor ID (optional)"
+          label="Sponsor ID"
           htmlFor="sponsorCode"
-          hint={sponsor ? `Filled in from the link you followed. You will join ${sponsor}'s team.` : 'Leave blank to join directly under the company.'}
+          hint={sponsor ? `Filled in from the link you followed. You will join ${sponsor}'s team.` : 'Ask whoever invited you for their sponsor ID.'}
         >
-          <input id="sponsorCode" name="sponsorCode" defaultValue={sponsorFieldValue} placeholder="MC100002" autoCapitalize="characters" className={inputClass} />
+          <input id="sponsorCode" name="sponsorCode" required defaultValue={sponsorFieldValue} placeholder="MC100002" autoCapitalize="characters" className={inputClass} />
         </Field>
 
         <button type="submit" className={primaryButtonClass}>Create free account</button>
