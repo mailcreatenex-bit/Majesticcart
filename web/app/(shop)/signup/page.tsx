@@ -49,8 +49,8 @@ export default async function SignupPage({
           <input id="phone" name="phone" required autoComplete="tel" inputMode="numeric" maxLength={10} pattern="[6-9][0-9]{9}" defaultValue={phone ?? ''} className={inputClass} />
         </Field>
 
-        <Field label="Email (optional)" htmlFor="email">
-          <input id="email" name="email" type="email" autoComplete="email" defaultValue={email ?? ''} className={inputClass} />
+        <Field label="Email" htmlFor="email" hint="For order updates and account recovery.">
+          <input id="email" name="email" type="email" required autoComplete="email" defaultValue={email ?? ''} className={inputClass} />
         </Field>
 
         <Field label="Password" htmlFor="password" hint="At least 8 characters. Avoid your name or phone number.">

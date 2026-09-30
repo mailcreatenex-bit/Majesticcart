@@ -30,7 +30,7 @@ const GENERIC_LOGIN_FAILURE = 'That phone number or password is not right.';
 export interface SignupInput {
   name: string;
   phone: string;
-  email?: string;
+  email: string;
   password: string;
   sponsorCode: string;
   deviceId?: string;
@@ -153,12 +153,12 @@ export class AuthService {
   async signup(input: SignupInput, ctx: SessionContext = {}): Promise<IssuedSession & { memberCode: string }> {
     const name = (input.name ?? '').trim().replace(/\s+/g, ' ');
     const phone = this.normalisePhone(input.phone);
-    const email = (input.email ?? '').trim().toLowerCase() || null;
+    const email = input.email.trim().toLowerCase();
 
     if (name.length < 2) throw new BadRequestException('Enter your full name.');
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new BadRequestException('Enter a valid email, or leave it blank.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new BadRequestException('Enter a valid email address.');
 
-    const policy = checkPasswordPolicy(input.password, { phone, name, email: email ?? undefined });
+    const policy = checkPasswordPolicy(input.password, { phone, name, email });
     if (!policy.ok) throw new BadRequestException(policy.problems.join(' '));
 
     if (input.otpCode) await this.consumeOtp(phone, 'SIGNUP', input.otpCode);
@@ -180,7 +180,7 @@ export class AuthService {
    * still surfaces instead of looping forever.
    */
   private async createMemberWithRetry(
-    args: { input: SignupInput; ctx: SessionContext; name: string; phone: string; email: string | null; passwordHash: string },
+    args: { input: SignupInput; ctx: SessionContext; name: string; phone: string; email: string; passwordHash: string },
     attempt = 1,
   ): Promise<{ id: string; memberCode: string }> {
     const { input, ctx, name, phone, email, passwordHash } = args;
