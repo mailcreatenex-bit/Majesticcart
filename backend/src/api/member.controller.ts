@@ -60,6 +60,16 @@ export const ResetSchema = z.object({
   newPassword: z.string().min(8, 'Use at least 8 characters').max(128),
 });
 
+export const RequestResetByEmailSchema = z.object({
+  email: z.string().trim().email('Enter a valid email'),
+});
+
+export const ResetByEmailSchema = z.object({
+  email: z.string().trim().email('Enter a valid email'),
+  code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
+  newPassword: z.string().min(8, 'Use at least 8 characters').max(128),
+});
+
 export const AddressSchema = z.object({
   name: z.string().trim().min(2, "Enter the recipient's name"),
   phone,
@@ -186,6 +196,24 @@ export class AuthController {
   @HttpCode(200)
   reset(@Body(zodBody(ResetSchema)) body: z.infer<typeof ResetSchema>) {
     return this.auth.resetPassword(body.phone, body.code, body.newPassword);
+  }
+
+  @Public()
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ points: 10, windowSeconds: 3600, keyPrefix: 'reset-email' })
+  @Post('reset/email')
+  @HttpCode(200)
+  requestResetByEmail(@Body(zodBody(RequestResetByEmailSchema)) body: z.infer<typeof RequestResetByEmailSchema>, @ClientContext() ctx: never) {
+    return this.auth.requestPasswordResetByEmail(body.email, ctx);
+  }
+
+  @Public()
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ points: 10, windowSeconds: 3600, keyPrefix: 'reset-email-confirm' })
+  @Post('reset/email/confirm')
+  @HttpCode(200)
+  resetByEmail(@Body(zodBody(ResetByEmailSchema)) body: z.infer<typeof ResetByEmailSchema>) {
+    return this.auth.resetPasswordByEmail(body.email, body.code, body.newPassword);
   }
 
   /**

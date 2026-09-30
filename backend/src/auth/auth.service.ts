@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, BadRequestException, UnauthorizedException,
 import { PrismaClient, Prisma } from '@prisma/client';
 import { TokenService, IssuedSession, SessionContext } from './token.service';
 import { SMS_SENDER } from '../notifications/sms.service';
+import { EMAIL_SENDER } from '../notifications/email.service';
 import {
 hashPassword, verifyPassword, passwordNeedsRehash, checkPasswordPolicy,
 generateOtpCode, hashOtpCode, otpMatches, nextLockout, isLockedOut, lockoutMessage,
@@ -41,6 +42,10 @@ export interface SmsSender {
   send(phone: string, message: string): Promise<void>;
 }
 
+export interface EmailSender {
+  send(to: string, subject: string, text: string): Promise<void>;
+}
+
 @Injectable()
 export class AuthService {
   private readonly log = new Logger(AuthService.name);
@@ -50,6 +55,7 @@ export class AuthService {
     private readonly prisma: PrismaClient,
     private readonly tokens: TokenService,
     @Inject(SMS_SENDER) private readonly sms: SmsSender,
+    @Inject(EMAIL_SENDER) private readonly email: EmailSender,
   ) {
     const pepper = process.env.OTP_PEPPER;
     if (!pepper || pepper.length < 32) {
@@ -71,10 +77,53 @@ export class AuthService {
    */
   async requestOtp(phone: string, purpose: 'LOGIN' | 'SIGNUP' | 'RESET', ctx: SessionContext = {}) {
     const normalised = this.normalisePhone(phone);
+    const code = await this.issueChallenge(normalised, purpose, ctx);
+    if (code) {
+      await this.sms.send(normalised, `${code} is your Majestic Cart verification code. It expires in ${OTP_TTL_MINUTES} minutes. Never share it with anyone.`);
+    }
+    return { sent: true as const, expiresInMinutes: OTP_TTL_MINUTES };
+  }
+
+  /**
+   * Password reset by email instead of SMS. The OTP challenge itself is
+   * still keyed by the member's phone — same table, same throttle, same
+   * attempt-limiting — only the delivery channel changes. That avoids a
+   * schema change and, more importantly, means this can go live the moment
+   * an email provider is configured, without waiting on SMS DLT registration.
+   */
+  async requestPasswordResetByEmail(rawEmail: string, ctx: SessionContext = {}) {
+    const normalisedEmail = rawEmail.trim().toLowerCase();
+    const member = await this.prisma.member.findUnique({ where: { email: normalisedEmail }, select: { phone: true } });
+
+    // Same anti-enumeration rule as requestOtp: identical reply either way.
+    if (!member) {
+      this.log.log('Password reset requested for unregistered email');
+      return { sent: true as const, expiresInMinutes: OTP_TTL_MINUTES };
+    }
+
+    const code = await this.issueChallenge(member.phone, 'RESET', ctx);
+    if (code) {
+      await this.email.send(
+        normalisedEmail,
+        'Your Majestic Cart password reset code',
+        `${code} is your password reset code. It expires in ${OTP_TTL_MINUTES} minutes. Never share it with anyone — our staff will never ask you for it.`,
+      );
+    }
+    return { sent: true as const, expiresInMinutes: OTP_TTL_MINUTES };
+  }
+
+  /**
+   * Throttle, supersede-and-create the OTP challenge row, and hand back the
+   * plaintext code to send — or null when the number/purpose combination
+   * should produce no challenge at all (an unknown number for LOGIN/RESET),
+   * so the caller still returns its generic "sent" reply without texting or
+   * emailing anyone.
+   */
+  private async issueChallenge(normalisedPhone: string, purpose: 'LOGIN' | 'SIGNUP' | 'RESET', ctx: SessionContext): Promise<string | null> {
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     const recent = await this.prisma.otpChallenge.findMany({
-      where: { phone: normalised, createdAt: { gte: hourAgo } },
+      where: { phone: normalisedPhone, createdAt: { gte: hourAgo } },
       orderBy: { createdAt: 'desc' },
       take: OTP_MAX_PER_HOUR,
     });
@@ -86,25 +135,25 @@ export class AuthService {
       throw new BadRequestException(`Wait ${wait} seconds before asking for another code.`);
     }
 
-    const exists = await this.prisma.member.findUnique({ where: { phone: normalised }, select: { id: true } });
+    const exists = await this.prisma.member.findUnique({ where: { phone: normalisedPhone }, select: { id: true } });
     if (purpose === 'SIGNUP' && exists) throw new ConflictException('This mobile number is already registered. Log in instead.');
 
-    // For LOGIN and RESET on an unknown number: no challenge, no SMS, same reply.
+    // For LOGIN and RESET on an unknown number: no challenge, no message sent.
     if (purpose !== 'SIGNUP' && !exists) {
       this.log.log(`OTP requested for unregistered number (${purpose})`);
-      return { sent: true as const, expiresInMinutes: OTP_TTL_MINUTES };
+      return null;
     }
 
     // Supersede any outstanding code so only the newest one works.
     await this.prisma.otpChallenge.updateMany({
-      where: { phone: normalised, purpose, consumed: false },
+      where: { phone: normalisedPhone, purpose, consumed: false },
       data: { consumed: true },
     });
 
     const code = generateOtpCode(6);
     await this.prisma.otpChallenge.create({
       data: {
-        phone: normalised,
+        phone: normalisedPhone,
         purpose,
         codeHash: hashOtpCode(code, this.otpPepper),
         expiresAt: new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000),
@@ -112,8 +161,7 @@ export class AuthService {
       },
     });
 
-    await this.sms.send(normalised, `${code} is your Majestic Cart verification code. It expires in ${OTP_TTL_MINUTES} minutes. Never share it with anyone.`);
-    return { sent: true as const, expiresInMinutes: OTP_TTL_MINUTES };
+    return code;
   }
 
   /**
@@ -358,13 +406,23 @@ export class AuthService {
    * the whole exercise pointless.
    */
   async resetPassword(phone: string, code: string, newPassword: string): Promise<{ ok: true }> {
-    const normalised = this.normalisePhone(phone);
-    await this.consumeOtp(normalised, 'RESET', code);
+    return this.finishPasswordReset(this.normalisePhone(phone), code, newPassword);
+  }
 
-    const member = await this.prisma.member.findUnique({ where: { phone: normalised } });
+  /** Same flow as resetPassword, entered by email instead of phone. */
+  async resetPasswordByEmail(rawEmail: string, code: string, newPassword: string): Promise<{ ok: true }> {
+    const member = await this.prisma.member.findUnique({ where: { email: rawEmail.trim().toLowerCase() }, select: { phone: true } });
+    if (!member) throw new BadRequestException('Request a new code.');
+    return this.finishPasswordReset(member.phone, code, newPassword);
+  }
+
+  private async finishPasswordReset(normalisedPhone: string, code: string, newPassword: string): Promise<{ ok: true }> {
+    await this.consumeOtp(normalisedPhone, 'RESET', code);
+
+    const member = await this.prisma.member.findUnique({ where: { phone: normalisedPhone } });
     if (!member) throw new BadRequestException('Request a new code.');
 
-    const policy = checkPasswordPolicy(newPassword, { phone: normalised, name: member.name, email: member.email ?? undefined });
+    const policy = checkPasswordPolicy(newPassword, { phone: normalisedPhone, name: member.name, email: member.email ?? undefined });
     if (!policy.ok) throw new BadRequestException(policy.problems.join(' '));
 
     await this.prisma.member.update({

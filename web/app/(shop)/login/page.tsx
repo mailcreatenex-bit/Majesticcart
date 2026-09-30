@@ -12,13 +12,15 @@ export const metadata: Metadata = buildMetadata({
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string; identifier?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; identifier?: string; notice?: string }>;
 }) {
   // Both query params come back from `app/api/auth/login/route.ts` after a
   // failed attempt (post-redirect-get, so a refresh does not resubmit the
   // password) — never anything the visitor typed directly into the URL and
-  // had rendered back at them.
-  const { next, error, identifier } = await searchParams;
+  // had rendered back at them. `notice` is a fixed enum value (not user
+  // input) set by `app/api/auth/reset-password/route.ts` after a successful
+  // reset.
+  const { next, error, identifier, notice } = await searchParams;
 
   return (
     <>
@@ -28,6 +30,12 @@ export default async function LoginPage({
       lead="Log in to shop from your wallet and follow your team."
       footer={<>New here? <Link href="/signup" className="font-semibold text-[var(--accent)]">Create a free account</Link></>}
     >
+      {notice === 'password-reset' && (
+        <p role="status" className="mb-4 rounded-xl bg-[#EAF7EE] px-3.5 py-2.5 text-sm text-[#1E7D3C]">
+          Password reset. Log in with your new password.
+        </p>
+      )}
+
       {error && (
         <p role="alert" className="mb-4 rounded-xl bg-[#FDECEA] px-3.5 py-2.5 text-sm text-[#A5342A]">
           {error}

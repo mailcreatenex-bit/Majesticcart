@@ -33,6 +33,7 @@ import { CouponService } from './coupon/coupon.service';
 import { InvoiceService } from './invoice/invoice.service';
 import { CatalogController, AdminCatalogController, InvoiceController, MemberReviewController } from './api/catalog.controller';
 import { smsProvider, SMS_SENDER } from './notifications/sms.service';
+import { emailProvider, EMAIL_SENDER } from './notifications/email.service';
 import { OutboundNotifier } from './notifications/outbound.service';
 import { SupportService } from './support/support.service';
 import { MemberSupportController, PublicSupportController, AdminSupportController } from './api/support.controller';
@@ -95,8 +96,8 @@ export class PrismaModule {}
     }),
   ],
   controllers: [AuthController, AdminAuthController],
-  providers: [AuthService, TokenService, smsProvider, OutboundNotifier],
-  exports: [AuthService, TokenService, JwtModule, SMS_SENDER],
+  providers: [AuthService, TokenService, smsProvider, emailProvider, OutboundNotifier],
+  exports: [AuthService, TokenService, JwtModule, SMS_SENDER, EMAIL_SENDER],
 })
 export class AuthModule {}
 
