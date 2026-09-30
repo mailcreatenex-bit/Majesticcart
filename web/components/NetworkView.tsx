@@ -335,6 +335,7 @@ function ReferralCard({ memberCode }: { memberCode: string }) {
               {copied === 'link' ? 'Copied' : 'Copy'}
             </button>
           </div>
+          {link && <ShareRow link={link} memberCode={memberCode} />}
         </div>
 
         <div className="rounded-xl bg-[var(--surface)] px-4 py-3">
@@ -366,5 +367,99 @@ function ReferralCard({ memberCode }: { memberCode: string }) {
         address bar.
       </p>
     </section>
+  );
+}
+
+/**
+ * Direct share links, not a copy-paste-only widget. WhatsApp, Telegram,
+ * Facebook and email all have a stable web URL that needs no app registration
+ * of ours; Messenger and Instagram do not offer one (Meta requires a
+ * registered app id for Messenger's dialog, and Instagram has no web share
+ * intent at all) so those two use the mobile app's own deep-link scheme —
+ * they open the app with the link pre-filled on a phone that has it
+ * installed, and are a harmless no-op tap anywhere else.
+ */
+function ShareRow({ link, memberCode }: { link: string; memberCode: string }) {
+  const intro = `Join Majestic Cart and shop with me — sign up with my ID ${memberCode}`;
+  const encodedMessage = encodeURIComponent(`${intro}: ${link}`);
+  const encodedIntro = encodeURIComponent(intro);
+  const encodedLink = encodeURIComponent(link);
+
+  const targets = [
+    { name: 'WhatsApp', href: `https://wa.me/?text=${encodedMessage}`, icon: WhatsAppIcon },
+    { name: 'Telegram', href: `https://t.me/share/url?url=${encodedLink}&text=${encodedIntro}`, icon: TelegramIcon },
+    { name: 'Messenger', href: `fb-messenger://share?link=${encodedLink}`, icon: MessengerIcon },
+    { name: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${encodedLink}`, icon: FacebookIcon },
+    { name: 'Instagram', href: `instagram://share?text=${encodedMessage}`, icon: InstagramIcon },
+    { name: 'Email', href: `mailto:?subject=${encodeURIComponent('Join Majestic Cart')}&body=${encodedMessage}`, icon: EmailIcon },
+  ];
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--line)] pt-3">
+      {targets.map((t) => (
+        <a
+          key={t.name}
+          href={t.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Share on ${t.name}`}
+          title={t.name}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line-strong)] text-[var(--muted)] transition hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
+        >
+          <t.icon />
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2Zm5.8 14.02c-.24.68-1.4 1.3-1.93 1.35-.5.05-1.03.24-3.44-.72-2.9-1.16-4.76-4.08-4.9-4.27-.14-.19-1.17-1.56-1.17-2.98s.74-2.11 1-2.4c.26-.29.57-.36.76-.36h.55c.18 0 .42-.07.65.5.24.58.82 2 .89 2.14.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.41.5-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.05.94 1.93 1.23 2.21 1.37.28.14.44.12.6-.07.16-.19.69-.8.87-1.08.18-.28.36-.23.6-.14.24.09 1.53.72 1.79.85.26.14.43.2.5.31.07.12.07.66-.17 1.35Z" />
+    </svg>
+  );
+}
+
+function TelegramIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M21.5 4.5 2.7 11.9c-1 .4-1 1 .18 1.34l4.8 1.5 1.85 5.7c.22.62.4.87.82.87.32 0 .47-.15.66-.33l1.77-1.72 4.9 3.62c.68.4 1.16.2 1.34-.63l3.1-14.7c.27-1.1-.28-1.55-1.62-1.05Zm-3.08 3.6-7.4 6.7-.3 3.15-1.5-4.65 8.9-5.6c.4-.24.76-.11.46.18l-.16.22Z" />
+    </svg>
+  );
+}
+
+function MessengerIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2C6.48 2 2 6.15 2 11.27c0 2.92 1.46 5.53 3.75 7.23V22l3.43-1.88c.9.25 1.85.38 2.82.38 5.52 0 10-4.15 10-9.27C22 6.15 17.52 2 12 2Zm1 12.5-2.55-2.72-4.98 2.72 5.48-5.82 2.6 2.72 4.93-2.72L13 14.5Z" />
+    </svg>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M13.5 21v-7.5H16l.5-3H13.5V8.5c0-.87.24-1.46 1.5-1.46H16.6V4.36C16.3 4.32 15.3 4.24 14.1 4.24c-2.4 0-4.05 1.47-4.05 4.17v2.13H7.5v3H10V21h3.5Z" />
+    </svg>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function EmailIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3.5 6 8.5 7 8.5-7" />
+    </svg>
   );
 }
