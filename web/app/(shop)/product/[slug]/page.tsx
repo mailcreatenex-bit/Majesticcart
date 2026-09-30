@@ -6,6 +6,7 @@ import {
   buildMetadata, pageTitle, metaDescription, productJsonLd, breadcrumbJsonLd,
 } from '@/lib/seo';
 import { getProduct, listProducts, categoryCopy } from '@/lib/catalog';
+import { playChipClass } from '@/lib/playColors';
 import { showMoney, showVolume, discountPercent } from '@/lib/money';
 import { AddToBag } from '@/components/AddToBag';
 import { ProductCard } from '@/components/ProductCard';
@@ -129,12 +130,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           />
 
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-[var(--faint)]">
-              {product.brand && product.brandSlug ? (
-                <Link href={`/brand/${product.brandSlug}`} className="hover:text-[var(--ink)]">{product.brand}</Link>
-              ) : product.brand}
-              {product.brand ? ' · ' : ''}{product.category}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${playChipClass(product.category)}`}>
+                {product.category}
+              </span>
+              {product.brand && (
+                product.brandSlug ? (
+                  <Link href={`/brand/${product.brandSlug}`} className="text-[11px] uppercase tracking-wider text-[var(--faint)] hover:text-[var(--ink)]">
+                    {product.brand}
+                  </Link>
+                ) : (
+                  <span className="text-[11px] uppercase tracking-wider text-[var(--faint)]">{product.brand}</span>
+                )
+              )}
+            </div>
             {/* Exactly one h1 per page, and it is the product name. */}
             <h1 className="mt-1 font-serif text-3xl leading-tight text-[var(--ink)]">{product.name}</h1>
 

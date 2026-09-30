@@ -7,6 +7,7 @@ import {
 import { absoluteUrl } from '@/lib/referral';
 import { listProducts, listBrands, getBrand, listCategories } from '@/lib/catalog';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
+import { playTileClass } from '@/lib/playColors';
 
 /**
  * A brand's own storefront page.
@@ -83,7 +84,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       ))}
 
       {brand.logoUrl && (
-        <div className="flex items-center justify-center border-b border-[var(--line)] bg-gradient-to-br from-[var(--accent-soft)] to-[var(--surface)] py-14">
+        <div className={`flex items-center justify-center border-b border-[var(--line)] py-14 ${playTileClass(brand.slug)}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={brand.logoUrl} alt={brand.name} className="h-16 max-w-[60%] object-contain sm:h-20" />
         </div>

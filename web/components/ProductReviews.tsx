@@ -40,7 +40,11 @@ export function ProductReviews({ slug }: { slug: string }) {
   }, [slug]);
 
   const loadMine = useCallback(async () => {
-    try { setMine(await api<Mine>(`/reviews/${encodeURIComponent(slug)}/mine`)); } catch { setMine(null); }
+    // Anyone can land here signed out — that is not a session ending, so this
+    // must not trigger the global 401-redirect-to-login side effect, or every
+    // anonymous visit to a product page would bounce straight to the login
+    // screen.
+    try { setMine(await api<Mine>(`/reviews/${encodeURIComponent(slug)}/mine`, { skipAuthRedirect: true })); } catch { setMine(null); }
   }, [slug]);
 
   useEffect(() => { void load(); void loadMine(); }, [load, loadMine]);
