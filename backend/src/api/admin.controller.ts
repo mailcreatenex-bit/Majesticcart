@@ -3,7 +3,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, BadRe
 import { zodBody } from '../common/zod.pipe';
 import { money, volume, parseMoneyInput } from '../common/serialization';
 import { AdminOnly, RequirePermission, CurrentUser, Public, ClientContext } from '../auth/guards';
-import { ThemeSettingValue } from '../settings/settings.service';
+import { ThemeSettingValue, PLAY_COLORS } from '../settings/settings.service';
 import { RateLimit, RateLimitGuard } from '../common/rate-limit.guard';
 import { AuthService } from '../auth/auth.service';
 import { TokenService } from '../auth/token.service';
@@ -737,6 +737,12 @@ export class AdminSettingsController {
 
 /* ---------------------------------------------------------------- theme */
 
+const TitleBodySchema = z.object({
+  title: z.string().trim().max(60),
+  body: z.string().trim().max(300),
+  image: z.string().trim().max(500).optional(),
+});
+
 const ThemeSettingSchema = z.object({
   colors: z.object({ ink: z.string(), accent: z.string(), gold: z.string() }),
   logoUrl: z.string().trim().max(500).default(''),
@@ -766,6 +772,23 @@ const ThemeSettingSchema = z.object({
     ctaLabel: z.string().trim().max(40).default(''),
     ctaHref: z.string().trim().max(200).default('/shop'),
   }).default({ enabled: true, images: [], heading: '', ctaLabel: '', ctaHref: '/shop' }),
+  promoStrip: z.object({
+    images: z.array(z.string().trim().max(500)).max(4).default([]),
+  }).default({ images: [] }),
+  homeSections: z.object({
+    categoriesBg: z.enum(PLAY_COLORS),
+    featuredBg: z.enum(PLAY_COLORS),
+    aboutBg: z.enum(PLAY_COLORS),
+    exploreBg: z.enum(PLAY_COLORS),
+  }),
+  trustBadges: z.tuple([TitleBodySchema, TitleBodySchema, TitleBodySchema]),
+  pinkBadges: z.tuple([TitleBodySchema, TitleBodySchema, TitleBodySchema]),
+  exploreTiles: z.tuple([TitleBodySchema, TitleBodySchema, TitleBodySchema, TitleBodySchema, TitleBodySchema, TitleBodySchema, TitleBodySchema]),
+  aboutUs: z.object({
+    title: z.string().trim().max(80),
+    body: z.string().trim().max(600),
+    images: z.tuple([z.string().trim().max(500), z.string().trim().max(500)]),
+  }),
 });
 
 /** Read by the storefront on every homepage render — public, since it's exactly what the page already shows every visitor. */

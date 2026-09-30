@@ -3,7 +3,7 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { buildMetadata, metaDescription, SITE } from '@/lib/seo';
 import { listProducts, listCategories, listBrands, categoryCopy, categoryTree } from '@/lib/catalog';
-import { getTheme } from '@/lib/content';
+import { getTheme, type PlayColorKey } from '@/lib/content';
 import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
 import { BrandCarousel } from '@/components/BrandCarousel';
@@ -44,6 +44,17 @@ const DEFAULT_HERO_IMAGES = [
 const DEFAULT_PROMO_IMAGES = ['/home/editorial-8.jpg', '/home/editorial-9.jpg'];
 const DEFAULT_PROMO_HEADING = 'Skin care, makeup and more — picked from brands already on your shelf.';
 
+/** One of the site's playful accent colours (globals.css) per background class, for the admin-editable homepage section colours. */
+const SECTION_BG: Record<PlayColorKey, string> = {
+  coral: 'bg-[var(--play-coral-soft)]',
+  teal: 'bg-[var(--play-teal-soft)]',
+  violet: 'bg-[var(--play-violet-soft)]',
+  lime: 'bg-[var(--play-lime-soft)]',
+  pink: 'bg-[var(--play-pink-soft)]',
+  yellow: 'bg-[var(--play-yellow-soft)]',
+  sky: 'bg-[var(--play-sky-soft)]',
+};
+
 export default async function HomePage() {
   const [featured, categories, brands, allProducts, theme] = await Promise.all([
     listProducts({ limit: 8 }),
@@ -63,6 +74,8 @@ export default async function HomePage() {
   const heroImages = hero.imageUrls.length > 0 ? hero.imageUrls : DEFAULT_HERO_IMAGES;
   const promo = theme.promoBanner;
   const promoImages = promo.images.length > 0 ? promo.images : DEFAULT_PROMO_IMAGES;
+  const promoStripImages = theme.promoStrip.images;
+  const sections = theme.homeSections;
 
   // WebSite markup enables the sitelinks search box, and ItemList tells a
   // crawler these are products rather than an unlabelled set of links.
@@ -119,12 +132,7 @@ export default async function HomePage() {
       {/* --------------------------------------------------- promo banners */}
       <section className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {[
-            '/home/promo-banner-1.jpg',
-            '/home/promo-banner-2.jpg',
-            '/home/promo-banner-3.jpg',
-            '/home/promo-banner-4.jpg',
-          ].map((src) => (
+          {promoStripImages.map((src) => (
             <div key={src} className="relative aspect-square overflow-hidden rounded-2xl shadow-md">
               <Image src={src} alt="" fill sizes="(max-width: 1024px) 50vw, 25vw" className="object-cover" />
             </div>
@@ -133,7 +141,7 @@ export default async function HomePage() {
       </section>
 
       {/* ------------------------------------------------------ categories */}
-      <section className="bg-[var(--play-pink-soft)] px-4 py-14">
+      <section className={`${SECTION_BG[sections.categoriesBg]} px-4 py-14`}>
         <div className="mx-auto max-w-6xl">
         <h2 className="font-serif text-2xl text-[var(--ink)]">Shop by category</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -197,7 +205,7 @@ export default async function HomePage() {
       )}
 
       {/* -------------------------------------------------------- featured */}
-      <section className="bg-[var(--play-yellow-soft)] px-4 py-16">
+      <section className={`${SECTION_BG[sections.featuredBg]} px-4 py-16`}>
         <div className="mx-auto max-w-6xl">
         <div className="flex items-end justify-between">
           <h2 className="font-serif text-2xl text-[var(--ink)]">New this season</h2>
@@ -212,24 +220,19 @@ export default async function HomePage() {
       </section>
 
       {/* ------------------------------------------------------- about us */}
-      <section className="border-y border-[var(--line)] bg-[var(--play-violet-soft)]">
+      <section className={`border-y border-[var(--line)] ${SECTION_BG[sections.aboutBg]}`}>
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 sm:items-center">
           <div className="order-2 flex gap-4 sm:order-1">
             <div className="relative mt-8 aspect-[3/4] w-1/2 overflow-hidden rounded-2xl shadow-lg">
-              <Image src="/home/about-1.jpg" alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+              <Image src={theme.aboutUs.images[0]} alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
             </div>
             <div className="relative aspect-[3/4] w-1/2 overflow-hidden rounded-2xl shadow-lg">
-              <Image src="/home/editorial-3.jpg" alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+              <Image src={theme.aboutUs.images[1]} alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
             </div>
           </div>
           <div className="order-1 max-w-xl sm:order-2">
-            <h2 className="font-serif text-2xl text-[var(--ink)]">About Majestic Cart</h2>
-            <p className="mt-3 text-sm leading-relaxed text-[var(--body)]">
-              Majestic Cart brings beauty and personal-care products from established brands together in one
-              place, and sells them through a network of independent sellers rather than retail shelves. We do
-              not make products or sell under a brand of our own. Here&apos;s how the business works, and just
-              as importantly, what it does not do.
-            </p>
+            <h2 className="font-serif text-2xl text-[var(--ink)]">{theme.aboutUs.title}</h2>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--body)]">{theme.aboutUs.body}</p>
             <Link
               href="/about"
               className="mt-6 inline-block shrink-0 rounded-xl border border-[var(--ink)]/15 bg-[var(--surface)] px-6 py-3 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]"
@@ -243,30 +246,27 @@ export default async function HomePage() {
       <MandalaRule />
 
       {/* ----------------------------------------------------- explore */}
-      <section className="bg-[var(--play-sky-soft)] px-4 py-14">
+      <section className={`${SECTION_BG[sections.exploreBg]} px-4 py-14`}>
         <div className="mx-auto max-w-6xl">
         <h2 className="font-serif text-2xl text-[var(--ink)]">Explore Majestic Cart</h2>
         <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">
           A quick map of the site — everything below has its own page with more detail.
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { href: '/shop', title: 'Shop the range', body: 'Makeup, skin care, body care and fragrance — the full catalogue, or browse by category.', image: '/home/explore-shop.jpg' },
-            { href: '/shade-finder', title: 'AI shade finder', body: 'Upload a selfie and get shade suggestions from the current makeup range.', image: '/home/explore-shade-finder.jpg' },
-            { href: '/wallet', title: 'Wallet & recharge', body: 'Add funds by UPI, track both wallets, or recharge a mobile number instead of buying right now.', image: '/home/explore-wallet.jpg' },
-            { href: '/join', title: 'Become a member', body: 'Free to register. What it costs, what is expected, and what you are paid on.', image: '/home/explore-join.jpg' },
-            { href: '/network', title: 'Your network', body: 'Your team and your referral link, once you are a member.', image: '/home/explore-network.jpg' },
-            { href: '/account', title: 'Your account', body: 'Rank, volume, payout details and order history in one place.', image: '/home/explore-account.jpg' },
-            { href: '/faq', title: 'Help & policies', body: 'Ordering, delivery, returns and membership — answered plainly, with every policy linked below.', image: '/home/explore-faq.jpg' },
-          ].map((c) => (
+          {/* Only the words and photo of each tile are theme-editable — the
+              href points at a real app route, so it stays fixed in code
+              rather than something an admin could mistype into a dead link. */}
+          {(['/shop', '/shade-finder', '/wallet', '/join', '/network', '/account', '/faq'] as const).map((href, i) => {
+            const c = theme.exploreTiles[i];
+            return (
             <Link
-              key={c.href}
-              href={c.href}
+              key={href}
+              href={href}
               className="group overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition hover:border-[var(--line-strong)] hover:shadow-lg hover:shadow-rose-900/5"
             >
               <div className={`relative aspect-[4/3] overflow-hidden ${playTileClass(c.title)}`}>
                 <Image
-                  src={c.image}
+                  src={c.image ?? ''}
                   alt=""
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -281,7 +281,8 @@ export default async function HomePage() {
                 </span>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
         </div>
       </section>
@@ -290,29 +291,11 @@ export default async function HomePage() {
       <section className="bg-[#111111]">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3">
           {[
-            {
-              title: 'Brands you already know',
-              body: 'Everything we sell is made by other established beauty brands. We do not manufacture products or sell under our own brand name.',
-              icon: BrandBadgeIcon,
-              tone: 'var(--play-coral)',
-              glow: 'glow-coral',
-            },
-            {
-              title: 'Wallet-based ordering',
-              body: 'Add funds to your wallet by UPI, and every order draws from that balance — or recharge your own mobile number if you change your mind about shopping. No card details ever touch the site.',
-              icon: WalletBadgeIcon,
-              tone: 'var(--play-teal)',
-              glow: 'glow-teal',
-            },
-            {
-              title: 'Delivered across India',
-              body: 'Tracking on every order, and a returns window set out in full in the refund policy.',
-              icon: TruckBadgeIcon,
-              tone: 'var(--play-violet)',
-              glow: 'glow-violet',
-            },
-          ].map((f) => (
-            <div key={f.title} className="flex gap-4">
+            { icon: BrandBadgeIcon, tone: 'var(--play-coral)', glow: 'glow-coral' },
+            { icon: WalletBadgeIcon, tone: 'var(--play-teal)', glow: 'glow-teal' },
+            { icon: TruckBadgeIcon, tone: 'var(--play-violet)', glow: 'glow-violet' },
+          ].map((f, i) => (
+            <div key={theme.trustBadges[i].title} className="flex gap-4">
               <span
                 className={`${f.glow} flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white`}
                 style={{ background: f.tone }}
@@ -320,8 +303,8 @@ export default async function HomePage() {
                 <f.icon />
               </span>
               <div>
-                <h3 className="font-semibold text-white">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/70">{f.body}</p>
+                <h3 className="font-semibold text-white">{theme.trustBadges[i].title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/70">{theme.trustBadges[i].body}</p>
               </div>
             </div>
           ))}
@@ -331,15 +314,15 @@ export default async function HomePage() {
       {/* ------------------------------------------------------ pink badges */}
       <section className="bg-[var(--play-pink-soft)] px-4 py-14">
         <div className="mx-auto grid max-w-3xl gap-x-10 gap-y-8 sm:grid-cols-2">
+          {/* The fourth badge is never theme.pinkBadges content — its title
+              and body always come from the live catalogue count below, so an
+              admin can edit the words on the first three but can't type in a
+              brand/product number that drifts from reality. */}
           {[
-            { title: 'Pan-India Delivery', body: 'Tracking on every order, wherever you are.', icon: TruckBadgeIcon },
-            { title: 'Authentic Products', body: 'Sourced directly from brands and authorised distributors.', icon: BrandBadgeIcon },
-            { title: 'Easy Returns', body: 'A return window set out in full in the refund policy.', icon: ReturnBadgeIcon },
-            {
-              title: `${brandCount} Brands`,
-              body: `${productCount}+ genuine products, and growing.`,
-              icon: TagBadgeIcon,
-            },
+            { ...theme.pinkBadges[0], icon: TruckBadgeIcon },
+            { ...theme.pinkBadges[1], icon: BrandBadgeIcon },
+            { ...theme.pinkBadges[2], icon: ReturnBadgeIcon },
+            { title: `${brandCount} Brands`, body: `${productCount}+ genuine products, and growing.`, icon: TagBadgeIcon },
           ].map((f) => (
             <div key={f.title} className="flex items-center gap-4">
               <span className="glow-pink flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--play-pink)] text-white">

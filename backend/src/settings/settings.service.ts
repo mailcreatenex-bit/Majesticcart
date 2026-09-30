@@ -94,7 +94,40 @@ export interface ThemeSettingValue {
     ctaLabel: string;
     ctaHref: string;
   };
+  /** The row of up to four square lifestyle banners just under the brand carousel. */
+  promoStrip: {
+    images: string[];
+  };
+  /** One of the site's five-then-seven "playful" accent colours (see web/app/globals.css) — a closed set rather than a free hex field, so a section always lands on a colour the rest of the palette already uses. */
+  homeSections: {
+    categoriesBg: PlayColorKey;
+    featuredBg: PlayColorKey;
+    aboutBg: PlayColorKey;
+    exploreBg: PlayColorKey;
+  };
+  /** The three cards on the dark "how this works" strip near the footer. Icon and colour per card are fixed in the frontend; only the words are editable here. */
+  trustBadges: [TitleBody, TitleBody, TitleBody];
+  /** The pink circular badges above the fraud notice. Only the first three are editable — the fourth always shows the catalogue's live brand/product counts, never a typed-in number. */
+  pinkBadges: [TitleBody, TitleBody, TitleBody];
+  /** The seven photo tiles under "Explore Majestic Cart". Each tile's link is fixed in the frontend (they point at real app pages) — only the words and photo are editable. */
+  exploreTiles: [TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody];
+  /** The "About Majestic Cart" strip: two photos beside a heading and a paragraph. */
+  aboutUs: {
+    title: string;
+    body: string;
+    images: [string, string];
+  };
 }
+
+interface TitleBody {
+  title: string;
+  body: string;
+  /** Only meaningful on the "About" tiles' cover photos; ignored elsewhere. */
+  image?: string;
+}
+
+export const PLAY_COLORS = ['coral', 'teal', 'violet', 'lime', 'pink', 'yellow', 'sky'] as const;
+export type PlayColorKey = (typeof PLAY_COLORS)[number];
 
 const DEFAULT_ANNOUNCEMENT: ThemeSettingValue['announcement'] = {
   enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '',
@@ -102,6 +135,42 @@ const DEFAULT_ANNOUNCEMENT: ThemeSettingValue['announcement'] = {
 
 const DEFAULT_PROMO_BANNER: ThemeSettingValue['promoBanner'] = {
   enabled: true, images: [], heading: '', ctaLabel: '', ctaHref: '/shop',
+};
+
+const DEFAULT_PROMO_STRIP: ThemeSettingValue['promoStrip'] = {
+  images: ['/home/promo-banner-1.jpg', '/home/promo-banner-2.jpg', '/home/promo-banner-3.jpg', '/home/promo-banner-4.jpg'],
+};
+
+const DEFAULT_HOME_SECTIONS: ThemeSettingValue['homeSections'] = {
+  categoriesBg: 'pink', featuredBg: 'yellow', aboutBg: 'violet', exploreBg: 'sky',
+};
+
+const DEFAULT_TRUST_BADGES: ThemeSettingValue['trustBadges'] = [
+  { title: 'Brands you already know', body: 'Everything we sell is made by other established beauty brands. We do not manufacture products or sell under our own brand name.' },
+  { title: 'Wallet-based ordering', body: 'Add funds to your wallet by UPI, and every order draws from that balance — or recharge your own mobile number if you change your mind about shopping. No card details ever touch the site.' },
+  { title: 'Delivered across India', body: 'Tracking on every order, and a returns window set out in full in the refund policy.' },
+];
+
+const DEFAULT_PINK_BADGES: ThemeSettingValue['pinkBadges'] = [
+  { title: 'Pan-India Delivery', body: 'Tracking on every order, wherever you are.' },
+  { title: 'Authentic Products', body: 'Sourced directly from brands and authorised distributors.' },
+  { title: 'Easy Returns', body: 'A return window set out in full in the refund policy.' },
+];
+
+const DEFAULT_EXPLORE_TILES: ThemeSettingValue['exploreTiles'] = [
+  { title: 'Shop the range', body: 'Makeup, skin care, body care and fragrance — the full catalogue, or browse by category.', image: '/home/explore-shop.jpg' },
+  { title: 'AI shade finder', body: 'Upload a selfie and get shade suggestions from the current makeup range.', image: '/home/explore-shade-finder.jpg' },
+  { title: 'Wallet & recharge', body: 'Add funds by UPI, track both wallets, or recharge a mobile number instead of buying right now.', image: '/home/explore-wallet.jpg' },
+  { title: 'Become a member', body: 'Free to register. What it costs, what is expected, and what you are paid on.', image: '/home/explore-join.jpg' },
+  { title: 'Your network', body: 'Your team and your referral link, once you are a member.', image: '/home/explore-network.jpg' },
+  { title: 'Your account', body: 'Rank, volume, payout details and order history in one place.', image: '/home/explore-account.jpg' },
+  { title: 'Help & policies', body: 'Ordering, delivery, returns and membership — answered plainly, with every policy linked below.', image: '/home/explore-faq.jpg' },
+];
+
+const DEFAULT_ABOUT_US: ThemeSettingValue['aboutUs'] = {
+  title: 'About Majestic Cart',
+  body: 'Majestic Cart brings beauty and personal-care products from established brands together in one place, and sells them through a network of independent sellers rather than retail shelves. We do not make products or sell under a brand of our own. Here’s how the business works, and just as importantly, what it does not do.',
+  images: ['/home/about-1.jpg', '/home/editorial-3.jpg'],
 };
 
 const DEFAULT_THEME: ThemeSettingValue = {
@@ -119,9 +188,20 @@ const DEFAULT_THEME: ThemeSettingValue = {
   },
   announcement: DEFAULT_ANNOUNCEMENT,
   promoBanner: DEFAULT_PROMO_BANNER,
+  promoStrip: DEFAULT_PROMO_STRIP,
+  homeSections: DEFAULT_HOME_SECTIONS,
+  trustBadges: DEFAULT_TRUST_BADGES,
+  pinkBadges: DEFAULT_PINK_BADGES,
+  exploreTiles: DEFAULT_EXPLORE_TILES,
+  aboutUs: DEFAULT_ABOUT_US,
 };
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+/** Merges a saved array over its default item-by-item, so a row saved before a tile existed still yields the right length instead of `undefined` entries. */
+function mergeTuple<N extends readonly TitleBody[]>(defaults: N, stored: readonly Partial<TitleBody>[] | undefined): N {
+  return defaults.map((d, i) => ({ ...d, ...stored?.[i] })) as unknown as N;
+}
 
 @Injectable()
 export class SettingsService {
@@ -240,6 +320,15 @@ export class SettingsService {
       hero: { ...DEFAULT_THEME.hero, ...stored?.hero },
       announcement: { ...DEFAULT_ANNOUNCEMENT, ...stored?.announcement },
       promoBanner: { ...DEFAULT_PROMO_BANNER, ...stored?.promoBanner },
+      promoStrip: { ...DEFAULT_PROMO_STRIP, ...stored?.promoStrip },
+      homeSections: { ...DEFAULT_HOME_SECTIONS, ...stored?.homeSections },
+      // Fixed-length tuples: a saved array shorter than the default (e.g. from
+      // a settings row written before a tile was added) would otherwise leave
+      // `undefined` holes instead of falling back per-item.
+      trustBadges: mergeTuple(DEFAULT_TRUST_BADGES, stored?.trustBadges),
+      pinkBadges: mergeTuple(DEFAULT_PINK_BADGES, stored?.pinkBadges),
+      exploreTiles: mergeTuple(DEFAULT_EXPLORE_TILES, stored?.exploreTiles),
+      aboutUs: { ...DEFAULT_ABOUT_US, ...stored?.aboutUs },
     };
   }
 

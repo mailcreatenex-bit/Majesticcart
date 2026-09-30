@@ -5,6 +5,11 @@ import { api, ApiError } from '@/lib/api';
 import { AdminShell, Panel, TableSkeleton } from './AdminShell';
 import { ImageUploadField, ImageGalleryField } from './ImageUploadField';
 
+interface TitleBody { title: string; body: string; image?: string }
+
+const PLAY_COLORS = ['coral', 'teal', 'violet', 'lime', 'pink', 'yellow', 'sky'] as const;
+type PlayColorKey = (typeof PLAY_COLORS)[number];
+
 interface ThemeValue {
   colors: { ink: string; accent: string; gold: string };
   logoUrl: string;
@@ -21,10 +26,28 @@ interface ThemeValue {
   promoBanner: {
     enabled: boolean; images: string[]; heading: string; ctaLabel: string; ctaHref: string;
   };
+  promoStrip: { images: string[] };
+  homeSections: { categoriesBg: PlayColorKey; featuredBg: PlayColorKey; aboutBg: PlayColorKey; exploreBg: PlayColorKey };
+  trustBadges: [TitleBody, TitleBody, TitleBody];
+  pinkBadges: [TitleBody, TitleBody, TitleBody];
+  exploreTiles: [TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody];
+  aboutUs: { title: string; body: string; images: [string, string] };
 }
 
 const NO_BANNER: ThemeValue['announcement'] = { enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '' };
 const NO_PROMO: ThemeValue['promoBanner'] = { enabled: true, images: [], heading: '', ctaLabel: '', ctaHref: '/shop' };
+const NO_STRIP: ThemeValue['promoStrip'] = { images: [] };
+const NO_SECTIONS: ThemeValue['homeSections'] = { categoriesBg: 'pink', featuredBg: 'yellow', aboutBg: 'violet', exploreBg: 'sky' };
+const EMPTY_TB: TitleBody = { title: '', body: '', image: '' };
+const NO_TRUST: ThemeValue['trustBadges'] = [EMPTY_TB, EMPTY_TB, EMPTY_TB];
+const NO_PINK: ThemeValue['pinkBadges'] = [EMPTY_TB, EMPTY_TB, EMPTY_TB];
+const NO_EXPLORE: ThemeValue['exploreTiles'] = [EMPTY_TB, EMPTY_TB, EMPTY_TB, EMPTY_TB, EMPTY_TB, EMPTY_TB, EMPTY_TB];
+const NO_ABOUT: ThemeValue['aboutUs'] = { title: '', body: '', images: ['', ''] };
+const EXPLORE_LABELS = ['Shop the range', 'AI shade finder', 'Wallet & recharge', 'Become a member', 'Your network', 'Your account', 'Help & policies'];
+
+function mergeTuple<N extends readonly TitleBody[]>(defaults: N, stored: readonly Partial<TitleBody>[] | undefined): N {
+  return defaults.map((d, i) => ({ ...d, ...stored?.[i] })) as unknown as N;
+}
 
 export function ThemeAdminView() {
   return (
@@ -42,7 +65,17 @@ function Theme() {
 
   useEffect(() => {
     api<ThemeValue>('/admin/theme')
-      .then((v) => setValue({ ...v, announcement: { ...NO_BANNER, ...v.announcement }, promoBanner: { ...NO_PROMO, ...v.promoBanner } }))
+      .then((v) => setValue({
+        ...v,
+        announcement: { ...NO_BANNER, ...v.announcement },
+        promoBanner: { ...NO_PROMO, ...v.promoBanner },
+        promoStrip: { ...NO_STRIP, ...v.promoStrip },
+        homeSections: { ...NO_SECTIONS, ...v.homeSections },
+        trustBadges: mergeTuple(NO_TRUST, v.trustBadges),
+        pinkBadges: mergeTuple(NO_PINK, v.pinkBadges),
+        exploreTiles: mergeTuple(NO_EXPLORE, v.exploreTiles),
+        aboutUs: { ...NO_ABOUT, ...v.aboutUs },
+      }))
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load theme settings.'));
   }, []);
 
@@ -53,6 +86,13 @@ function Theme() {
   const setBanner = <K extends keyof ThemeValue['announcement']>(key: K, v: ThemeValue['announcement'][K]) => setValue({ ...value, announcement: { ...value.announcement, [key]: v } });
   const setHero = <K extends keyof ThemeValue['hero']>(key: K, v: ThemeValue['hero'][K]) => setValue({ ...value, hero: { ...value.hero, [key]: v } });
   const setPromo = <K extends keyof ThemeValue['promoBanner']>(key: K, v: ThemeValue['promoBanner'][K]) => setValue({ ...value, promoBanner: { ...value.promoBanner, [key]: v } });
+  const setSection = <K extends keyof ThemeValue['homeSections']>(key: K, v: ThemeValue['homeSections'][K]) => setValue({ ...value, homeSections: { ...value.homeSections, [key]: v } });
+  const setAbout = <K extends keyof ThemeValue['aboutUs']>(key: K, v: ThemeValue['aboutUs'][K]) => setValue({ ...value, aboutUs: { ...value.aboutUs, [key]: v } });
+  const setTupleItem = <F extends 'trustBadges' | 'pinkBadges' | 'exploreTiles'>(field: F, i: number, patch: Partial<TitleBody>) => {
+    const next = [...value[field]] as ThemeValue[F];
+    next[i] = { ...next[i], ...patch };
+    setValue({ ...value, [field]: next });
+  };
 
   const save = async () => {
     setSaving(true);
@@ -138,6 +178,85 @@ function Theme() {
         </div>
       </Panel>
 
+      <Panel title="Promo photo strip">
+        <ImageGalleryField
+          label="Photos (shown in a row under the brand carousel)"
+          values={value.promoStrip.images}
+          onChange={(urls) => setValue({ ...value, promoStrip: { images: urls } })}
+          purpose="theme-asset"
+          max={4}
+        />
+        <p className="mt-1 text-xs text-neutral-500">Up to four. Shown in one row on desktop, two rows of two on phones.</p>
+      </Panel>
+
+      <Panel title="Homepage section colours">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <ColorSelect label="Category grid background" value={value.homeSections.categoriesBg} onChange={(v) => setSection('categoriesBg', v)} />
+          <ColorSelect label={'"New this season" background'} value={value.homeSections.featuredBg} onChange={(v) => setSection('featuredBg', v)} />
+          <ColorSelect label="About-us background" value={value.homeSections.aboutBg} onChange={(v) => setSection('aboutBg', v)} />
+          <ColorSelect label="Explore-tiles background" value={value.homeSections.exploreBg} onChange={(v) => setSection('exploreBg', v)} />
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">Picked from the site's own playful accent palette, so a section always lands on a colour the rest of the page already uses.</p>
+      </Panel>
+
+      <Panel title={'"How this works" strip (dark, near the footer)'}>
+        <div className="space-y-4">
+          {value.trustBadges.map((b, i) => (
+            <div key={i} className="grid gap-3 rounded-lg border border-neutral-200 p-3 sm:grid-cols-2">
+              <Field label={`Card ${i + 1} title`} value={b.title} onChange={(v) => setTupleItem('trustBadges', i, { title: v })} />
+              <label className="block text-sm font-medium text-neutral-800">
+                Card {i + 1} body
+                <textarea value={b.body} onChange={(e) => setTupleItem('trustBadges', i, { body: e.target.value })} rows={2} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+              </label>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      <Panel title="Pink trust badges">
+        <div className="space-y-4">
+          {value.pinkBadges.map((b, i) => (
+            <div key={i} className="grid gap-3 rounded-lg border border-neutral-200 p-3 sm:grid-cols-2">
+              <Field label={`Badge ${i + 1} title`} value={b.title} onChange={(v) => setTupleItem('pinkBadges', i, { title: v })} />
+              <Field label={`Badge ${i + 1} body`} value={b.body} onChange={(v) => setTupleItem('pinkBadges', i, { body: v })} />
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">
+          A fourth badge always follows these three, showing the catalogue's live brand and product counts — it isn't editable here, so it can never show a number that's gone stale.
+        </p>
+      </Panel>
+
+      <Panel title="Explore tiles">
+        <div className="space-y-4">
+          {value.exploreTiles.map((t, i) => (
+            <div key={i} className="rounded-lg border border-neutral-200 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Links to: {EXPLORE_LABELS[i]}</p>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <Field label="Title" value={t.title} onChange={(v) => setTupleItem('exploreTiles', i, { title: v })} />
+                <Field label="Body" value={t.body} onChange={(v) => setTupleItem('exploreTiles', i, { body: v })} />
+                <div className="sm:col-span-2">
+                  <ImageUploadField label="Photo" value={t.image ?? ''} onChange={(url) => setTupleItem('exploreTiles', i, { image: url })} purpose="theme-asset" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">Each tile's destination page is fixed — only its words and photo are editable here.</p>
+      </Panel>
+
+      <Panel title="About Majestic Cart section">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Heading" value={value.aboutUs.title} onChange={(v) => setAbout('title', v)} span2 />
+          <label className="block text-sm font-medium text-neutral-800 sm:col-span-2">
+            Body
+            <textarea value={value.aboutUs.body} onChange={(e) => setAbout('body', e.target.value)} rows={4} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+          </label>
+          <ImageUploadField label="Photo 1" value={value.aboutUs.images[0]} onChange={(url) => setAbout('images', [url, value.aboutUs.images[1]])} purpose="theme-asset" />
+          <ImageUploadField label="Photo 2" value={value.aboutUs.images[1]} onChange={(url) => setAbout('images', [value.aboutUs.images[0], url])} purpose="theme-asset" />
+        </div>
+      </Panel>
+
       <Panel title="Festival banner">
         <label className="flex items-center gap-2 text-sm font-medium text-neutral-800">
           <input type="checkbox" checked={value.announcement.enabled} onChange={(e) => setBanner('enabled', e.target.checked)} className="h-4 w-4" />
@@ -190,6 +309,17 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
         <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-9 w-12 shrink-0 rounded border border-neutral-300" />
         <input value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm font-mono focus:border-neutral-900 focus:outline-none" />
       </div>
+    </label>
+  );
+}
+
+function ColorSelect({ label, value, onChange }: { label: string; value: PlayColorKey; onChange: (v: PlayColorKey) => void }) {
+  return (
+    <label className="block text-sm font-medium text-neutral-800">
+      {label}
+      <select value={value} onChange={(e) => onChange(e.target.value as PlayColorKey)} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm capitalize focus:border-neutral-900 focus:outline-none">
+        {PLAY_COLORS.map((c) => <option key={c} value={c}>{c}</option>)}
+      </select>
     </label>
   );
 }
