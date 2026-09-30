@@ -10,6 +10,7 @@ import { BrandCarousel } from '@/components/BrandCarousel';
 import { HeroSlider } from '@/components/HeroSlider';
 import { PromoBanner } from '@/components/PromoBanner';
 import { CATEGORY_IMAGES } from '@/lib/categoryImages';
+import { playChipClass, playTileClass } from '@/lib/playColors';
 
 /**
  * Home.
@@ -73,10 +74,10 @@ export default async function HomePage() {
       ))}
 
       {/* ------------------------------------------------------------ hero */}
-      <section className="relative overflow-hidden border-b border-[var(--line)] bg-gradient-to-b from-[var(--accent-soft)] via-[var(--page)] to-[var(--page)]">
+      <section className="relative overflow-hidden border-b border-[var(--line)] bg-gradient-to-br from-[var(--play-pink-soft)] via-[var(--play-violet-soft)] to-[var(--play-teal-soft)]">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:py-24 md:grid-cols-2 md:items-center">
           <div className="max-w-2xl">
-            <p className="text-xs uppercase tracking-[0.2em] text-[var(--accent)]">{hero.eyebrow}</p>
+            <p className="inline-block rounded-full bg-[var(--play-pink)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white">{hero.eyebrow}</p>
             {/* The only h1 on the page. It carries the brand and what is sold,
                 because that is the query it has to answer. Editable from the
                 console's Theme page — see lib/content.ts's getTheme(). */}
@@ -122,7 +123,7 @@ export default async function HomePage() {
                 href={`/category/${c.slug}`}
                 className="group overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition hover:border-[var(--line-strong)] hover:shadow-lg hover:shadow-rose-900/5"
               >
-                <div className="relative aspect-[4/3] overflow-hidden bg-[var(--accent-soft)]">
+                <div className={`relative aspect-[4/3] overflow-hidden ${playTileClass(c.slug)}`}>
                   {image && (
                     <Image
                       src={image}
@@ -132,6 +133,9 @@ export default async function HomePage() {
                       className="object-cover object-top transition duration-500 group-hover:scale-105"
                     />
                   )}
+                  <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${playChipClass(c.slug)}`}>
+                    {c.name}
+                  </span>
                 </div>
                 <div className="p-6">
                   <h3 className="font-serif text-lg text-[var(--ink)]">{c.name}</h3>
@@ -225,7 +229,7 @@ export default async function HomePage() {
               href={c.href}
               className="group overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition hover:border-[var(--line-strong)] hover:shadow-lg hover:shadow-rose-900/5"
             >
-              <div className="relative aspect-[4/3] overflow-hidden bg-[var(--accent-soft)]">
+              <div className={`relative aspect-[4/3] overflow-hidden ${playTileClass(c.title)}`}>
                 <Image
                   src={c.image}
                   alt=""
@@ -253,23 +257,67 @@ export default async function HomePage() {
             {
               title: 'Brands you already know',
               body: 'Everything we sell is made by other established beauty brands. We do not manufacture products or sell under our own brand name.',
+              icon: BrandBadgeIcon,
+              tone: 'var(--play-coral)',
             },
             {
               title: 'Wallet-based ordering',
               body: 'Add funds to your wallet by UPI, and every order draws from that balance — or recharge your own mobile number if you change your mind about shopping. No card details ever touch the site.',
+              icon: WalletBadgeIcon,
+              tone: 'var(--play-teal)',
             },
             {
               title: 'Delivered across India',
               body: 'Tracking on every order, and a returns window set out in full in the refund policy.',
+              icon: TruckBadgeIcon,
+              tone: 'var(--play-violet)',
             },
           ].map((f) => (
-            <div key={f.title}>
-              <h3 className="font-semibold text-[var(--ink)]">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{f.body}</p>
+            <div key={f.title} className="flex gap-4">
+              <span
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white"
+                style={{ background: f.tone }}
+              >
+                <f.icon />
+              </span>
+              <div>
+                <h3 className="font-semibold text-[var(--ink)]">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{f.body}</p>
+              </div>
             </div>
           ))}
         </div>
       </section>
     </>
+  );
+}
+
+function BrandBadgeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3 4 7v5c0 4.5 3.4 7.6 8 9 4.6-1.4 8-4.5 8-9V7Z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+
+function WalletBadgeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h13A1.5 1.5 0 0 1 19 7.5v1H4.5A1.5 1.5 0 0 0 3 10Z" />
+      <path d="M3 10v8a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18v-7a1.5 1.5 0 0 0-1.5-1.5H4.5A1.5 1.5 0 0 1 3 8" />
+      <circle cx="16.5" cy="14.5" r="1.25" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function TruckBadgeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 7h11v9H3z" />
+      <path d="M14 10h4l3 3v3h-7z" />
+      <circle cx="7" cy="18" r="1.6" />
+      <circle cx="17.5" cy="18" r="1.6" />
+    </svg>
   );
 }

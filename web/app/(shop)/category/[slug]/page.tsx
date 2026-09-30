@@ -11,6 +11,7 @@ import {
 } from '@/lib/catalog';
 import { categoryImage } from '@/lib/categoryImages';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
+import { playChipClass } from '@/lib/playColors';
 
 /**
  * A category.
@@ -154,7 +155,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                   key={c.slug}
                   href={`/category/${c.slug}`}
                   aria-current={on ? 'page' : undefined}
-                  className={`rounded-full border px-4 py-1.5 text-sm transition ${on ? 'border-[var(--ink)] bg-[var(--ink)] font-semibold text-[var(--gold-pale)]' : 'border-[var(--line-strong)] text-[var(--body)] hover:bg-[var(--surface-tint)]'}`}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${on ? 'bg-[var(--ink)] text-[var(--gold-pale)]' : `${playChipClass(c.slug)} hover:opacity-80`}`}
                 >
                   {c.name}
                 </Link>
