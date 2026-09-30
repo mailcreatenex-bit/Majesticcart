@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, organizationJsonLd } from '@/lib/seo';
-import { getCompanyInfo } from '@/lib/content';
+import { getCompanyInfo, getTheme } from '@/lib/content';
 import { PageHeader } from '@/components/Chrome';
 import { ContactForm } from '@/components/ContactForm';
 
@@ -20,18 +20,19 @@ export const metadata: Metadata = buildMetadata({
  * than behind a contact form.
  */
 export default async function ContactPage() {
-  const ENTITY = await getCompanyInfo();
+  const [ENTITY, theme] = await Promise.all([getCompanyInfo(), getTheme()]);
+  const COPY = theme.contactPageCopy;
   const jsonLd = organizationJsonLd({ phone: ENTITY.supportPhone, email: ENTITY.supportEmail });
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <PageHeader title="Contact us" lead="Real people, reachable during business hours. Every complaint gets an acknowledgement." image="/home/about-1.jpg" />
+      <PageHeader title="Contact us" lead={COPY.lead} image="/home/about-1.jpg" />
 
       <div className="mx-auto grid max-w-4xl gap-6 px-4 py-10 md:grid-cols-2">
         <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6">
           <h2 className="font-serif text-xl text-[var(--ink)]">Customer care</h2>
-          <p className="mt-2 text-sm text-[var(--muted)]">Orders, delivery, returns and wallet questions.</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">{COPY.careBody}</p>
           <address className="mt-4 space-y-2 not-italic">
             <div><a href={`tel:${ENTITY.supportPhone}`} className="text-lg font-medium text-[var(--ink)]">{ENTITY.supportPhone}</a></div>
             <div><a href={`mailto:${ENTITY.supportEmail}`} className="text-[var(--accent)]">{ENTITY.supportEmail}</a></div>
@@ -42,7 +43,7 @@ export default async function ContactPage() {
         <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6">
           <h2 className="font-serif text-xl text-[var(--ink)]">Grievance officer</h2>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            If customer care has not resolved your issue, escalate here.
+            {COPY.grievanceIntro}
           </p>
           <address className="mt-4 space-y-1 not-italic text-[var(--body)]">
             <div className="font-medium text-[var(--ink)]">{ENTITY.grievanceOfficer.name}</div>
@@ -51,16 +52,14 @@ export default async function ContactPage() {
             <div className="text-sm">{ENTITY.grievanceOfficer.phone}</div>
           </address>
           <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
-            Acknowledged within 48 hours and resolved within one month, as required by the
-            Consumer Protection (E-Commerce) Rules, 2020.
+            {COPY.slaText}
           </p>
         </section>
 
         <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 md:col-span-2">
           <h2 className="font-serif text-xl text-[var(--ink)]">Write to us</h2>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Ask a question or raise a complaint. You get a reference number, and we acknowledge it within 48 hours.
-            Members can also do this from the Support tab in their account, where the replies appear.
+            {COPY.writeBody}
           </p>
           <div className="mt-4"><ContactForm /></div>
         </section>

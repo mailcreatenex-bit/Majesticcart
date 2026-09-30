@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { buildMetadata, pageTitle, SITE } from '@/lib/seo';
 import { listProducts, getStorefrontMember } from '@/lib/catalog';
+import { getTheme } from '@/lib/content';
 import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
 
@@ -44,10 +45,12 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 
 export default async function StorefrontPage({ params }: { params: Promise<Params> }) {
   const { code } = await params;
-  const [member, products] = await Promise.all([
+  const [member, products, theme] = await Promise.all([
     loadMember(code),
     listProducts({ limit: 24 }),
+    getTheme(),
   ]);
+  const COPY = theme.memberStorefrontCopy;
 
   // No such member, or not currently active: fall back to "page doesn't
   // exist" rather than quietly rendering a storefront for nobody — a 404 here
@@ -69,14 +72,13 @@ export default async function StorefrontPage({ params }: { params: Promise<Param
             Shop {SITE.name} with {member.firstName}
           </h1>
           <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[var(--body)]">
-            Every order placed here is on {member.firstName}&apos;s recommendation. Wallet,
-            delivery and returns work exactly as they do anywhere else on the site.
+            {COPY.body.replace(/\{name\}/g, member.firstName)}
           </p>
           <Link
             href="/join"
             className="mt-5 inline-block text-xs font-semibold text-[var(--accent)] hover:underline"
           >
-            Want to sell like {member.firstName}? See how to join →
+            {COPY.cta.replace(/\{name\}/g, member.firstName)}
           </Link>
         </div>
       </section>
@@ -84,7 +86,7 @@ export default async function StorefrontPage({ params }: { params: Promise<Param
       <MandalaRule />
 
       <section className="mx-auto max-w-6xl px-4 py-10">
-        <h2 className="font-serif text-2xl text-[var(--ink)]">The full range</h2>
+        <h2 className="font-serif text-2xl text-[var(--ink)]">{COPY.rangeHeading}</h2>
         <div className="mt-6">
           <ProductGrid products={products} />
         </div>

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { NetworkView } from '@/components/NetworkView';
 import { MemberSkeleton } from '@/components/MemberShell';
+import { getTheme } from '@/lib/content';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('My team'),
@@ -10,10 +11,11 @@ export const metadata: Metadata = buildMetadata({
   pathname: '/network',
 });
 
-export default function Page() {
+export default async function Page() {
+  const { networkCopy } = await getTheme();
   return (
     <Suspense fallback={<MemberSkeleton />}>
-      <NetworkView />
+      <NetworkView content={networkCopy} />
     </Suspense>
   );
 }

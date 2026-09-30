@@ -14,7 +14,9 @@ import { formatRupees } from '@/lib/money';
  * changed in between is corrected there rather than silently carried through —
  * and the member sees the correction before they pay, not after.
  */
-export function CartView() {
+interface CartCopy { emptyState: string; pricingNote: string }
+
+export function CartView({ copy }: { copy: CartCopy }) {
   const { cart, totals, ready, setQty, remove } = useCart();
 
   // `ready` guards this: without it the empty-bag message flashes on every load
@@ -37,7 +39,7 @@ export function CartView() {
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
         <h1 className="font-serif text-3xl text-[var(--ink)]">Your bag is empty</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">
-          Nothing here yet. Have a look at what is in stock.
+          {copy.emptyState}
         </p>
         <Link
           href="/shop"
@@ -156,8 +158,7 @@ export function CartView() {
               across it — which this page does not know. Promising a total
               before the address is chosen would mean showing the wrong one. */}
           <p className="mt-4 border-t border-[var(--line)] pt-4 text-xs leading-relaxed text-[var(--muted)]">
-            GST and delivery are calculated at checkout, once the delivery address is chosen.
-            Prices shown are from when each item was added and are confirmed again before you pay.
+            {copy.pricingNote}
           </p>
 
           <Link

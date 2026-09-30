@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { SITE } from '@/lib/seo';
+import { getTheme } from '@/lib/content';
 
 /**
  * Shared shell for login, signup and password reset.
@@ -19,18 +20,19 @@ import { SITE } from '@/lib/seo';
  * the homepage banner can be pure imagery, while someone actually deciding
  * whether to log in or join still sees why the store is worth trusting.
  */
-export function AuthIntro() {
+export async function AuthIntro() {
+  const { authCopy } = await getTheme();
+  const [line1, line2] = authCopy.introHeading.split('\n');
   return (
     <div className="mx-auto mb-10 max-w-2xl px-4 text-center">
       <p className="inline-block rounded-full bg-[var(--play-pink)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white">
-        Beauty from brands you know
+        {authCopy.introEyebrow}
       </p>
       <h2 className="mt-3 font-serif text-2xl leading-tight text-[var(--ink)] sm:text-3xl">
-        Beauty brands you love,<br />under one roof
+        {line1}{line2 && <><br />{line2}</>}
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-[var(--body)]">
-        Shop makeup, skin care, body care and fragrance from brands you already trust — Lakmé, Lotus
-        Herbals, Pond&rsquo;s, Dot &amp; Key, Himalaya and more — delivered to your door.
+        {authCopy.introBody}
       </p>
     </div>
   );

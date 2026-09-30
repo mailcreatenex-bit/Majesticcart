@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { REF_COOKIE, normaliseRefCode } from '@/lib/referral';
 import { AuthShell, AuthIntro, Field, inputClass, primaryButtonClass } from '@/components/AuthShell';
+import { getTheme } from '@/lib/content';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Join free'),
@@ -23,7 +24,7 @@ export default async function SignupPage({
   // the other fields from the redirect's query params rather than the member
   // retyping their name and phone — `sponsorCode` here is what they actually
   // typed, which wins over the cookie if the two differ.
-  const { error, name, phone, email, sponsorCode } = await searchParams;
+  const [{ error, name, phone, email, sponsorCode }, theme] = await Promise.all([searchParams, getTheme()]);
   const sponsorFieldValue = sponsorCode ?? sponsor ?? '';
 
   return (
@@ -31,7 +32,7 @@ export default async function SignupPage({
     <AuthIntro />
     <AuthShell
       title="Join Majestic Cart"
-      lead="Free to register. No registration fee."
+      lead={theme.authCopy.signupLead}
       footer={<>Already a member? <Link href="/login" className="font-semibold text-[var(--accent)]">Log in</Link></>}
     >
       {error && (
@@ -72,7 +73,7 @@ export default async function SignupPage({
         By joining you accept our{' '}
         <Link href="/legal/terms" className="text-[var(--accent)]">terms</Link> and{' '}
         <Link href="/legal/privacy-policy" className="text-[var(--accent)]">privacy policy</Link>.
-        Income is earned only on products sold and delivered. We make no guarantee of earnings.
+        {' '}{theme.authCopy.signupDisclaimer}
       </p>
     </AuthShell>
     </>

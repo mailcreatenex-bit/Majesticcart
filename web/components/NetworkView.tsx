@@ -50,15 +50,21 @@ interface Network {
 
 interface SearchHit extends TreeNode { level: number }
 
-export function NetworkView() {
+export interface NetworkCopy {
+  levelsExplainer: string; emptyTitle: string; emptyBody: string;
+  incomeDisclaimer: string; inviteIntro: string; storefrontPitch: string;
+  shareMessageTemplate: string;
+}
+
+export function NetworkView({ content }: { content: NetworkCopy }) {
   return (
     <MemberShell title="My team">
-      {(data) => <Team memberCode={data.member.code} />}
+      {(data) => <Team memberCode={data.member.code} content={content} />}
     </MemberShell>
   );
 }
 
-function Team({ memberCode }: { memberCode: string }) {
+function Team({ memberCode, content }: { memberCode: string; content: NetworkCopy }) {
   const [network, setNetwork] = useState<Network | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [belowOnly, setBelowOnly] = useState(false);
@@ -117,7 +123,7 @@ function Team({ memberCode }: { memberCode: string }) {
 
   return (
     <div className="space-y-6">
-      <ReferralCard memberCode={memberCode} />
+      <ReferralCard memberCode={memberCode} content={content} />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Direct" value={network.totals.direct} hint="People you sponsored yourself" />
@@ -130,7 +136,7 @@ function Team({ memberCode }: { memberCode: string }) {
         <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
           <h2 className="font-serif text-lg text-[var(--ink)]">By level</h2>
           <p className="mt-1 text-xs text-[var(--muted)]">
-            Level 1 is the people you sponsored. Level 2 is the people they sponsored, and so on.
+            {content.levelsExplainer}
           </p>
 
           <ul className="mt-4 space-y-2">
@@ -228,8 +234,8 @@ function Team({ memberCode }: { memberCode: string }) {
             <EmptyState title="Everyone has met the target" body="Nobody in your direct team is below this month's target." />
           ) : network.directs.length === 0 ? (
             <EmptyState
-              title="Nobody yet"
-              body="Share your referral link with anyone who wants to sell the products. They will appear here once they sign up."
+              title={content.emptyTitle}
+              body={content.emptyBody}
             />
           ) : (
             <NetworkTree
@@ -252,8 +258,7 @@ function Team({ memberCode }: { memberCode: string }) {
 
       {/* Said plainly, because someone will ask. */}
       <p className="text-xs leading-relaxed text-[var(--muted)]">
-        Earnings are not shown here — neither yours nor anyone else&apos;s. Your own income is in your
-        wallet statement; what the people in your team earn is theirs to share or not.
+        {content.incomeDisclaimer}
       </p>
     </div>
   );
@@ -269,7 +274,7 @@ function Stat({ label, value, hint }: { label: string; value: number; hint: stri
   );
 }
 
-function ReferralCard({ memberCode }: { memberCode: string }) {
+function ReferralCard({ memberCode, content }: { memberCode: string; content: NetworkCopy }) {
   const [copied, setCopied] = useState<'link' | 'code' | 'storefront' | null>(null);
   const [origin, setOrigin] = useState('');
 
@@ -304,7 +309,7 @@ function ReferralCard({ memberCode }: { memberCode: string }) {
     <section className="rounded-2xl border border-[var(--line)] bg-gradient-to-br from-[var(--accent-soft)] to-white p-5">
       <h2 className="font-serif text-lg text-[var(--ink)]">Invite someone</h2>
       <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-        Anyone who signs up through your link or with your ID joins your team. Joining is free.
+        {content.inviteIntro}
       </p>
 
       <div className="mt-4 space-y-3">
@@ -335,7 +340,7 @@ function ReferralCard({ memberCode }: { memberCode: string }) {
               {copied === 'link' ? 'Copied' : 'Copy'}
             </button>
           </div>
-          {link && <ShareRow link={link} memberCode={memberCode} />}
+          {link && <ShareRow link={link} memberCode={memberCode} messageTemplate={content.shareMessageTemplate} />}
         </div>
 
         <div className="rounded-xl bg-[var(--surface)] px-4 py-3">
@@ -352,8 +357,7 @@ function ReferralCard({ memberCode }: { memberCode: string }) {
             </button>
           </div>
           <p className="mt-1.5 text-[11px] leading-relaxed text-[var(--faint)]">
-            A full page with your name on it, not just a tracked link — better for a WhatsApp
-            status or a bio link.
+            {content.storefrontPitch}
           </p>
         </div>
       </div>
@@ -379,8 +383,8 @@ function ReferralCard({ memberCode }: { memberCode: string }) {
  * they open the app with the link pre-filled on a phone that has it
  * installed, and are a harmless no-op tap anywhere else.
  */
-function ShareRow({ link, memberCode }: { link: string; memberCode: string }) {
-  const intro = `Join Majestic Cart and shop with me — sign up with my ID ${memberCode}`;
+function ShareRow({ link, memberCode, messageTemplate }: { link: string; memberCode: string; messageTemplate: string }) {
+  const intro = messageTemplate.replace('{code}', memberCode);
   const encodedMessage = encodeURIComponent(`${intro}: ${link}`);
   const encodedIntro = encodeURIComponent(intro);
   const encodedLink = encodeURIComponent(link);

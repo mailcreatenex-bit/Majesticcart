@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { CartView } from '@/components/CartView';
+import { getTheme } from '@/lib/content';
 
 /**
  * The bag.
@@ -15,6 +16,7 @@ export const metadata: Metadata = buildMetadata({
   pathname: '/cart',
 });
 
-export default function CartPage() {
-  return <CartView />;
+export default async function CartPage() {
+  const { cartCopy } = await getTheme();
+  return <CartView copy={cartCopy} />;
 }

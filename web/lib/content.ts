@@ -99,6 +99,32 @@ export interface ThemeSettings {
     eligibility: string;
   };
   faqPage: { q: string; a: string }[];
+  authCopy: {
+    introEyebrow: string; introHeading: string; introBody: string;
+    loginLead: string;
+    signupLead: string; signupDisclaimer: string;
+    forgotPasswordLead: string;
+  };
+  contactPageCopy: { lead: string; careBody: string; grievanceIntro: string; slaText: string; writeBody: string };
+  blogPageCopy: { intro: string; emptyState: string };
+  memberStorefrontCopy: { body: string; cta: string; rangeHeading: string };
+  brandPageCopy: { lead: string; emptyTitle: string; emptyBody: string };
+  cartCopy: { emptyState: string; pricingNote: string };
+  checkoutCopy: { walletNote: string; incomeWalletNote: string };
+  networkCopy: {
+    levelsExplainer: string; emptyTitle: string; emptyBody: string;
+    incomeDisclaimer: string; inviteIntro: string; storefrontPitch: string;
+    shareMessageTemplate: string;
+  };
+  walletCopy: { shoppingWalletBody: string; incomeWalletBody: string; shoppingEmptyBody: string; incomeEmptyBody: string };
+  withdrawCopy: { successNote: string; processingNote: string; goodToKnow: [string, string, string] };
+  accountCopy: { payoutNote: string; payoutDisclaimer: string };
+  supportCopy: { intro: string };
+  idCardCopy: { welcome: string; tagline: string };
+  statementCopy: { rejectedNote: string };
+  shadeFinderCopy: { intro: string; privacyNote: string };
+  autoshipCopy: { intro: string; deliveryNote: string };
+  mobileRechargeCopy: { successNote: string; processingNote: string; goodToKnow: [string, string, string] };
 }
 
 export interface TitleBody {
@@ -226,6 +252,116 @@ function mergeTuple<N extends readonly TitleBody[]>(defaults: N, stored: readonl
   return defaults.map((d, i) => ({ ...d, ...stored?.[i] })) as unknown as N;
 }
 
+const DEFAULT_AUTH_COPY: ThemeSettings['authCopy'] = {
+  introEyebrow: 'Beauty from brands you know',
+  introHeading: 'Beauty brands you love,\nunder one roof',
+  introBody: 'Shop makeup, skin care, body care and fragrance from brands you already trust — Lakmé, Lotus Herbals, Pond’s, Dot & Key, Himalaya and more — delivered to your door.',
+  loginLead: 'Log in to shop from your wallet and follow your team.',
+  signupLead: 'Free to register. No registration fee.',
+  signupDisclaimer: 'Income is earned only on products sold and delivered. We make no guarantee of earnings.',
+  forgotPasswordLead: 'We will send a one-time code to your registered email address.',
+};
+
+const DEFAULT_CONTACT_PAGE_COPY: ThemeSettings['contactPageCopy'] = {
+  lead: 'Real people, reachable during business hours. Every complaint gets an acknowledgement.',
+  careBody: 'Orders, delivery, returns and wallet questions.',
+  grievanceIntro: 'If customer care has not resolved your issue, escalate here.',
+  slaText: 'Acknowledged within 48 hours and resolved within one month, as required by the Consumer Protection (E-Commerce) Rules, 2020.',
+  writeBody: 'Ask a question or raise a complaint. You get a reference number, and we acknowledge it within 48 hours. Members can also do this from the Support tab in their account, where the replies appear.',
+};
+
+const DEFAULT_BLOG_PAGE_COPY: ThemeSettings['blogPageCopy'] = {
+  intro: 'Skin care guidance, ingredient explainers and product updates from Majestic Cart.',
+  emptyState: 'Nothing published yet. Check back soon.',
+};
+
+const DEFAULT_MEMBER_STOREFRONT_COPY: ThemeSettings['memberStorefrontCopy'] = {
+  body: 'Every order placed here is on {name}’s recommendation. Wallet, delivery and returns work exactly as they do anywhere else on the site.',
+  cta: 'Want to sell like {name}? See how to join →',
+  rangeHeading: 'The full range',
+};
+
+const DEFAULT_BRAND_PAGE_COPY: ThemeSettings['brandPageCopy'] = {
+  lead: 'The full {name} range, sold direct through Majestic Cart.',
+  emptyTitle: '{name} products are on their way',
+  emptyBody: 'We carry {name}, but nothing is listed just yet. Have a look at the rest of the range.',
+};
+
+const DEFAULT_CART_COPY: ThemeSettings['cartCopy'] = {
+  emptyState: 'Nothing here yet. Have a look at what is in stock.',
+  pricingNote: 'GST and delivery are calculated at checkout, once the delivery address is chosen. Prices shown are from when each item was added and are confirmed again before you pay.',
+};
+
+const DEFAULT_CHECKOUT_COPY: ThemeSettings['checkoutCopy'] = {
+  walletNote: 'Orders are paid from your shopping wallet. There is no card payment on this site.',
+  incomeWalletNote: 'Income wallet: {amount} — withdrawable to your bank, not spendable here.',
+};
+
+const DEFAULT_NETWORK_COPY: ThemeSettings['networkCopy'] = {
+  levelsExplainer: 'Level 1 is the people you sponsored. Level 2 is the people they sponsored, and so on.',
+  emptyTitle: 'Nobody yet',
+  emptyBody: 'Share your referral link with anyone who wants to sell the products. They will appear here once they sign up.',
+  incomeDisclaimer: 'Earnings are not shown here — neither yours nor anyone else’s. Your own income is in your wallet statement; what the people in your team earn is theirs to share or not.',
+  inviteIntro: 'Anyone who signs up through your link or with your ID joins your team. Joining is free.',
+  storefrontPitch: 'A full page with your name on it, not just a tracked link — better for a WhatsApp status or a bio link.',
+  shareMessageTemplate: 'Join Majestic Cart and shop with me — sign up with my ID {code}',
+};
+
+const DEFAULT_WALLET_COPY: ThemeSettings['walletCopy'] = {
+  shoppingWalletBody: 'Funded by UPI payments you submit for approval. Spends on orders — or on a mobile recharge, if you’d rather not shop right now. Cannot be withdrawn as cash.',
+  incomeWalletBody: 'Earned on orders that have been delivered. Withdraws to your bank account, or moves into your shopping wallet.',
+  shoppingEmptyBody: 'Once a recharge is approved it will appear here, along with every order it pays for.',
+  incomeEmptyBody: 'Income appears here once an order you or your team placed has been delivered.',
+};
+
+const DEFAULT_WITHDRAW_COPY: ThemeSettings['withdrawCopy'] = {
+  successNote: '{amount} will be transferred to your account. The amount has been held from your income wallet already, so it cannot be spent twice while the transfer is processed.',
+  processingNote: 'Withdrawals are checked and paid by our team. The amount is held from your wallet as soon as you request it, so it cannot be spent twice while it is processed.',
+  goodToKnow: [
+    'Payouts go only to an account in your own name.',
+    'Your shopping wallet cannot be withdrawn — it buys products only.',
+    'TDS is deducted where it applies, and shown on your statement.',
+  ],
+};
+
+const DEFAULT_ACCOUNT_COPY: ThemeSettings['accountCopy'] = {
+  payoutNote: 'Where income withdrawals are sent. Must be an account in your own name.',
+  payoutDisclaimer: 'Payouts are only made to an account in the member’s own name. An account that already belongs to another member will be refused.',
+};
+
+const DEFAULT_SUPPORT_COPY: ThemeSettings['supportCopy'] = {
+  intro: 'Ask a question or raise a complaint. We acknowledge every ticket within 48 hours and aim to resolve it within a month.',
+};
+
+const DEFAULT_ID_CARD_COPY: ThemeSettings['idCardCopy'] = {
+  welcome: 'Welcome to Majestic Cart! Add your photo below and your ID card is ready to print.',
+  tagline: 'Unlocked by what you have achieved.',
+};
+
+const DEFAULT_STATEMENT_COPY: ThemeSettings['statementCopy'] = {
+  rejectedNote: 'Rejected withdrawals are returned to your wallet and are not counted in the totals.',
+};
+
+const DEFAULT_SHADE_FINDER_COPY: ThemeSettings['shadeFinderCopy'] = {
+  intro: 'A clear photo in good light — front-facing, no filter — works best.',
+  privacyNote: 'Your photo is analysed and then discarded; it is never saved.',
+};
+
+const DEFAULT_AUTOSHIP_COPY: ThemeSettings['autoshipCopy'] = {
+  intro: 'Pick what you buy every month and the day you want it. On that day the order is placed from your shopping wallet, exactly like an order you place yourself - so it counts toward your monthly target{targetClause}. If your wallet is short, nothing is charged and we let you know.',
+  deliveryNote: 'Delivered to your saved address. Prices include GST; the order is priced on the day. Add money to your shopping wallet before the day so the order can be paid.',
+};
+
+const DEFAULT_MOBILE_RECHARGE_COPY: ThemeSettings['mobileRechargeCopy'] = {
+  successNote: '{amount} has been held from your shopping wallet to recharge {number}. It usually completes within a few hours — you’ll get a notification either way.',
+  processingNote: 'The amount is held from your shopping wallet the moment you submit. If we can’t complete the recharge, it goes straight back to your wallet.',
+  goodToKnow: [
+    'This spends your shopping wallet — the same balance an order would spend.',
+    '₹10 minimum, ₹5,000 maximum per recharge, one in progress at a time.',
+    'Recharges are fulfilled by our team, usually within a few hours.',
+  ],
+};
+
 const DEFAULT_THEME: ThemeSettings = {
   colors: { ink: '#341316', accent: '#B84654', gold: '#D9B25A' },
   logoUrl: '',
@@ -251,6 +387,23 @@ const DEFAULT_THEME: ThemeSettings = {
   aboutPage: DEFAULT_ABOUT_PAGE,
   joinPage: DEFAULT_JOIN_PAGE,
   faqPage: DEFAULT_FAQ_PAGE,
+  authCopy: DEFAULT_AUTH_COPY,
+  contactPageCopy: DEFAULT_CONTACT_PAGE_COPY,
+  blogPageCopy: DEFAULT_BLOG_PAGE_COPY,
+  memberStorefrontCopy: DEFAULT_MEMBER_STOREFRONT_COPY,
+  brandPageCopy: DEFAULT_BRAND_PAGE_COPY,
+  cartCopy: DEFAULT_CART_COPY,
+  checkoutCopy: DEFAULT_CHECKOUT_COPY,
+  networkCopy: DEFAULT_NETWORK_COPY,
+  walletCopy: DEFAULT_WALLET_COPY,
+  withdrawCopy: DEFAULT_WITHDRAW_COPY,
+  accountCopy: DEFAULT_ACCOUNT_COPY,
+  supportCopy: DEFAULT_SUPPORT_COPY,
+  idCardCopy: DEFAULT_ID_CARD_COPY,
+  statementCopy: DEFAULT_STATEMENT_COPY,
+  shadeFinderCopy: DEFAULT_SHADE_FINDER_COPY,
+  autoshipCopy: DEFAULT_AUTOSHIP_COPY,
+  mobileRechargeCopy: DEFAULT_MOBILE_RECHARGE_COPY,
 };
 
 const API = () => {
@@ -324,6 +477,29 @@ export async function getTheme(): Promise<ThemeSettings> {
     aboutPage: { ...DEFAULT_ABOUT_PAGE, ...t.aboutPage },
     joinPage: { ...DEFAULT_JOIN_PAGE, ...t.joinPage },
     faqPage: t.faqPage && t.faqPage.length > 0 ? t.faqPage : DEFAULT_FAQ_PAGE,
+    authCopy: { ...DEFAULT_AUTH_COPY, ...t.authCopy },
+    contactPageCopy: { ...DEFAULT_CONTACT_PAGE_COPY, ...t.contactPageCopy },
+    blogPageCopy: { ...DEFAULT_BLOG_PAGE_COPY, ...t.blogPageCopy },
+    memberStorefrontCopy: { ...DEFAULT_MEMBER_STOREFRONT_COPY, ...t.memberStorefrontCopy },
+    brandPageCopy: { ...DEFAULT_BRAND_PAGE_COPY, ...t.brandPageCopy },
+    cartCopy: { ...DEFAULT_CART_COPY, ...t.cartCopy },
+    checkoutCopy: { ...DEFAULT_CHECKOUT_COPY, ...t.checkoutCopy },
+    networkCopy: { ...DEFAULT_NETWORK_COPY, ...t.networkCopy },
+    walletCopy: { ...DEFAULT_WALLET_COPY, ...t.walletCopy },
+    withdrawCopy: {
+      ...DEFAULT_WITHDRAW_COPY, ...t.withdrawCopy,
+      goodToKnow: DEFAULT_WITHDRAW_COPY.goodToKnow.map((d, i) => t.withdrawCopy?.goodToKnow?.[i] ?? d) as ThemeSettings['withdrawCopy']['goodToKnow'],
+    },
+    accountCopy: { ...DEFAULT_ACCOUNT_COPY, ...t.accountCopy },
+    supportCopy: { ...DEFAULT_SUPPORT_COPY, ...t.supportCopy },
+    idCardCopy: { ...DEFAULT_ID_CARD_COPY, ...t.idCardCopy },
+    statementCopy: { ...DEFAULT_STATEMENT_COPY, ...t.statementCopy },
+    shadeFinderCopy: { ...DEFAULT_SHADE_FINDER_COPY, ...t.shadeFinderCopy },
+    autoshipCopy: { ...DEFAULT_AUTOSHIP_COPY, ...t.autoshipCopy },
+    mobileRechargeCopy: {
+      ...DEFAULT_MOBILE_RECHARGE_COPY, ...t.mobileRechargeCopy,
+      goodToKnow: DEFAULT_MOBILE_RECHARGE_COPY.goodToKnow.map((d, i) => t.mobileRechargeCopy?.goodToKnow?.[i] ?? d) as ThemeSettings['mobileRechargeCopy']['goodToKnow'],
+    },
   };
 }
 

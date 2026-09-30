@@ -864,6 +864,91 @@ const ThemeSettingSchema = z.object({
     q: z.string().trim().max(200),
     a: z.string().trim().max(1000),
   })).min(1).max(40),
+  authCopy: z.object({
+    introEyebrow: z.string().trim().max(60),
+    introHeading: z.string().trim().max(120),
+    introBody: z.string().trim().max(400),
+    loginLead: z.string().trim().max(200),
+    signupLead: z.string().trim().max(200),
+    signupDisclaimer: z.string().trim().max(300),
+    forgotPasswordLead: z.string().trim().max(200),
+  }),
+  contactPageCopy: z.object({
+    lead: z.string().trim().max(300),
+    careBody: z.string().trim().max(200),
+    grievanceIntro: z.string().trim().max(200),
+    slaText: z.string().trim().max(300),
+    writeBody: z.string().trim().max(400),
+  }),
+  blogPageCopy: z.object({
+    intro: z.string().trim().max(300),
+    emptyState: z.string().trim().max(200),
+  }),
+  memberStorefrontCopy: z.object({
+    body: z.string().trim().max(300),
+    cta: z.string().trim().max(150),
+    rangeHeading: z.string().trim().max(60),
+  }),
+  brandPageCopy: z.object({
+    lead: z.string().trim().max(200),
+    emptyTitle: z.string().trim().max(150),
+    emptyBody: z.string().trim().max(300),
+  }),
+  cartCopy: z.object({
+    emptyState: z.string().trim().max(200),
+    pricingNote: z.string().trim().max(400),
+  }),
+  checkoutCopy: z.object({
+    walletNote: z.string().trim().max(200),
+    incomeWalletNote: z.string().trim().max(200),
+  }),
+  networkCopy: z.object({
+    levelsExplainer: z.string().trim().max(200),
+    emptyTitle: z.string().trim().max(100),
+    emptyBody: z.string().trim().max(300),
+    incomeDisclaimer: z.string().trim().max(400),
+    inviteIntro: z.string().trim().max(200),
+    storefrontPitch: z.string().trim().max(200),
+    shareMessageTemplate: z.string().trim().max(300),
+  }),
+  walletCopy: z.object({
+    shoppingWalletBody: z.string().trim().max(400),
+    incomeWalletBody: z.string().trim().max(400),
+    shoppingEmptyBody: z.string().trim().max(300),
+    incomeEmptyBody: z.string().trim().max(300),
+  }),
+  withdrawCopy: z.object({
+    successNote: z.string().trim().max(400),
+    processingNote: z.string().trim().max(400),
+    goodToKnow: z.tuple([z.string().trim().max(200), z.string().trim().max(200), z.string().trim().max(200)]),
+  }),
+  accountCopy: z.object({
+    payoutNote: z.string().trim().max(200),
+    payoutDisclaimer: z.string().trim().max(300),
+  }),
+  supportCopy: z.object({
+    intro: z.string().trim().max(300),
+  }),
+  idCardCopy: z.object({
+    welcome: z.string().trim().max(200),
+    tagline: z.string().trim().max(150),
+  }),
+  statementCopy: z.object({
+    rejectedNote: z.string().trim().max(300),
+  }),
+  shadeFinderCopy: z.object({
+    intro: z.string().trim().max(300),
+    privacyNote: z.string().trim().max(300),
+  }),
+  autoshipCopy: z.object({
+    intro: z.string().trim().max(500),
+    deliveryNote: z.string().trim().max(300),
+  }),
+  mobileRechargeCopy: z.object({
+    successNote: z.string().trim().max(300),
+    processingNote: z.string().trim().max(300),
+    goodToKnow: z.tuple([z.string().trim().max(200), z.string().trim().max(200), z.string().trim().max(200)]),
+  }),
 });
 
 /** Read by the storefront on every homepage render — public, since it's exactly what the page already shows every visitor. */

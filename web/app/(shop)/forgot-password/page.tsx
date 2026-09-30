@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { AuthShell, Field, inputClass, primaryButtonClass } from '@/components/AuthShell';
+import { getTheme } from '@/lib/content';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Reset your password'),
@@ -14,12 +15,12 @@ export default async function ForgotPasswordPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const { error } = await searchParams;
+  const [{ error }, theme] = await Promise.all([searchParams, getTheme()]);
 
   return (
     <AuthShell
       title="Reset your password"
-      lead="We will send a one-time code to your registered email address."
+      lead={theme.authCopy.forgotPasswordLead}
       footer={<Link href="/login" className="font-semibold text-[var(--accent)]">Back to log in</Link>}
     >
       {error && (

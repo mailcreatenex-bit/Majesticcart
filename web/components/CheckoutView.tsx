@@ -59,7 +59,9 @@ interface Quote {
 
 const EMPTY_ADDRESS: Address = { name: '', phone: '', line: '', city: '', state: '', pincode: '' };
 
-export function CheckoutView() {
+interface CheckoutCopy { walletNote: string; incomeWalletNote: string }
+
+export function CheckoutView({ copy }: { copy: CheckoutCopy }) {
   const router = useRouter();
   const { cart, totals, ready, clear } = useCart();
 
@@ -387,7 +389,7 @@ export function CheckoutView() {
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
             <h2 className="font-serif text-lg text-[var(--ink)]">Payment</h2>
             <p className="mt-1 text-xs text-[var(--muted)]">
-              Orders are paid from your shopping wallet. There is no card payment on this site.
+              {copy.walletNote}
             </p>
 
             <div className="mt-4 flex items-baseline justify-between rounded-xl bg-[var(--page)] px-4 py-3">
@@ -403,8 +405,7 @@ export function CheckoutView() {
                 what would make it a deposit. */}
             {dashboard && dashboard.wallets.income.paise > 0 && (
               <p className="mt-2 text-xs text-[var(--muted)]">
-                Income wallet: {showMoney(dashboard.wallets.income)} — withdrawable to your bank,
-                not spendable here.
+                {copy.incomeWalletNote.replace('{amount}', showMoney(dashboard.wallets.income))}
               </p>
             )}
 

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { AuthShell, AuthIntro, Field, inputClass, primaryButtonClass } from '@/components/AuthShell';
+import { getTheme } from '@/lib/content';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Log in'),
@@ -20,14 +21,14 @@ export default async function LoginPage({
   // had rendered back at them. `notice` is a fixed enum value (not user
   // input) set by `app/api/auth/reset-password/route.ts` after a successful
   // reset.
-  const { next, error, identifier, notice } = await searchParams;
+  const [{ next, error, identifier, notice }, theme] = await Promise.all([searchParams, getTheme()]);
 
   return (
     <>
     <AuthIntro />
     <AuthShell
       title="Welcome back"
-      lead="Log in to shop from your wallet and follow your team."
+      lead={theme.authCopy.loginLead}
       footer={<>New here? <Link href="/signup" className="font-semibold text-[var(--accent)]">Create a free account</Link></>}
     >
       {notice === 'password-reset' && (

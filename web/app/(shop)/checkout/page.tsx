@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle } from '@/lib/seo';
 import { CheckoutView } from '@/components/CheckoutView';
+import { getTheme } from '@/lib/content';
 
 /**
  * Checkout.
@@ -15,6 +16,7 @@ export const metadata: Metadata = buildMetadata({
   pathname: '/checkout',
 });
 
-export default function CheckoutPage() {
-  return <CheckoutView />;
+export default async function CheckoutPage() {
+  const { checkoutCopy } = await getTheme();
+  return <CheckoutView copy={checkoutCopy} />;
 }

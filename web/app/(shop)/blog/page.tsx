@@ -1,30 +1,32 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { buildMetadata, metaDescription, pageTitle } from '@/lib/seo';
-import { listBlogPosts } from '@/lib/content';
+import { listBlogPosts, getTheme } from '@/lib/content';
 import { PageHeader } from '@/components/Chrome';
 
 export const revalidate = 3600;
 
-const DESCRIPTION = 'Skin care guidance, ingredient explainers and product updates from Majestic Cart.';
-
-export const metadata: Metadata = buildMetadata({
-  title: pageTitle('Blog'),
-  description: metaDescription(DESCRIPTION),
-  pathname: '/blog',
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const theme = await getTheme();
+  return buildMetadata({
+    title: pageTitle('Blog'),
+    description: metaDescription(theme.blogPageCopy.intro),
+    pathname: '/blog',
+  });
+}
 
 export default async function BlogIndexPage() {
-  const posts = await listBlogPosts();
+  const [posts, theme] = await Promise.all([listBlogPosts(), getTheme()]);
+  const COPY = theme.blogPageCopy;
 
   return (
     <>
-      <PageHeader title="Blog" lead={DESCRIPTION} image="/home/category-makeup.jpg" />
+      <PageHeader title="Blog" lead={COPY.intro} image="/home/category-makeup.jpg" />
 
       <div className="mx-auto max-w-4xl px-4 py-10">
         {posts.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] px-6 py-12 text-center text-sm text-[var(--muted)]">
-            Nothing published yet. Check back soon.
+            {COPY.emptyState}
           </p>
         ) : (
           <div className="space-y-8">

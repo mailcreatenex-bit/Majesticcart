@@ -206,6 +206,53 @@ export interface ThemeSettingValue {
     eligibility: string;
   };
   faqPage: { q: string; a: string }[];
+  /**
+   * Everything below was the last sweep of the "nothing hardcoded" audit —
+   * persuasive, instructional and disclaimer copy scattered across the auth
+   * pages, contact page, blog intro, member storefront, brand pages, and the
+   * whole logged-in member area (cart, checkout, wallet, network, account,
+   * support, ID card, statement, shade finder, autoship, mobile recharge).
+   * None of it carries the income-claim build-time check the way About/Join/
+   * FAQ originally did, so there is no compliance trade-off here the way
+   * there was for those three — it just needed a home. A few fields contain
+   * a literal `{placeholder}` token the frontend substitutes at render time
+   * (a member's first name, a formatted amount); the admin panel says so
+   * next to each one.
+   */
+  authCopy: {
+    introEyebrow: string; introHeading: string; introBody: string;
+    loginLead: string;
+    signupLead: string; signupDisclaimer: string;
+    forgotPasswordLead: string;
+  };
+  contactPageCopy: { lead: string; careBody: string; grievanceIntro: string; slaText: string; writeBody: string };
+  blogPageCopy: { intro: string; emptyState: string };
+  /** {name} is replaced with the sponsoring member's first name. */
+  memberStorefrontCopy: { body: string; cta: string; rangeHeading: string };
+  /** {name} is replaced with the brand's name. */
+  brandPageCopy: { lead: string; emptyTitle: string; emptyBody: string };
+  cartCopy: { emptyState: string; pricingNote: string };
+  /** {amount} is replaced with the formatted income-wallet balance. */
+  checkoutCopy: { walletNote: string; incomeWalletNote: string };
+  /** {code} is replaced with the member's own referral code. */
+  networkCopy: {
+    levelsExplainer: string; emptyTitle: string; emptyBody: string;
+    incomeDisclaimer: string; inviteIntro: string; storefrontPitch: string;
+    shareMessageTemplate: string;
+  };
+  walletCopy: { shoppingWalletBody: string; incomeWalletBody: string; shoppingEmptyBody: string; incomeEmptyBody: string };
+  /** {amount} is replaced with the formatted amount requested. */
+  withdrawCopy: { successNote: string; processingNote: string; goodToKnow: [string, string, string] };
+  accountCopy: { payoutNote: string; payoutDisclaimer: string };
+  supportCopy: { intro: string };
+  idCardCopy: { welcome: string; tagline: string };
+  statementCopy: { rejectedNote: string };
+  /** This one states a fact about the system (photos are discarded, not stored) — keep it true, not just on-brand. */
+  shadeFinderCopy: { intro: string; privacyNote: string };
+  /** {targetClause} is replaced with " of <target>" when the member has a repurchase target, or removed entirely when they don't. */
+  autoshipCopy: { intro: string; deliveryNote: string };
+  /** {amount} and {number} are replaced with the recharge amount and the mobile number. */
+  mobileRechargeCopy: { successNote: string; processingNote: string; goodToKnow: [string, string, string] };
 }
 
 interface TitleBody {
@@ -330,6 +377,116 @@ const DEFAULT_FAQ_PAGE: ThemeSettingValue['faqPage'] = [
   { q: 'Who do I contact if something goes wrong?', a: 'Contact customer care by phone or email, shown in the footer of every page. If a complaint is not resolved to your satisfaction, the grievance officer’s details are also in the footer and a response is due within 48 hours.' },
 ];
 
+const DEFAULT_AUTH_COPY: ThemeSettingValue['authCopy'] = {
+  introEyebrow: 'Beauty from brands you know',
+  introHeading: 'Beauty brands you love,\nunder one roof',
+  introBody: 'Shop makeup, skin care, body care and fragrance from brands you already trust — Lakmé, Lotus Herbals, Pond’s, Dot & Key, Himalaya and more — delivered to your door.',
+  loginLead: 'Log in to shop from your wallet and follow your team.',
+  signupLead: 'Free to register. No registration fee.',
+  signupDisclaimer: 'Income is earned only on products sold and delivered. We make no guarantee of earnings.',
+  forgotPasswordLead: 'We will send a one-time code to your registered email address.',
+};
+
+const DEFAULT_CONTACT_PAGE_COPY: ThemeSettingValue['contactPageCopy'] = {
+  lead: 'Real people, reachable during business hours. Every complaint gets an acknowledgement.',
+  careBody: 'Orders, delivery, returns and wallet questions.',
+  grievanceIntro: 'If customer care has not resolved your issue, escalate here.',
+  slaText: 'Acknowledged within 48 hours and resolved within one month, as required by the Consumer Protection (E-Commerce) Rules, 2020.',
+  writeBody: 'Ask a question or raise a complaint. You get a reference number, and we acknowledge it within 48 hours. Members can also do this from the Support tab in their account, where the replies appear.',
+};
+
+const DEFAULT_BLOG_PAGE_COPY: ThemeSettingValue['blogPageCopy'] = {
+  intro: 'Skin care guidance, ingredient explainers and product updates from Majestic Cart.',
+  emptyState: 'Nothing published yet. Check back soon.',
+};
+
+const DEFAULT_MEMBER_STOREFRONT_COPY: ThemeSettingValue['memberStorefrontCopy'] = {
+  body: 'Every order placed here is on {name}’s recommendation. Wallet, delivery and returns work exactly as they do anywhere else on the site.',
+  cta: 'Want to sell like {name}? See how to join →',
+  rangeHeading: 'The full range',
+};
+
+const DEFAULT_BRAND_PAGE_COPY: ThemeSettingValue['brandPageCopy'] = {
+  lead: 'The full {name} range, sold direct through Majestic Cart.',
+  emptyTitle: '{name} products are on their way',
+  emptyBody: 'We carry {name}, but nothing is listed just yet. Have a look at the rest of the range.',
+};
+
+const DEFAULT_CART_COPY: ThemeSettingValue['cartCopy'] = {
+  emptyState: 'Nothing here yet. Have a look at what is in stock.',
+  pricingNote: 'GST and delivery are calculated at checkout, once the delivery address is chosen. Prices shown are from when each item was added and are confirmed again before you pay.',
+};
+
+const DEFAULT_CHECKOUT_COPY: ThemeSettingValue['checkoutCopy'] = {
+  walletNote: 'Orders are paid from your shopping wallet. There is no card payment on this site.',
+  incomeWalletNote: 'Income wallet: {amount} — withdrawable to your bank, not spendable here.',
+};
+
+const DEFAULT_NETWORK_COPY: ThemeSettingValue['networkCopy'] = {
+  levelsExplainer: 'Level 1 is the people you sponsored. Level 2 is the people they sponsored, and so on.',
+  emptyTitle: 'Nobody yet',
+  emptyBody: 'Share your referral link with anyone who wants to sell the products. They will appear here once they sign up.',
+  incomeDisclaimer: 'Earnings are not shown here — neither yours nor anyone else’s. Your own income is in your wallet statement; what the people in your team earn is theirs to share or not.',
+  inviteIntro: 'Anyone who signs up through your link or with your ID joins your team. Joining is free.',
+  storefrontPitch: 'A full page with your name on it, not just a tracked link — better for a WhatsApp status or a bio link.',
+  shareMessageTemplate: 'Join Majestic Cart and shop with me — sign up with my ID {code}',
+};
+
+const DEFAULT_WALLET_COPY: ThemeSettingValue['walletCopy'] = {
+  shoppingWalletBody: 'Funded by UPI payments you submit for approval. Spends on orders — or on a mobile recharge, if you’d rather not shop right now. Cannot be withdrawn as cash.',
+  incomeWalletBody: 'Earned on orders that have been delivered. Withdraws to your bank account, or moves into your shopping wallet.',
+  shoppingEmptyBody: 'Once a recharge is approved it will appear here, along with every order it pays for.',
+  incomeEmptyBody: 'Income appears here once an order you or your team placed has been delivered.',
+};
+
+const DEFAULT_WITHDRAW_COPY: ThemeSettingValue['withdrawCopy'] = {
+  successNote: '{amount} will be transferred to your account. The amount has been held from your income wallet already, so it cannot be spent twice while the transfer is processed.',
+  processingNote: 'Withdrawals are checked and paid by our team. The amount is held from your wallet as soon as you request it, so it cannot be spent twice while it is processed.',
+  goodToKnow: [
+    'Payouts go only to an account in your own name.',
+    'Your shopping wallet cannot be withdrawn — it buys products only.',
+    'TDS is deducted where it applies, and shown on your statement.',
+  ],
+};
+
+const DEFAULT_ACCOUNT_COPY: ThemeSettingValue['accountCopy'] = {
+  payoutNote: 'Where income withdrawals are sent. Must be an account in your own name.',
+  payoutDisclaimer: 'Payouts are only made to an account in the member’s own name. An account that already belongs to another member will be refused.',
+};
+
+const DEFAULT_SUPPORT_COPY: ThemeSettingValue['supportCopy'] = {
+  intro: 'Ask a question or raise a complaint. We acknowledge every ticket within 48 hours and aim to resolve it within a month.',
+};
+
+const DEFAULT_ID_CARD_COPY: ThemeSettingValue['idCardCopy'] = {
+  welcome: 'Welcome to Majestic Cart! Add your photo below and your ID card is ready to print.',
+  tagline: 'Unlocked by what you have achieved.',
+};
+
+const DEFAULT_STATEMENT_COPY: ThemeSettingValue['statementCopy'] = {
+  rejectedNote: 'Rejected withdrawals are returned to your wallet and are not counted in the totals.',
+};
+
+const DEFAULT_SHADE_FINDER_COPY: ThemeSettingValue['shadeFinderCopy'] = {
+  intro: 'A clear photo in good light — front-facing, no filter — works best.',
+  privacyNote: 'Your photo is analysed and then discarded; it is never saved.',
+};
+
+const DEFAULT_AUTOSHIP_COPY: ThemeSettingValue['autoshipCopy'] = {
+  intro: 'Pick what you buy every month and the day you want it. On that day the order is placed from your shopping wallet, exactly like an order you place yourself - so it counts toward your monthly target{targetClause}. If your wallet is short, nothing is charged and we let you know.',
+  deliveryNote: 'Delivered to your saved address. Prices include GST; the order is priced on the day. Add money to your shopping wallet before the day so the order can be paid.',
+};
+
+const DEFAULT_MOBILE_RECHARGE_COPY: ThemeSettingValue['mobileRechargeCopy'] = {
+  successNote: '{amount} has been held from your shopping wallet to recharge {number}. It usually completes within a few hours — you’ll get a notification either way.',
+  processingNote: 'The amount is held from your shopping wallet the moment you submit. If we can’t complete the recharge, it goes straight back to your wallet.',
+  goodToKnow: [
+    'This spends your shopping wallet — the same balance an order would spend.',
+    '₹10 minimum, ₹5,000 maximum per recharge, one in progress at a time.',
+    'Recharges are fulfilled by our team, usually within a few hours.',
+  ],
+};
+
 const DEFAULT_THEME: ThemeSettingValue = {
   colors: { ink: '#341316', accent: '#B84654', gold: '#D9B25A' },
   logoUrl: '',
@@ -355,6 +512,23 @@ const DEFAULT_THEME: ThemeSettingValue = {
   aboutPage: DEFAULT_ABOUT_PAGE,
   joinPage: DEFAULT_JOIN_PAGE,
   faqPage: DEFAULT_FAQ_PAGE,
+  authCopy: DEFAULT_AUTH_COPY,
+  contactPageCopy: DEFAULT_CONTACT_PAGE_COPY,
+  blogPageCopy: DEFAULT_BLOG_PAGE_COPY,
+  memberStorefrontCopy: DEFAULT_MEMBER_STOREFRONT_COPY,
+  brandPageCopy: DEFAULT_BRAND_PAGE_COPY,
+  cartCopy: DEFAULT_CART_COPY,
+  checkoutCopy: DEFAULT_CHECKOUT_COPY,
+  networkCopy: DEFAULT_NETWORK_COPY,
+  walletCopy: DEFAULT_WALLET_COPY,
+  withdrawCopy: DEFAULT_WITHDRAW_COPY,
+  accountCopy: DEFAULT_ACCOUNT_COPY,
+  supportCopy: DEFAULT_SUPPORT_COPY,
+  idCardCopy: DEFAULT_ID_CARD_COPY,
+  statementCopy: DEFAULT_STATEMENT_COPY,
+  shadeFinderCopy: DEFAULT_SHADE_FINDER_COPY,
+  autoshipCopy: DEFAULT_AUTOSHIP_COPY,
+  mobileRechargeCopy: DEFAULT_MOBILE_RECHARGE_COPY,
 };
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
@@ -544,6 +718,29 @@ export class SettingsService {
       aboutPage: { ...DEFAULT_ABOUT_PAGE, ...stored?.aboutPage },
       joinPage: { ...DEFAULT_JOIN_PAGE, ...stored?.joinPage },
       faqPage: stored?.faqPage && stored.faqPage.length > 0 ? stored.faqPage : DEFAULT_FAQ_PAGE,
+      authCopy: { ...DEFAULT_AUTH_COPY, ...stored?.authCopy },
+      contactPageCopy: { ...DEFAULT_CONTACT_PAGE_COPY, ...stored?.contactPageCopy },
+      blogPageCopy: { ...DEFAULT_BLOG_PAGE_COPY, ...stored?.blogPageCopy },
+      memberStorefrontCopy: { ...DEFAULT_MEMBER_STOREFRONT_COPY, ...stored?.memberStorefrontCopy },
+      brandPageCopy: { ...DEFAULT_BRAND_PAGE_COPY, ...stored?.brandPageCopy },
+      cartCopy: { ...DEFAULT_CART_COPY, ...stored?.cartCopy },
+      checkoutCopy: { ...DEFAULT_CHECKOUT_COPY, ...stored?.checkoutCopy },
+      networkCopy: { ...DEFAULT_NETWORK_COPY, ...stored?.networkCopy },
+      walletCopy: { ...DEFAULT_WALLET_COPY, ...stored?.walletCopy },
+      withdrawCopy: {
+        ...DEFAULT_WITHDRAW_COPY, ...stored?.withdrawCopy,
+        goodToKnow: DEFAULT_WITHDRAW_COPY.goodToKnow.map((d, i) => stored?.withdrawCopy?.goodToKnow?.[i] ?? d) as ThemeSettingValue['withdrawCopy']['goodToKnow'],
+      },
+      accountCopy: { ...DEFAULT_ACCOUNT_COPY, ...stored?.accountCopy },
+      supportCopy: { ...DEFAULT_SUPPORT_COPY, ...stored?.supportCopy },
+      idCardCopy: { ...DEFAULT_ID_CARD_COPY, ...stored?.idCardCopy },
+      statementCopy: { ...DEFAULT_STATEMENT_COPY, ...stored?.statementCopy },
+      shadeFinderCopy: { ...DEFAULT_SHADE_FINDER_COPY, ...stored?.shadeFinderCopy },
+      autoshipCopy: { ...DEFAULT_AUTOSHIP_COPY, ...stored?.autoshipCopy },
+      mobileRechargeCopy: {
+        ...DEFAULT_MOBILE_RECHARGE_COPY, ...stored?.mobileRechargeCopy,
+        goodToKnow: DEFAULT_MOBILE_RECHARGE_COPY.goodToKnow.map((d, i) => stored?.mobileRechargeCopy?.goodToKnow?.[i] ?? d) as ThemeSettingValue['mobileRechargeCopy']['goodToKnow'],
+      },
     };
   }
 
@@ -590,6 +787,22 @@ export class SettingsService {
         'The Join page',
       );
       assertNoIncomeClaims(input.faqPage.map((f) => `${f.q} ${f.a}`).join(' '), 'The FAQ page');
+      // Not a page hardcoded for build-time enforcement the way the three
+      // above were, but several of these newer fields talk about earnings
+      // and wallets directly enough (the signup disclaimer, the network
+      // page's income notice) that the same save-time net is worth running
+      // over all of them rather than drawing a line only some of it needs.
+      assertNoIncomeClaims(
+        [
+          input.authCopy.signupDisclaimer,
+          input.networkCopy.incomeDisclaimer, input.networkCopy.inviteIntro,
+          input.checkoutCopy.walletNote, input.checkoutCopy.incomeWalletNote,
+          input.walletCopy.shoppingWalletBody, input.walletCopy.incomeWalletBody,
+          input.withdrawCopy.successNote, input.withdrawCopy.processingNote, ...input.withdrawCopy.goodToKnow,
+          input.accountCopy.payoutNote, input.accountCopy.payoutDisclaimer,
+        ].join(' '),
+        'The site copy',
+      );
     } catch (err) {
       throw new BadRequestException((err as Error).message);
     }
