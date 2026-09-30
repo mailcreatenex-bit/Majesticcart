@@ -38,6 +38,9 @@ interface ThemeValue {
   pinkBadges: [TitleBody, TitleBody, TitleBody];
   exploreTiles: [TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody];
   aboutUs: { title: string; body: string; images: [string, string] };
+  aboutPage: { lead: string; story: string[]; howItWorks: TitleBody[]; notThisTitle: string; notThis: string[] };
+  joinPage: { lead: string; steps: TitleBody[]; rules: TitleBody[]; honestTitle: string; honestPoints: string[]; eligibility: string };
+  faqPage: { q: string; a: string }[];
 }
 
 const NO_BANNER: ThemeValue['announcement'] = { enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '' };
@@ -56,6 +59,9 @@ const NO_PINK: ThemeValue['pinkBadges'] = [EMPTY_TB, EMPTY_TB, EMPTY_TB];
 const NO_EXPLORE: ThemeValue['exploreTiles'] = [EMPTY_TB, EMPTY_TB, EMPTY_TB, EMPTY_TB, EMPTY_TB, EMPTY_TB, EMPTY_TB];
 const NO_ABOUT: ThemeValue['aboutUs'] = { title: '', body: '', images: ['', ''] };
 const EXPLORE_LABELS = ['Shop the range', 'AI shade finder', 'Wallet & recharge', 'Become a member', 'Your network', 'Your account', 'Help & policies'];
+const NO_ABOUT_PAGE: ThemeValue['aboutPage'] = { lead: '', story: [''], howItWorks: [EMPTY_TB], notThisTitle: '', notThis: [''] };
+const NO_JOIN_PAGE: ThemeValue['joinPage'] = { lead: '', steps: [EMPTY_TB], rules: [EMPTY_TB], honestTitle: '', honestPoints: [''], eligibility: '' };
+const NO_FAQ_PAGE: ThemeValue['faqPage'] = [{ q: '', a: '' }];
 
 function mergeTuple<N extends readonly TitleBody[]>(defaults: N, stored: readonly Partial<TitleBody>[] | undefined): N {
   return defaults.map((d, i) => ({ ...d, ...stored?.[i] })) as unknown as N;
@@ -88,6 +94,9 @@ function Theme() {
         pinkBadges: mergeTuple(NO_PINK, v.pinkBadges),
         exploreTiles: mergeTuple(NO_EXPLORE, v.exploreTiles),
         aboutUs: { ...NO_ABOUT, ...v.aboutUs },
+        aboutPage: { ...NO_ABOUT_PAGE, ...v.aboutPage },
+        joinPage: { ...NO_JOIN_PAGE, ...v.joinPage },
+        faqPage: v.faqPage?.length ? v.faqPage : NO_FAQ_PAGE,
       }))
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load theme settings.'));
   }, []);
@@ -111,6 +120,9 @@ function Theme() {
     next[i] = v;
     setValue({ ...value, trustRibbon: next });
   };
+  const setAboutPage = <K extends keyof ThemeValue['aboutPage']>(key: K, v: ThemeValue['aboutPage'][K]) => setValue({ ...value, aboutPage: { ...value.aboutPage, [key]: v } });
+  const setJoinPage = <K extends keyof ThemeValue['joinPage']>(key: K, v: ThemeValue['joinPage'][K]) => setValue({ ...value, joinPage: { ...value.joinPage, [key]: v } });
+  const setFaqPage = (v: ThemeValue['faqPage']) => setValue({ ...value, faqPage: v });
 
   const save = async () => {
     setSaving(true);
@@ -288,6 +300,47 @@ function Theme() {
         </div>
       </Panel>
 
+      <Panel title="About page (/about)">
+        <div className="space-y-4">
+          <label className="block text-sm font-medium text-neutral-800">
+            Lead paragraph (under the page title)
+            <textarea value={value.aboutPage.lead} onChange={(e) => setAboutPage('lead', e.target.value)} rows={2} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+          </label>
+          <StringListField label="Story paragraphs" values={value.aboutPage.story} onChange={(v) => setAboutPage('story', v)} max={6} rows={3} />
+          <TitleBodyListField label="How the business works — cards" values={value.aboutPage.howItWorks} onChange={(v) => setAboutPage('howItWorks', v)} max={8} />
+          <Field label={'"What this is not" heading'} value={value.aboutPage.notThisTitle} onChange={(v) => setAboutPage('notThisTitle', v)} span2 />
+          <StringListField label={'"What this is not" points'} values={value.aboutPage.notThis} onChange={(v) => setAboutPage('notThis', v)} max={8} />
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">
+          The site's highest-scrutiny page under the Direct Selling Rules — content is checked for income claims when you save, and the save is rejected with the offending phrase if one is found.
+        </p>
+      </Panel>
+
+      <Panel title="Join page (/join)">
+        <div className="space-y-4">
+          <label className="block text-sm font-medium text-neutral-800">
+            Lead paragraph
+            <textarea value={value.joinPage.lead} onChange={(e) => setJoinPage('lead', e.target.value)} rows={2} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+          </label>
+          <TitleBodyListField label="How it works — numbered steps" values={value.joinPage.steps} onChange={(v) => setJoinPage('steps', v)} max={10} />
+          <TitleBodyListField label="The rules we hold ourselves to" values={value.joinPage.rules} onChange={(v) => setJoinPage('rules', v)} max={10} />
+          <Field label={'"What this is not" heading'} value={value.joinPage.honestTitle} onChange={(v) => setJoinPage('honestTitle', v)} span2 />
+          <StringListField label={'"What this is not" points'} values={value.joinPage.honestPoints} onChange={(v) => setJoinPage('honestPoints', v)} max={8} />
+          <label className="block text-sm font-medium text-neutral-800">
+            Who can join
+            <textarea value={value.joinPage.eligibility} onChange={(e) => setJoinPage('eligibility', e.target.value)} rows={2} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+          </label>
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">
+          The site's single highest-risk page — the one a regulator reads first when judging whether this is a genuine direct-selling business. Content is checked for income claims when you save.
+        </p>
+      </Panel>
+
+      <Panel title="FAQ (/faq)">
+        <FaqListField values={value.faqPage} onChange={setFaqPage} max={40} />
+        <p className="mt-3 text-xs text-neutral-500">Also checked for income claims when you save.</p>
+      </Panel>
+
       <Panel title="Festival banner">
         <label className="flex items-center gap-2 text-sm font-medium text-neutral-800">
           <input type="checkbox" checked={value.announcement.enabled} onChange={(e) => setBanner('enabled', e.target.checked)} className="h-4 w-4" />
@@ -352,5 +405,70 @@ function ColorSelect({ label, value, onChange }: { label: string; value: PlayCol
         {PLAY_COLORS.map((c) => <option key={c} value={c}>{c}</option>)}
       </select>
     </label>
+  );
+}
+
+function StringListField({ label, values, onChange, max, min = 1, rows = 2 }: { label: string; values: string[]; onChange: (v: string[]) => void; max: number; min?: number; rows?: number }) {
+  return (
+    <div>
+      <p className="text-sm font-medium text-neutral-800">{label}</p>
+      <div className="mt-2 space-y-2">
+        {values.map((v, i) => (
+          <div key={i} className="flex gap-2">
+            <textarea
+              value={v}
+              onChange={(e) => { const next = [...values]; next[i] = e.target.value; onChange(next); }}
+              rows={rows}
+              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none"
+            />
+            <button type="button" onClick={() => onChange(values.filter((_, j) => j !== i))} disabled={values.length <= min} className="h-fit shrink-0 rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm text-neutral-600 disabled:opacity-30">✕</button>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={() => onChange([...values, ''])} disabled={values.length >= max} className="mt-2 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-700 disabled:opacity-30">+ Add</button>
+    </div>
+  );
+}
+
+function TitleBodyListField({ label, values, onChange, max, min = 1 }: { label: string; values: TitleBody[]; onChange: (v: TitleBody[]) => void; max: number; min?: number }) {
+  return (
+    <div>
+      <p className="text-sm font-medium text-neutral-800">{label}</p>
+      <div className="mt-2 space-y-3">
+        {values.map((item, i) => (
+          <div key={i} className="rounded-lg border border-neutral-200 p-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Title" value={item.title} onChange={(v) => { const next = [...values]; next[i] = { ...next[i], title: v }; onChange(next); }} />
+              <label className="block text-sm font-medium text-neutral-800">
+                Body
+                <textarea value={item.body} onChange={(e) => { const next = [...values]; next[i] = { ...next[i], body: e.target.value }; onChange(next); }} rows={2} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+              </label>
+            </div>
+            <button type="button" onClick={() => onChange(values.filter((_, j) => j !== i))} disabled={values.length <= min} className="mt-2 rounded-lg border border-neutral-300 px-3 py-1 text-xs font-semibold text-neutral-600 disabled:opacity-30">Remove</button>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={() => onChange([...values, { title: '', body: '' }])} disabled={values.length >= max} className="mt-2 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-700 disabled:opacity-30">+ Add</button>
+    </div>
+  );
+}
+
+function FaqListField({ values, onChange, max, min = 1 }: { values: { q: string; a: string }[]; onChange: (v: { q: string; a: string }[]) => void; max: number; min?: number }) {
+  return (
+    <div>
+      <div className="space-y-3">
+        {values.map((item, i) => (
+          <div key={i} className="rounded-lg border border-neutral-200 p-3">
+            <Field label="Question" value={item.q} onChange={(v) => { const next = [...values]; next[i] = { ...next[i], q: v }; onChange(next); }} />
+            <label className="mt-3 block text-sm font-medium text-neutral-800">
+              Answer
+              <textarea value={item.a} onChange={(e) => { const next = [...values]; next[i] = { ...next[i], a: e.target.value }; onChange(next); }} rows={3} className="mt-1.5 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none" />
+            </label>
+            <button type="button" onClick={() => onChange(values.filter((_, j) => j !== i))} disabled={values.length <= min} className="mt-2 rounded-lg border border-neutral-300 px-3 py-1 text-xs font-semibold text-neutral-600 disabled:opacity-30">Remove</button>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={() => onChange([...values, { q: '', a: '' }])} disabled={values.length >= max} className="mt-2 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-700 disabled:opacity-30">+ Add question</button>
+    </div>
   );
 }

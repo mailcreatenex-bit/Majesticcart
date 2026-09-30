@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { buildMetadata, pageTitle, assertNoIncomeClaims, breadcrumbJsonLd } from '@/lib/seo';
+import { buildMetadata, pageTitle, breadcrumbJsonLd } from '@/lib/seo';
+import { getTheme } from '@/lib/content';
 import { PageHeader } from '@/components/Chrome';
 import { ENTITY } from '@/lib/legal';
 
@@ -14,69 +15,17 @@ export const metadata: Metadata = buildMetadata({
 /**
  * FAQ.
  *
- * Structured as data because two things read it: the JSON-LD builder below,
- * which turns it into FAQPage markup, and the income-claim lint. Writing the
- * answers inline in JSX would defeat both.
- *
- * The wallet answers are the ones that matter. "Why can I not just pay by
- * card?" is the question every new customer asks, and an unclear answer is
- * what turns a normal checkout into a support call — or, worse, into a
- * suspicion that the money has gone somewhere it should not have.
+ * Content is admin-editable (Theme > FAQ page). Two things read it: the
+ * JSON-LD builder below, which turns it into FAQPage markup, and the
+ * server-side income-claim check that runs when an admin saves the Theme
+ * settings (backend/src/settings/settings.service.ts's setTheme()) — this
+ * used to be a build-time lint over a hardcoded constant, and is now the
+ * runtime equivalent now that the constant lives in the CMS instead.
  */
-const FAQS: { q: string; a: string }[] = [
-  {
-    q: 'Why can I not pay by card at checkout?',
-    a: 'Orders are paid from your shopping wallet rather than card by card. You add money to the wallet once by UPI, our team verifies the payment against the bank statement, and the balance is then available for any order. It means no card details are ever stored on the site, and it gives every member a single statement of what they have put in and what they have spent.',
-  },
-  {
-    q: 'How do I add money to my wallet?',
-    a: 'Open the recharge page, transfer the amount by UPI to the account shown there, and submit the UTR reference number from your UPI app together with a screenshot of the payment. You will see the request marked as pending until it is checked.',
-  },
-  {
-    q: 'How long does a wallet recharge take to be approved?',
-    a: 'Most are checked within a few working hours. Every request is verified by hand against the bank statement before it is credited, so it is never instant. If yours is still pending after one working day, contact customer care with the UTR.',
-  },
-  {
-    q: 'What happens if my recharge is rejected?',
-    a: 'Nothing is deducted — a rejected request never credits the wallet, and the money stays where it was. The reason is shown on the request itself. The usual causes are a UTR that does not match any payment received, an amount different from the one claimed, or a screenshot that has already been used.',
-  },
-  {
-    q: 'Can I take money back out of my shopping wallet?',
-    a: 'No. The shopping wallet buys products and cannot be withdrawn as cash. Income earned on sales goes to a separate income wallet, and that one can be withdrawn to your bank account. Only add to the shopping wallet what you intend to spend on products.',
-  },
-  {
-    q: 'When will my order arrive?',
-    a: 'Orders are dispatched within two working days and usually arrive within three to seven working days depending on the PIN code. You will get a tracking reference once it ships, and the order page shows every status change.',
-  },
-  {
-    q: 'Can I return a product?',
-    a: 'Sealed, unused products can be returned within the window set out in the refund policy. Opened cosmetics cannot be returned for hygiene reasons unless they arrived damaged or are faulty, in which case we replace or refund them. Damaged deliveries should be reported within 48 hours with photographs.',
-  },
-  {
-    q: 'Does it cost anything to become a member?',
-    a: 'Registering is free, and there is no renewal fee. To earn, you place a first order of at least the minimum value in the compensation plan; that is a purchase of products you keep, never a fee. If anyone asks you to pay to join, report it to the grievance officer.',
-  },
-  {
-    q: 'Do I get paid for signing people up?',
-    a: 'No. Nothing in the plan pays for recruitment. Every payment is calculated on products that have been sold and delivered.',
-  },
-  {
-    q: 'Where can I see the compensation plan?',
-    a: 'In full inside your account, once you have signed up. Every rate, rank and qualification rule is published there, along with the income distribution across all members.',
-  },
-  {
-    q: 'How do I cancel my membership?',
-    a: `Write to ${ENTITY.supportEmail} from your registered email or contact customer care. There is no penalty and no notice period. Any balance in your income wallet can be withdrawn subject to the conditions in the plan.`,
-  },
-  {
-    q: 'Who do I contact if something goes wrong?',
-    a: `Customer care on ${ENTITY.supportPhone}, ${ENTITY.supportHours}, or by email at ${ENTITY.supportEmail}. If a complaint is not resolved to your satisfaction, the grievance officer's details are in the footer of every page and a response is due within 48 hours.`,
-  },
-];
+export default async function FaqPage() {
+  const theme = await getTheme();
+  const FAQS = theme.faqPage;
 
-assertNoIncomeClaims(FAQS.map((f) => `${f.q} ${f.a}`).join(' '), 'app/faq/page.tsx');
-
-export default function FaqPage() {
   const jsonLd = [
     breadcrumbJsonLd([
       { name: 'Home', path: '/' },

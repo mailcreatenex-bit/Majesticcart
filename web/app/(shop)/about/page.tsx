@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { buildMetadata, pageTitle, assertNoIncomeClaims } from '@/lib/seo';
+import { buildMetadata, pageTitle } from '@/lib/seo';
+import { getTheme } from '@/lib/content';
 import { PageHeader } from '@/components/Chrome';
 
 export const metadata: Metadata = buildMetadata({
@@ -12,36 +13,17 @@ export const metadata: Metadata = buildMetadata({
 /**
  * About page.
  *
- * Copy is declared as data so the income-claim lint can read it. This is a
- * public, indexable page describing a direct-selling business — precisely the
- * page a regulator reads first — so no earnings figure may appear on it.
+ * Content is admin-editable (Theme > About page) rather than hardcoded.
+ * This used to be declared as data specifically so a build-time lint could
+ * read it and fail the build over an income claim; that check now runs on
+ * the server when an admin saves the Theme settings instead (see
+ * backend/src/settings/settings.service.ts's setTheme()) — the actual
+ * enforcement point now that this is edited at runtime, not compile time.
  */
-const COPY = {
-  lead: 'A beauty store built around independent sellers who use the products themselves.',
-  story: [
-    'Majestic Cart sells beauty and personal-care products made by other established brands — we do not manufacture products or sell under a brand of our own. We sell direct, through members who use the products themselves, because a recommendation from someone who has actually used a serum through a Kolkata summer is worth more than a shelf tag.',
-    'Every product carries a business volume, and members earn on what they sell and what their team sells, once the order is delivered. That is the whole model.',
-  ],
-  howItWorks: [
-    { title: 'Joining is free', body: 'No registration fee, no renewal fee, no payment of any kind to become a member. Anyone over 18 resident in India can join.' },
-    { title: 'Income comes from selling products', body: 'Nobody earns anything for recruiting a member. Income is paid on products that are sold and delivered, and on nothing else.' },
-    { title: 'The plan is published in full', body: 'Every rate, rank and qualification rule is visible in your account. No part of it is discretionary and no part of it is hidden.' },
-    { title: 'You can return what you do not sell', body: 'Members can return unsold, resaleable stock under the buy-back policy. Nobody should be left holding inventory they cannot move.' },
-  ],
-  notThis: [
-    'It is not an investment. Money in a shopping wallet buys products; it earns no interest and is not a deposit.',
-    'It is not a way to earn without selling. If nothing is sold, nothing is paid.',
-    'There is no guarantee of income. What you make depends on what you and your team actually sell.',
-  ],
-};
+export default async function AboutPage() {
+  const theme = await getTheme();
+  const COPY = theme.aboutPage;
 
-// Runs at module load, so a build fails rather than publishing a claim.
-assertNoIncomeClaims(
-  [COPY.lead, ...COPY.story, ...COPY.howItWorks.map((s) => `${s.title} ${s.body}`), ...COPY.notThis].join(' '),
-  'the About page',
-);
-
-export default function AboutPage() {
   return (
     <>
       <PageHeader title="About Majestic Cart" lead={COPY.lead} image="/home/hero-2.jpg" />
@@ -68,7 +50,7 @@ export default function AboutPage() {
         {/* Saying plainly what the business is not is the fastest way to keep
             members from describing it as something it isn't. */}
         <section className="mt-14 rounded-2xl border border-[var(--line)] bg-[var(--accent-soft)] p-6">
-          <h2 className="font-serif text-2xl text-[var(--ink)]">What this is not</h2>
+          <h2 className="font-serif text-2xl text-[var(--ink)]">{COPY.notThisTitle}</h2>
           <ul className="mt-4 space-y-3">
             {COPY.notThis.map((line, i) => (
               <li key={i} className="max-w-prose leading-relaxed text-[var(--body)]">{line}</li>

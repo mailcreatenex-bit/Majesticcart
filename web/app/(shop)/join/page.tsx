@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { buildMetadata, pageTitle, assertNoIncomeClaims, breadcrumbJsonLd } from '@/lib/seo';
+import { buildMetadata, pageTitle, breadcrumbJsonLd } from '@/lib/seo';
+import { getTheme } from '@/lib/content';
 import { PageHeader } from '@/components/Chrome';
 
 export const metadata: Metadata = buildMetadata({
@@ -17,93 +18,23 @@ export const metadata: Metadata = buildMetadata({
  * and it is the page a regulator reads first when asking whether a direct
  * selling business is actually a money-circulation scheme.
  *
- * Two things follow from that, and both are enforced rather than remembered:
+ * Content is admin-editable (Theme > Join page) rather than hardcoded. Two
+ * things still follow from the page's risk, just enforced at a different
+ * point than before:
  *
- *   • No earnings figure appears anywhere on it. Not an example, not a
- *     "potential", not a range. The lint at the bottom of this file fails the
- *     build if one does.
+ *   • No earnings figure may appear anywhere on it. That used to be a
+ *     build-time lint reading a hardcoded constant; it is now a check the
+ *     server runs on every save of the Theme settings (see
+ *     backend/src/settings/settings.service.ts's setTheme()), since the
+ *     content itself now lives there, not in this file.
  *   • What is NOT true is stated as plainly as what is. The Direct Selling
  *     Rules require the prohibitions to be disclosed, and a page that only
  *     lists upside is the one that gets read as an inducement.
- *
- * Copy is declared as data rather than written inline in JSX so the lint can
- * read every word of it.
  */
-const COPY = {
-  lead: 'Sell products you use yourself. Registering is free. Your first order has a minimum value, and a small monthly purchase keeps your income withdrawable.',
+export default async function JoinPage() {
+  const theme = await getTheme();
+  const COPY = theme.joinPage;
 
-  steps: [
-    {
-      title: 'Sign up with a sponsor ID',
-      body: 'Someone already selling shares their member ID with you. You sign up with it, verify your mobile number, and you are a member. It takes about two minutes and registering costs nothing.',
-    },
-    {
-      title: 'Add money to your shopping wallet',
-      body: 'Orders are paid from a shopping wallet, not a card. You transfer by UPI to the account shown on the recharge page, upload the payment reference, and the amount is credited once our team has checked it against the bank statement.',
-    },
-    {
-      title: 'Order products and sell them',
-      body: 'You buy at member price and sell to your own customers. Every product carries a business volume, shown on its page before you buy.',
-    },
-    {
-      title: 'Build a team, if you want to',
-      body: 'You can sponsor other sellers. Sponsors earn a direct income when someone they sponsored makes a first product purchase, and further income on the products their team buys. Nothing is paid just for signing someone up.',
-    },
-  ],
-
-  rules: [
-    {
-      title: 'Joining is free, and always will be',
-      body: 'Registering is free: no registration fee, no renewal fee, no training fee, no compulsory kit. If anyone asks you to pay to join or to stay a member, report it to the grievance officer — it is a breach of our policy and of the Direct Selling Rules.',
-    },
-    {
-      title: 'Nobody is paid for recruiting',
-      body: 'Nothing is paid for signing someone up. Every payment in the plan is calculated on products that have been purchased. A member who never sponsors anyone can still be paid in full on their own purchases.',
-    },
-    {
-      title: 'A minimum first order, and a monthly purchase to withdraw',
-      body: 'To earn, a member places a first order of at least the minimum value in the plan. The monthly repurchase target applies only to withdrawing income; it never removes you or your team. Both are stated in the plan in your account, and both are purchases of products you keep, never fees.',
-    },
-    {
-      title: 'Unsold stock can be returned',
-      body: 'Resaleable stock in its original condition can be returned under the buy-back policy within the stated window. You should never be left holding inventory you cannot move.',
-    },
-    {
-      title: 'You can leave whenever you like',
-      body: 'Membership can be cancelled at any time, in writing, with no penalty and no notice period.',
-    },
-  ],
-
-  honest: {
-    title: 'What this is not',
-    points: [
-      'It is not an investment. Money in a shopping wallet buys products. It earns no interest, it is not a deposit, and it is not returnable as cash.',
-      'It is not income without selling. If nothing is sold, nothing is paid — to you or to anyone above you.',
-      'It is not guaranteed. What a member makes depends entirely on what they and their team sell, and most people who join direct selling sell very little.',
-      'It is not full-time work. Treat it as something you do alongside what you already do, not instead of it.',
-    ],
-  },
-
-  eligibility:
-    'You must be 18 or over and resident in India. You will need a mobile number, a PAN for payouts above the TDS threshold, and a bank account or UPI ID in your own name. Payouts are only ever made to an account in the member’s own name.',
-};
-
-// Runs at module load. A build fails rather than publishing an income claim —
-// see lib/seo.ts for what it looks for and, just as importantly, what it does
-// not: a clean run means nothing blatant, never "approved".
-assertNoIncomeClaims(
-  [
-    COPY.lead,
-    ...COPY.steps.map((s) => `${s.title} ${s.body}`),
-    ...COPY.rules.map((s) => `${s.title} ${s.body}`),
-    COPY.honest.title,
-    ...COPY.honest.points,
-    COPY.eligibility,
-  ].join(' '),
-  'app/join/page.tsx',
-);
-
-export default function JoinPage() {
   const jsonLd = breadcrumbJsonLd([
     { name: 'Home', path: '/' },
     { name: 'Become a member', path: '/join' },
@@ -148,9 +79,9 @@ export default function JoinPage() {
         {/* Given the same weight as the section above it, not tucked into a
             footnote. A page that lists only upside is an inducement. */}
         <section className="mt-12 rounded-2xl border border-[var(--ink)]/15 bg-[var(--accent-soft)] p-6">
-          <h2 className="font-serif text-2xl text-[var(--ink)]">{COPY.honest.title}</h2>
+          <h2 className="font-serif text-2xl text-[var(--ink)]">{COPY.honestTitle}</h2>
           <ul className="mt-4 space-y-3">
-            {COPY.honest.points.map((p) => (
+            {COPY.honestPoints.map((p) => (
               <li key={p} className="flex gap-3 text-sm leading-relaxed text-[var(--body)]">
                 <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
                 {p}

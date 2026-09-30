@@ -73,6 +73,31 @@ export interface ThemeSettings {
   pinkBadges: [TitleBody, TitleBody, TitleBody];
   exploreTiles: [TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody, TitleBody];
   aboutUs: { title: string; body: string; images: [string, string] };
+  /**
+   * The full /about, /join and /faq pages. Admin-editable per the client's
+   * explicit choice after being shown the trade-off: these three were kept
+   * as hardcoded, lint-checked TypeScript specifically so a build-time check
+   * (assertNoIncomeClaims below) could fail the build over an income claim —
+   * the same check now runs server-side on every save instead (see
+   * backend/src/settings/settings.service.ts's setTheme()), which is the
+   * actual enforcement point now that this is runtime-editable.
+   */
+  aboutPage: {
+    lead: string;
+    story: string[];
+    howItWorks: TitleBody[];
+    notThisTitle: string;
+    notThis: string[];
+  };
+  joinPage: {
+    lead: string;
+    steps: TitleBody[];
+    rules: TitleBody[];
+    honestTitle: string;
+    honestPoints: string[];
+    eligibility: string;
+  };
+  faqPage: { q: string; a: string }[];
 }
 
 export interface TitleBody {
@@ -136,6 +161,66 @@ const DEFAULT_ABOUT_US: ThemeSettings['aboutUs'] = {
   images: ['/home/about-1.jpg', '/home/editorial-3.jpg'],
 };
 
+const DEFAULT_ABOUT_PAGE: ThemeSettings['aboutPage'] = {
+  lead: 'A beauty store built around independent sellers who use the products themselves.',
+  story: [
+    'Majestic Cart sells beauty and personal-care products made by other established brands — we do not manufacture products or sell under a brand of our own. We sell direct, through members who use the products themselves, because a recommendation from someone who has actually used a serum through a Kolkata summer is worth more than a shelf tag.',
+    'Every product carries a business volume, and members earn on what they sell and what their team sells, once the order is delivered. That is the whole model.',
+  ],
+  howItWorks: [
+    { title: 'Joining is free', body: 'No registration fee, no renewal fee, no payment of any kind to become a member. Anyone over 18 resident in India can join.' },
+    { title: 'Income comes from selling products', body: 'Nobody earns anything for recruiting a member. Income is paid on products that are sold and delivered, and on nothing else.' },
+    { title: 'The plan is published in full', body: 'Every rate, rank and qualification rule is visible in your account. No part of it is discretionary and no part of it is hidden.' },
+    { title: 'You can return what you do not sell', body: 'Members can return unsold, resaleable stock under the buy-back policy. Nobody should be left holding inventory they cannot move.' },
+  ],
+  notThisTitle: 'What this is not',
+  notThis: [
+    'It is not an investment. Money in a shopping wallet buys products; it earns no interest and is not a deposit.',
+    'It is not a way to earn without selling. If nothing is sold, nothing is paid.',
+    'There is no guarantee of income. What you make depends on what you and your team actually sell.',
+  ],
+};
+
+const DEFAULT_JOIN_PAGE: ThemeSettings['joinPage'] = {
+  lead: 'Sell products you use yourself. Registering is free. Your first order has a minimum value, and a small monthly purchase keeps your income withdrawable.',
+  steps: [
+    { title: 'Sign up with a sponsor ID', body: 'Someone already selling shares their member ID with you. You sign up with it, verify your mobile number, and you are a member. It takes about two minutes and registering costs nothing.' },
+    { title: 'Add money to your shopping wallet', body: 'Orders are paid from a shopping wallet, not a card. You transfer by UPI to the account shown on the recharge page, upload the payment reference, and the amount is credited once our team has checked it against the bank statement.' },
+    { title: 'Order products and sell them', body: 'You buy at member price and sell to your own customers. Every product carries a business volume, shown on its page before you buy.' },
+    { title: 'Build a team, if you want to', body: 'You can sponsor other sellers. Sponsors earn a direct income when someone they sponsored makes a first product purchase, and further income on the products their team buys. Nothing is paid just for signing someone up.' },
+  ],
+  rules: [
+    { title: 'Joining is free, and always will be', body: 'Registering is free: no registration fee, no renewal fee, no training fee, no compulsory kit. If anyone asks you to pay to join or to stay a member, report it to the grievance officer — it is a breach of our policy and of the Direct Selling Rules.' },
+    { title: 'Nobody is paid for recruiting', body: 'Nothing is paid for signing someone up. Every payment in the plan is calculated on products that have been purchased. A member who never sponsors anyone can still be paid in full on their own purchases.' },
+    { title: 'A minimum first order, and a monthly purchase to withdraw', body: 'To earn, a member places a first order of at least the minimum value in the plan. The monthly repurchase target applies only to withdrawing income; it never removes you or your team. Both are stated in the plan in your account, and both are purchases of products you keep, never fees.' },
+    { title: 'Unsold stock can be returned', body: 'Resaleable stock in its original condition can be returned under the buy-back policy within the stated window. You should never be left holding inventory you cannot move.' },
+    { title: 'You can leave whenever you like', body: 'Membership can be cancelled at any time, in writing, with no penalty and no notice period.' },
+  ],
+  honestTitle: 'What this is not',
+  honestPoints: [
+    'It is not an investment. Money in a shopping wallet buys products. It earns no interest, it is not a deposit, and it is not returnable as cash.',
+    'It is not income without selling. If nothing is sold, nothing is paid — to you or to anyone above you.',
+    'It is not guaranteed. What a member makes depends entirely on what they and their team sell, and most people who join direct selling sell very little.',
+    'It is not full-time work. Treat it as something you do alongside what you already do, not instead of it.',
+  ],
+  eligibility: 'You must be 18 or over and resident in India. You will need a mobile number, a PAN for payouts above the TDS threshold, and a bank account or UPI ID in your own name. Payouts are only ever made to an account in the member’s own name.',
+};
+
+const DEFAULT_FAQ_PAGE: ThemeSettings['faqPage'] = [
+  { q: 'Why can I not pay by card at checkout?', a: 'Orders are paid from your shopping wallet rather than card by card. You add money to the wallet once by UPI, our team verifies the payment against the bank statement, and the balance is then available for any order. It means no card details are ever stored on the site, and it gives every member a single statement of what they have put in and what they have spent.' },
+  { q: 'How do I add money to my wallet?', a: 'Open the recharge page, transfer the amount by UPI to the account shown there, and submit the UTR reference number from your UPI app together with a screenshot of the payment. You will see the request marked as pending until it is checked.' },
+  { q: 'How long does a wallet recharge take to be approved?', a: 'Most are checked within a few working hours. Every request is verified by hand against the bank statement before it is credited, so it is never instant. If yours is still pending after one working day, contact customer care with the UTR.' },
+  { q: 'What happens if my recharge is rejected?', a: 'Nothing is deducted — a rejected request never credits the wallet, and the money stays where it was. The reason is shown on the request itself. The usual causes are a UTR that does not match any payment received, an amount different from the one claimed, or a screenshot that has already been used.' },
+  { q: 'Can I take money back out of my shopping wallet?', a: 'No. The shopping wallet buys products and cannot be withdrawn as cash. Income earned on sales goes to a separate income wallet, and that one can be withdrawn to your bank account. Only add to the shopping wallet what you intend to spend on products.' },
+  { q: 'When will my order arrive?', a: 'Orders are dispatched within two working days and usually arrive within three to seven working days depending on the PIN code. You will get a tracking reference once it ships, and the order page shows every status change.' },
+  { q: 'Can I return a product?', a: 'Sealed, unused products can be returned within the window set out in the refund policy. Opened cosmetics cannot be returned for hygiene reasons unless they arrived damaged or are faulty, in which case we replace or refund them. Damaged deliveries should be reported within 48 hours with photographs.' },
+  { q: 'Does it cost anything to become a member?', a: 'Registering is free, and there is no renewal fee. To earn, you place a first order of at least the minimum value in the compensation plan; that is a purchase of products you keep, never a fee. If anyone asks you to pay to join, report it to the grievance officer.' },
+  { q: 'Do I get paid for signing people up?', a: 'No. Nothing in the plan pays for recruitment. Every payment is calculated on products that have been sold and delivered.' },
+  { q: 'Where can I see the compensation plan?', a: 'In full inside your account, once you have signed up. Every rate, rank and qualification rule is published there, along with the income distribution across all members.' },
+  { q: 'How do I cancel my membership?', a: 'Write to us from your registered email or contact customer care. There is no penalty and no notice period. Any balance in your income wallet can be withdrawn subject to the conditions in the plan.' },
+  { q: 'Who do I contact if something goes wrong?', a: 'Contact customer care by phone or email, shown in the footer of every page. If a complaint is not resolved to your satisfaction, the grievance officer’s details are also in the footer and a response is due within 48 hours.' },
+];
+
 function mergeTuple<N extends readonly TitleBody[]>(defaults: N, stored: readonly Partial<TitleBody>[] | undefined): N {
   return defaults.map((d, i) => ({ ...d, ...stored?.[i] })) as unknown as N;
 }
@@ -162,6 +247,9 @@ const DEFAULT_THEME: ThemeSettings = {
   pinkBadges: DEFAULT_PINK_BADGES,
   exploreTiles: DEFAULT_EXPLORE_TILES,
   aboutUs: DEFAULT_ABOUT_US,
+  aboutPage: DEFAULT_ABOUT_PAGE,
+  joinPage: DEFAULT_JOIN_PAGE,
+  faqPage: DEFAULT_FAQ_PAGE,
 };
 
 const API = () => {
@@ -232,5 +320,8 @@ export async function getTheme(): Promise<ThemeSettings> {
     pinkBadges: mergeTuple(DEFAULT_PINK_BADGES, t.pinkBadges),
     exploreTiles: mergeTuple(DEFAULT_EXPLORE_TILES, t.exploreTiles),
     aboutUs: { ...DEFAULT_ABOUT_US, ...t.aboutUs },
+    aboutPage: { ...DEFAULT_ABOUT_PAGE, ...t.aboutPage },
+    joinPage: { ...DEFAULT_JOIN_PAGE, ...t.joinPage },
+    faqPage: t.faqPage && t.faqPage.length > 0 ? t.faqPage : DEFAULT_FAQ_PAGE,
   };
 }

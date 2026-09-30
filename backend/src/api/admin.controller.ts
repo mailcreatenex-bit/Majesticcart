@@ -796,6 +796,25 @@ const ThemeSettingSchema = z.object({
     body: z.string().trim().max(600),
     images: z.tuple([z.string().trim().max(500), z.string().trim().max(500)]),
   }),
+  aboutPage: z.object({
+    lead: z.string().trim().max(300),
+    story: z.array(z.string().trim().max(800)).min(1).max(6),
+    howItWorks: z.array(TitleBodySchema).min(1).max(8),
+    notThisTitle: z.string().trim().max(60),
+    notThis: z.array(z.string().trim().max(300)).min(1).max(8),
+  }),
+  joinPage: z.object({
+    lead: z.string().trim().max(300),
+    steps: z.array(TitleBodySchema).min(1).max(10),
+    rules: z.array(TitleBodySchema).min(1).max(10),
+    honestTitle: z.string().trim().max(60),
+    honestPoints: z.array(z.string().trim().max(300)).min(1).max(8),
+    eligibility: z.string().trim().max(500),
+  }),
+  faqPage: z.array(z.object({
+    q: z.string().trim().max(200),
+    a: z.string().trim().max(1000),
+  })).min(1).max(40),
 });
 
 /** Read by the storefront on every homepage render — public, since it's exactly what the page already shows every visitor. */
