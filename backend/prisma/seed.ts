@@ -95,7 +95,7 @@ async function bootstrap() {
       // (payeeName, note) — not what would read naturally on its own
       // (payee, instructions), which silently fall back to hardcoded
       // defaults instead of erroring, so the mismatch has no test to catch it.
-      upiId: 'majesticcart@upi', payeeName: 'Majestic Cart',
+      upiId: 'suravibazar@axl', payeeName: 'SMART FINCARES',
       minRechargePaise: rupeesToPaise(500).toString(), maxRechargePaise: rupeesToPaise(100000).toString(),
       note: 'Scan the QR with any UPI app and pay the exact amount. Then enter the 12-digit UTR and upload the payment screenshot.',
     }],
