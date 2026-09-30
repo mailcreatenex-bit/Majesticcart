@@ -39,7 +39,7 @@ export const metadata: Metadata = buildMetadata({
 const DEFAULT_HERO_IMAGES = [
   '/home/hero-1.jpg', '/home/hero-2.jpg', '/home/hero-4.jpg', '/home/hero-5.jpg',
   '/home/skin-1.jpg', '/home/skin-2.jpg', '/home/skin-3.jpg', '/home/skin-4.jpg',
-  '/home/hero-6.jpg', '/home/editorial-2.jpg',
+  '/home/hero-6.jpg', '/home/hero-7.jpg',
 ];
 const DEFAULT_PROMO_IMAGES = ['/home/editorial-8.jpg', '/home/editorial-9.jpg'];
 const DEFAULT_PROMO_HEADING = 'Skin care, makeup and more — picked from brands already on your shelf.';
