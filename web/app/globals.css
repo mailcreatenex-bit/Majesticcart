@@ -40,7 +40,7 @@
   --gold-pale: #FBE9C6;   /* gold text on dark fills */
 
   /* surfaces */
-  --page: #FBF8F9;
+  --page: #FFFFFF;
   --surface: #FFFFFF;
   --surface-tint: #FDF2F4;
   --line: rgba(253, 228, 233, 0.7);
@@ -116,30 +116,32 @@
 }
 
 /**
- * Header and footer stay on the Royal Night palette in every theme, so the
- * seal's gold and rose read against a dark ground even when the page is light.
+ * Header and footer stay on the bright, white chrome in every theme — a
+ * Purplle-style white bar with the gold seal on it, rather than the page's
+ * own dark Royal Night surface — so the seal and playful colour accents read
+ * the same way whether the page underneath is in day or night mode.
  * Redeclaring the tokens on the element makes every descendant that uses them
- * (links, icons, buttons) resolve to the dark values without per-component
+ * (links, icons, buttons) resolve to the light values without per-component
  * overrides.
  */
-.chrome-dark {
-  --ink: #F7EBEC;
-  --body: #DCC6C9;
-  --muted: #AD9296;
-  --faint: #7E676B;
+.chrome-bright {
+  --ink: #341316;
+  --body: #624144;
+  --muted: #93767B;
+  --faint: #C4ABB1;
 
-  --accent: #E88B97;
-  --accent-soft: #2E1A1D;
+  --accent: #B84654;
+  --accent-soft: #FCEFF2;
 
-  --gold-deep: #B8862B;
-  --gold: #E4C878;
-  --gold-mid: #C79B3D;
-  --gold-pale: #2A1416;
+  --gold-deep: #9E7322;
+  --gold: #D9B25A;
+  --gold-mid: #A87C26;
+  --gold-pale: #FBE9C6;
 
-  --surface: #231518;
-  --surface-tint: #2E1A1D;
-  --line: rgba(120, 82, 88, 0.32);
-  --line-strong: #4A3034;
+  --surface: #FFFFFF;
+  --surface-tint: #FDF2F4;
+  --line: rgba(253, 228, 233, 0.7);
+  --line-strong: #F6D9DF;
 }
 
 @layer base {

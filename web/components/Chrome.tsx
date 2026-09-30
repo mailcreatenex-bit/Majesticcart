@@ -63,7 +63,7 @@ export async function Header() {
     // layout lets content draw under the status bar in the first place) — on
     // everything else `env(safe-area-inset-top)` resolves to 0 and this is a
     // no-op.
-    <header className="chrome-dark sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--surface)] pt-[env(safe-area-inset-top)] backdrop-blur">
+    <header className="chrome-bright sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--surface)] pt-[env(safe-area-inset-top)] backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-6xl sm:h-20 items-center gap-2 px-4 sm:gap-6" aria-label="Main">
         {/* The wordmark is dropped here deliberately: the seal alone is what
             carries brand recognition, and skipping the text is what leaves
@@ -135,7 +135,7 @@ function WalletIcon() {
 export async function Footer() {
   const { links: shopLinks } = await shopMenu();
   return (
-    <footer className="chrome-dark mt-20 border-t border-[var(--line)] bg-[var(--surface)]">
+    <footer className="chrome-bright mt-20 border-t border-[var(--line)] bg-[var(--surface)]">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2.5 font-serif text-lg text-[var(--ink)]">
