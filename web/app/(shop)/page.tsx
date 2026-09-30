@@ -132,16 +132,16 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="flex justify-center gap-3 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-5 sm:hidden">
+      <div className="grid grid-cols-2 gap-2 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-5 sm:hidden">
         <Link
           href={hero.primaryCtaHref}
-          className="rounded-xl gold-foil px-6 py-3 font-semibold text-white shadow-lg shadow-amber-900/20"
+          className="whitespace-nowrap rounded-xl gold-foil px-2 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-amber-900/20"
         >
           {hero.primaryCtaLabel}
         </Link>
         <Link
           href={hero.secondaryCtaHref}
-          className="rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-6 py-3 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]"
+          className="whitespace-nowrap rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-2 py-3 text-center text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]"
         >
           {hero.secondaryCtaLabel}
         </Link>
