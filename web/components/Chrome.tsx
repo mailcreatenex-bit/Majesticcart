@@ -242,7 +242,7 @@ export async function Footer() {
           Income is earned only on products that are sold and delivered, and depends entirely on the sales
           you and your team make. We make no guarantee of earnings.
           <div className="mt-3">© {new Date().getFullYear()} {ENTITY.legalName}. All rights reserved.</div>
-          <div className="mt-2 flex items-center gap-1.5">
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#0B1E3D] px-3 py-1.5 text-white">
             Developed with
             <span aria-hidden="true">♥️</span>
             by
