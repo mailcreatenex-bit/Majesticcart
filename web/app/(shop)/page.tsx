@@ -116,6 +116,22 @@ export default async function HomePage() {
 
       <BrandCarousel />
 
+      {/* --------------------------------------------------- promo banners */}
+      <section className="mx-auto max-w-6xl px-4 py-10">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {[
+            '/home/promo-banner-1.jpg',
+            '/home/promo-banner-2.jpg',
+            '/home/promo-banner-3.jpg',
+            '/home/promo-banner-4.jpg',
+          ].map((src) => (
+            <div key={src} className="relative aspect-square overflow-hidden rounded-2xl shadow-md">
+              <Image src={src} alt="" fill sizes="(max-width: 1024px) 50vw, 25vw" className="object-cover" />
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ------------------------------------------------------ categories */}
       <section className="bg-[var(--play-pink-soft)] px-4 py-14">
         <div className="mx-auto max-w-6xl">
