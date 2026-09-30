@@ -111,21 +111,41 @@ export default async function HomePage() {
 
         <HeroCarousel images={heroImages} fallback="/home/hero-1.jpg" />
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center gap-3 sm:bottom-12">
+        {/* Desktop keeps the buttons overlaid on the banner. On phones they
+            sit below it instead — overlaid text on a portrait-cropped face
+            was covering too much of the photo, and unlike desktop's wide
+            crop there is no reliably "empty" strip near the bottom to rest
+            on. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-8 hidden justify-center gap-3 sm:flex sm:bottom-12">
           <Link
             href={hero.primaryCtaHref}
-            className="pointer-events-auto rounded-xl gold-foil px-6 py-3 font-semibold text-white shadow-lg shadow-amber-900/20 sm:px-8 sm:py-4 sm:text-lg"
+            className="pointer-events-auto rounded-xl gold-foil px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-amber-900/20"
           >
             {hero.primaryCtaLabel}
           </Link>
           <Link
             href={hero.secondaryCtaHref}
-            className="pointer-events-auto rounded-xl bg-[var(--surface)] px-6 py-3 font-semibold text-[var(--ink)] shadow-lg hover:bg-[var(--surface-tint)] sm:px-8 sm:py-4 sm:text-lg"
+            className="pointer-events-auto rounded-xl bg-[var(--surface)] px-8 py-4 text-lg font-semibold text-[var(--ink)] shadow-lg hover:bg-[var(--surface-tint)]"
           >
             {hero.secondaryCtaLabel}
           </Link>
         </div>
       </section>
+
+      <div className="flex justify-center gap-3 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-5 sm:hidden">
+        <Link
+          href={hero.primaryCtaHref}
+          className="rounded-xl gold-foil px-6 py-3 font-semibold text-white shadow-lg shadow-amber-900/20"
+        >
+          {hero.primaryCtaLabel}
+        </Link>
+        <Link
+          href={hero.secondaryCtaHref}
+          className="rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-6 py-3 font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]"
+        >
+          {hero.secondaryCtaLabel}
+        </Link>
+      </div>
 
       <BrandCarousel />
 

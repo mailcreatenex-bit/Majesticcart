@@ -8,6 +8,7 @@ import { SITE, organizationJsonLd } from '@/lib/seo';
 import { ENTITY } from '@/lib/legal';
 import { getTheme } from '@/lib/content';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
+import { MobileSplash } from '@/components/MobileSplash';
 import { LocaleProvider } from '@/components/LocaleProvider';
 import '@/app/globals.css';
 
@@ -86,6 +87,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="bg-[var(--page)] font-sans text-[var(--ink)] antialiased">
+        <MobileSplash />
         {/* Keyboard users should not have to tab through the whole nav. */}
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[var(--surface)] focus:px-4 focus:py-2 focus:shadow">
           Skip to content

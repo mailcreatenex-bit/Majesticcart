@@ -22,7 +22,7 @@ export function HeroCarousel({ images, fallback }: { images: string[]; fallback:
   }, [slides.length]);
 
   return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden sm:aspect-[16/9] lg:aspect-[21/9]">
+    <div className="relative aspect-[16/9] w-full overflow-hidden">
       {slides.map((src, i) => (
         <div key={src} className="absolute inset-0 transition-opacity duration-700" style={{ opacity: i === index ? 1 : 0 }}>
           <Image src={src} alt="" fill priority={i === 0} sizes="100vw" className="object-cover" />

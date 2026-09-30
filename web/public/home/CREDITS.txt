@@ -20,19 +20,19 @@ hero-6.jpg: https://www.pexels.com/photo/young-blonde-woman-in-black-blouse-2269
 hero-7.jpg: https://www.pexels.com/photo/a-young-woman-in-a-white-top-12579925/
 category-makeup-2.jpg: https://www.pexels.com/photo/young-woman-on-a-pink-background-6256252/
 category-haircare-2.jpg: https://www.pexels.com/photo/portrait-of-young-woman-in-studio-lighting-36215312/
-category-personalcare-2.jpg: https://www.pexels.com/photo/elegant-portrait-of-a-woman-with-accessories-34681728/
+category-personalcare-2.jpg: https://www.pexels.com/photo/face-of-smiling-woman-15384044/
 category-fragrance-2.jpg: https://www.pexels.com/photo/woman-biting-her-lips-3762780/
-category-bathbody-2.jpg: https://www.pexels.com/photo/portrait-of-brunette-woman-27368173/
-shop-banner.jpg: https://www.pexels.com/photo/a-woman-smiling-7447388/
+category-bathbody-2.jpg: https://www.pexels.com/photo/woman-in-red-crew-neck-shirt-smiling-3760743/
+shop-banner.jpg: https://www.pexels.com/photo/woman-with-red-lipstick-13752397/
 category-personal-care-model.jpg: https://www.pexels.com/photo/13843957/
 category-bath-body-model.jpg: https://www.pexels.com/photo/8891969/
-explore-shop.jpg: https://www.pexels.com/photo/34719524/
-explore-shade-finder.jpg: https://www.pexels.com/photo/30703874/
-explore-wallet.jpg: https://www.pexels.com/photo/34211603/
-explore-join.jpg: https://www.pexels.com/photo/29125196/
-explore-network.jpg: https://www.pexels.com/photo/5370185/
-explore-account.jpg: https://www.pexels.com/photo/33824989/
-explore-faq.jpg: https://www.pexels.com/photo/34265174/
+explore-shop.jpg: https://www.pexels.com/photo/woman-with-colorful-eye-shadow-and-red-lipstick-7290095/ (purple)
+explore-shade-finder.jpg: https://www.pexels.com/photo/portrait-of-beautiful-woman-on-red-background-16948663/ (red)
+explore-wallet.jpg: https://www.pexels.com/photo/young-woman-in-denim-jacket-against-blue-background-33231317/ (blue)
+explore-join.jpg: https://www.pexels.com/photo/beautiful-woman-on-pink-background-2036645/ (pink)
+explore-network.jpg: https://www.pexels.com/photo/close-up-photo-of-woman-wearing-purple-and-white-sweater-3760583/ (orange)
+explore-account.jpg: https://www.pexels.com/photo/photo-of-beautiful-woman-wearing-brown-hat-on-turquoise-background-4499806/ (turquoise)
+explore-faq.jpg: https://www.pexels.com/photo/27368173/ (yellow)
 
 editorial-1.jpg through editorial-9.jpg and skin-1.jpg through skin-4.jpg: supplied by
 the client, generated with Google Gemini (AI-generated, not photographs of real people).
