@@ -14,7 +14,9 @@ category-bath-body.jpg: https://www.pexels.com/photo/4055794/
 about-1.jpg: https://www.pexels.com/photo/7321656/
 about-2.jpg: https://www.pexels.com/photo/7256108/
 hero-2.jpg: https://www.pexels.com/photo/3762482/
-hero-3.jpg: https://www.pexels.com/photo/6543142/
+hero-3.jpg: https://www.pexels.com/photo/6543142/ (no longer used in the hero rotation, kept for reference)
+hero-5.jpg: https://www.pexels.com/photo/portrait-of-a-woman-with-curly-hair-and-black-sweater-36826291/
+hero-6.jpg: https://www.pexels.com/photo/young-blonde-woman-in-black-blouse-22699626/
 category-personal-care-model.jpg: https://www.pexels.com/photo/13843957/
 category-bath-body-model.jpg: https://www.pexels.com/photo/8891969/
 explore-shop.jpg: https://www.pexels.com/photo/34719524/

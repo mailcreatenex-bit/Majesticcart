@@ -4,7 +4,6 @@ import { SITE } from '@/lib/seo';
 import { ENTITY, LEGAL_DOCUMENTS } from '@/lib/legal';
 import { InstallButton } from './InstallPrompt';
 import { CartCount } from './CartProvider';
-import { ThemeToggle } from './ThemeToggle';
 import { MobileMenu } from './MobileMenu';
 import { AccountLink } from './AccountLink';
 import { CategoryNav } from './CategoryNav';
@@ -95,10 +94,9 @@ export async function Header() {
           </ul>
         )}
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+          <LanguageSwitcher />
           {/* Renders nothing where installing is impossible, so the nav does
               not carry a dead control on Firefox or inside WhatsApp. */}
-          <ThemeToggle />
-          <LanguageSwitcher />
           <InstallButton variant="header" />
           {/* Goes to the member's wallet. A guest lands here too — MemberShell's
               own 401 handling sends them on to login, the same as any other

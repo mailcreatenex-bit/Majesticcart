@@ -4,7 +4,6 @@ import { Header, Footer } from '@/components/Chrome';
 import { PwaRegister, installCaptureScript } from '@/components/PwaRegister';
 import { InstallPromptPopup } from '@/components/InstallPrompt';
 import { CartProvider } from '@/components/CartProvider';
-import { themeBootScript } from '@/components/ThemeToggle';
 import { SITE, organizationJsonLd } from '@/lib/seo';
 import { ENTITY } from '@/lib/legal';
 import { getTheme } from '@/lib/content';
@@ -70,14 +69,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           the components is the other half.
         */}
         <script dangerouslySetInnerHTML={{ __html: installCaptureScript }} />
-
-        {/*
-          Applies the saved theme before the first paint. Inline and
-          parser-blocking for the same reason as the script above: run it
-          any later and the page paints in the day theme and then snaps to
-          Royal Night, which looks worse than having no dark theme at all.
-        */}
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
 
         {/*
           Admin-editable brand colours from the console's Theme page.
