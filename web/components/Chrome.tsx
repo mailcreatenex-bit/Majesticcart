@@ -262,7 +262,7 @@ export async function Footer() {
   );
 }
 
-export function PageHeader({ title, lead, image }: { title: string; lead?: string; image?: string }) {
+export function PageHeader({ title, lead, image, imagePosition }: { title: string; lead?: string; image?: string; imagePosition?: string }) {
   return (
     <div className="border-b border-[var(--line)] bg-[var(--accent-soft)]">
       <div className={`mx-auto max-w-4xl px-4 py-12 ${image ? 'grid gap-8 md:max-w-6xl md:grid-cols-2 md:items-center' : ''}`}>
@@ -272,7 +272,7 @@ export function PageHeader({ title, lead, image }: { title: string; lead?: strin
         </div>
         {image && (
           <div className="relative aspect-[16/10] overflow-hidden rounded-2xl shadow-lg">
-            <Image src={image} alt="" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+            <Image src={image} alt="" fill sizes="(max-width: 768px) 100vw, 50vw" className={`object-cover ${imagePosition ?? ''}`} />
           </div>
         )}
       </div>
