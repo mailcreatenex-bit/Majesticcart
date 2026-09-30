@@ -41,6 +41,29 @@ interface ThemeValue {
   aboutPage: { lead: string; story: string[]; howItWorks: TitleBody[]; notThisTitle: string; notThis: string[] };
   joinPage: { lead: string; steps: TitleBody[]; rules: TitleBody[]; honestTitle: string; honestPoints: string[]; eligibility: string };
   faqPage: { q: string; a: string }[];
+  authCopy: {
+    introEyebrow: string; introHeading: string; introBody: string;
+    loginLead: string; signupLead: string; signupDisclaimer: string; forgotPasswordLead: string;
+  };
+  contactPageCopy: { lead: string; careBody: string; grievanceIntro: string; slaText: string; writeBody: string };
+  blogPageCopy: { intro: string; emptyState: string };
+  memberStorefrontCopy: { body: string; cta: string; rangeHeading: string };
+  brandPageCopy: { lead: string; emptyTitle: string; emptyBody: string };
+  cartCopy: { emptyState: string; pricingNote: string };
+  checkoutCopy: { walletNote: string; incomeWalletNote: string };
+  networkCopy: {
+    levelsExplainer: string; emptyTitle: string; emptyBody: string;
+    incomeDisclaimer: string; inviteIntro: string; storefrontPitch: string; shareMessageTemplate: string;
+  };
+  walletCopy: { shoppingWalletBody: string; incomeWalletBody: string; shoppingEmptyBody: string; incomeEmptyBody: string };
+  withdrawCopy: { successNote: string; processingNote: string; goodToKnow: [string, string, string] };
+  accountCopy: { payoutNote: string; payoutDisclaimer: string };
+  supportCopy: { intro: string };
+  idCardCopy: { welcome: string; tagline: string };
+  statementCopy: { rejectedNote: string };
+  shadeFinderCopy: { intro: string; privacyNote: string };
+  autoshipCopy: { intro: string; deliveryNote: string };
+  mobileRechargeCopy: { successNote: string; processingNote: string; goodToKnow: [string, string, string] };
 }
 
 const NO_BANNER: ThemeValue['announcement'] = { enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '' };
@@ -62,6 +85,23 @@ const EXPLORE_LABELS = ['Shop the range', 'AI shade finder', 'Wallet & recharge'
 const NO_ABOUT_PAGE: ThemeValue['aboutPage'] = { lead: '', story: [''], howItWorks: [EMPTY_TB], notThisTitle: '', notThis: [''] };
 const NO_JOIN_PAGE: ThemeValue['joinPage'] = { lead: '', steps: [EMPTY_TB], rules: [EMPTY_TB], honestTitle: '', honestPoints: [''], eligibility: '' };
 const NO_FAQ_PAGE: ThemeValue['faqPage'] = [{ q: '', a: '' }];
+const NO_AUTH: ThemeValue['authCopy'] = { introEyebrow: '', introHeading: '', introBody: '', loginLead: '', signupLead: '', signupDisclaimer: '', forgotPasswordLead: '' };
+const NO_CONTACT: ThemeValue['contactPageCopy'] = { lead: '', careBody: '', grievanceIntro: '', slaText: '', writeBody: '' };
+const NO_BLOG: ThemeValue['blogPageCopy'] = { intro: '', emptyState: '' };
+const NO_STOREFRONT: ThemeValue['memberStorefrontCopy'] = { body: '', cta: '', rangeHeading: '' };
+const NO_BRAND: ThemeValue['brandPageCopy'] = { lead: '', emptyTitle: '', emptyBody: '' };
+const NO_CART: ThemeValue['cartCopy'] = { emptyState: '', pricingNote: '' };
+const NO_CHECKOUT: ThemeValue['checkoutCopy'] = { walletNote: '', incomeWalletNote: '' };
+const NO_NETWORK: ThemeValue['networkCopy'] = { levelsExplainer: '', emptyTitle: '', emptyBody: '', incomeDisclaimer: '', inviteIntro: '', storefrontPitch: '', shareMessageTemplate: '' };
+const NO_WALLET: ThemeValue['walletCopy'] = { shoppingWalletBody: '', incomeWalletBody: '', shoppingEmptyBody: '', incomeEmptyBody: '' };
+const NO_WITHDRAW: ThemeValue['withdrawCopy'] = { successNote: '', processingNote: '', goodToKnow: ['', '', ''] };
+const NO_ACCOUNT: ThemeValue['accountCopy'] = { payoutNote: '', payoutDisclaimer: '' };
+const NO_SUPPORT: ThemeValue['supportCopy'] = { intro: '' };
+const NO_ID_CARD: ThemeValue['idCardCopy'] = { welcome: '', tagline: '' };
+const NO_STATEMENT: ThemeValue['statementCopy'] = { rejectedNote: '' };
+const NO_SHADE_FINDER: ThemeValue['shadeFinderCopy'] = { intro: '', privacyNote: '' };
+const NO_AUTOSHIP: ThemeValue['autoshipCopy'] = { intro: '', deliveryNote: '' };
+const NO_MOBILE_RECHARGE: ThemeValue['mobileRechargeCopy'] = { successNote: '', processingNote: '', goodToKnow: ['', '', ''] };
 
 function mergeTuple<N extends readonly TitleBody[]>(defaults: N, stored: readonly Partial<TitleBody>[] | undefined): N {
   return defaults.map((d, i) => ({ ...d, ...stored?.[i] })) as unknown as N;
@@ -97,6 +137,23 @@ function Theme() {
         aboutPage: { ...NO_ABOUT_PAGE, ...v.aboutPage },
         joinPage: { ...NO_JOIN_PAGE, ...v.joinPage },
         faqPage: v.faqPage?.length ? v.faqPage : NO_FAQ_PAGE,
+        authCopy: { ...NO_AUTH, ...v.authCopy },
+        contactPageCopy: { ...NO_CONTACT, ...v.contactPageCopy },
+        blogPageCopy: { ...NO_BLOG, ...v.blogPageCopy },
+        memberStorefrontCopy: { ...NO_STOREFRONT, ...v.memberStorefrontCopy },
+        brandPageCopy: { ...NO_BRAND, ...v.brandPageCopy },
+        cartCopy: { ...NO_CART, ...v.cartCopy },
+        checkoutCopy: { ...NO_CHECKOUT, ...v.checkoutCopy },
+        networkCopy: { ...NO_NETWORK, ...v.networkCopy },
+        walletCopy: { ...NO_WALLET, ...v.walletCopy },
+        withdrawCopy: { ...NO_WITHDRAW, ...v.withdrawCopy, goodToKnow: NO_WITHDRAW.goodToKnow.map((d, i) => v.withdrawCopy?.goodToKnow?.[i] ?? d) as ThemeValue['withdrawCopy']['goodToKnow'] },
+        accountCopy: { ...NO_ACCOUNT, ...v.accountCopy },
+        supportCopy: { ...NO_SUPPORT, ...v.supportCopy },
+        idCardCopy: { ...NO_ID_CARD, ...v.idCardCopy },
+        statementCopy: { ...NO_STATEMENT, ...v.statementCopy },
+        shadeFinderCopy: { ...NO_SHADE_FINDER, ...v.shadeFinderCopy },
+        autoshipCopy: { ...NO_AUTOSHIP, ...v.autoshipCopy },
+        mobileRechargeCopy: { ...NO_MOBILE_RECHARGE, ...v.mobileRechargeCopy, goodToKnow: NO_MOBILE_RECHARGE.goodToKnow.map((d, i) => v.mobileRechargeCopy?.goodToKnow?.[i] ?? d) as ThemeValue['mobileRechargeCopy']['goodToKnow'] },
       }))
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load theme settings.'));
   }, []);
@@ -123,6 +180,16 @@ function Theme() {
   const setAboutPage = <K extends keyof ThemeValue['aboutPage']>(key: K, v: ThemeValue['aboutPage'][K]) => setValue({ ...value, aboutPage: { ...value.aboutPage, [key]: v } });
   const setJoinPage = <K extends keyof ThemeValue['joinPage']>(key: K, v: ThemeValue['joinPage'][K]) => setValue({ ...value, joinPage: { ...value.joinPage, [key]: v } });
   const setFaqPage = (v: ThemeValue['faqPage']) => setValue({ ...value, faqPage: v });
+  type CopyField = 'authCopy' | 'contactPageCopy' | 'blogPageCopy' | 'memberStorefrontCopy' | 'brandPageCopy'
+    | 'cartCopy' | 'checkoutCopy' | 'networkCopy' | 'walletCopy' | 'withdrawCopy' | 'accountCopy'
+    | 'supportCopy' | 'idCardCopy' | 'statementCopy' | 'shadeFinderCopy' | 'autoshipCopy' | 'mobileRechargeCopy';
+  const setCopy = <F extends CopyField, K extends keyof ThemeValue[F]>(field: F, key: K, v: ThemeValue[F][K]) =>
+    setValue({ ...value, [field]: { ...value[field], [key]: v } });
+  const setGoodToKnow = (field: 'withdrawCopy' | 'mobileRechargeCopy', i: number, v: string) => {
+    const next = [...value[field].goodToKnow] as [string, string, string];
+    next[i] = v;
+    setValue({ ...value, [field]: { ...value[field], goodToKnow: next } });
+  };
 
   const save = async () => {
     setSaving(true);
@@ -339,6 +406,140 @@ function Theme() {
       <Panel title="FAQ (/faq)">
         <FaqListField values={value.faqPage} onChange={setFaqPage} max={40} />
         <p className="mt-3 text-xs text-neutral-500">Also checked for income claims when you save.</p>
+      </Panel>
+
+      <Panel title="Login / signup / forgot-password pages">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Intro badge (e.g. 'Beauty from brands you know')" value={value.authCopy.introEyebrow} onChange={(v) => setCopy('authCopy', 'introEyebrow', v)} span2 />
+          <Field label="Intro heading (use a new line for a line break)" value={value.authCopy.introHeading} onChange={(v) => setCopy('authCopy', 'introHeading', v)} span2 />
+          <Field label="Intro body" value={value.authCopy.introBody} onChange={(v) => setCopy('authCopy', 'introBody', v)} span2 />
+          <Field label="Login page lead" value={value.authCopy.loginLead} onChange={(v) => setCopy('authCopy', 'loginLead', v)} />
+          <Field label="Signup page lead" value={value.authCopy.signupLead} onChange={(v) => setCopy('authCopy', 'signupLead', v)} />
+          <Field label="Signup disclaimer (checked for income claims)" value={value.authCopy.signupDisclaimer} onChange={(v) => setCopy('authCopy', 'signupDisclaimer', v)} span2 />
+          <Field label="Forgot-password page lead" value={value.authCopy.forgotPasswordLead} onChange={(v) => setCopy('authCopy', 'forgotPasswordLead', v)} span2 />
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">
+          The security wording on these pages (OTP expiry, "if that email is registered", staff-impersonation warnings) is intentionally not editable here — it is worded carefully to avoid becoming an account-enumeration tool.
+        </p>
+      </Panel>
+
+      <Panel title="Contact page (/contact)">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Lead" value={value.contactPageCopy.lead} onChange={(v) => setCopy('contactPageCopy', 'lead', v)} span2 />
+          <Field label="Customer care section body" value={value.contactPageCopy.careBody} onChange={(v) => setCopy('contactPageCopy', 'careBody', v)} span2 />
+          <Field label="Grievance officer section intro" value={value.contactPageCopy.grievanceIntro} onChange={(v) => setCopy('contactPageCopy', 'grievanceIntro', v)} span2 />
+          <Field label="SLA text (under grievance officer)" value={value.contactPageCopy.slaText} onChange={(v) => setCopy('contactPageCopy', 'slaText', v)} span2 />
+          <Field label="Write-to-us section body" value={value.contactPageCopy.writeBody} onChange={(v) => setCopy('contactPageCopy', 'writeBody', v)} span2 />
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">The registered address, GSTIN, support contact and grievance officer's own details live under Settings &gt; Company, not here.</p>
+      </Panel>
+
+      <Panel title="Blog page (/blog)">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Intro (also the page's meta description)" value={value.blogPageCopy.intro} onChange={(v) => setCopy('blogPageCopy', 'intro', v)} span2 />
+          <Field label="Empty state (no posts published yet)" value={value.blogPageCopy.emptyState} onChange={(v) => setCopy('blogPageCopy', 'emptyState', v)} span2 />
+        </div>
+      </Panel>
+
+      <Panel title="Member storefront (/mc/[code]) and brand pages (/brand/[slug])">
+        <p className="text-xs text-neutral-500">Use the literal text <code>{'{name}'}</code> where the member's first name (or the brand's name) should appear.</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Field label="Storefront body" value={value.memberStorefrontCopy.body} onChange={(v) => setCopy('memberStorefrontCopy', 'body', v)} span2 />
+          <Field label="Storefront 'join' link text" value={value.memberStorefrontCopy.cta} onChange={(v) => setCopy('memberStorefrontCopy', 'cta', v)} />
+          <Field label="Storefront range heading" value={value.memberStorefrontCopy.rangeHeading} onChange={(v) => setCopy('memberStorefrontCopy', 'rangeHeading', v)} />
+          <Field label="Brand page lead" value={value.brandPageCopy.lead} onChange={(v) => setCopy('brandPageCopy', 'lead', v)} span2 />
+          <Field label="Brand page empty-state title" value={value.brandPageCopy.emptyTitle} onChange={(v) => setCopy('brandPageCopy', 'emptyTitle', v)} />
+          <Field label="Brand page empty-state body" value={value.brandPageCopy.emptyBody} onChange={(v) => setCopy('brandPageCopy', 'emptyBody', v)} />
+        </div>
+      </Panel>
+
+      <Panel title="Cart and checkout">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Empty-bag message" value={value.cartCopy.emptyState} onChange={(v) => setCopy('cartCopy', 'emptyState', v)} span2 />
+          <Field label="Cart pricing note" value={value.cartCopy.pricingNote} onChange={(v) => setCopy('cartCopy', 'pricingNote', v)} span2 />
+          <Field label="Checkout wallet note" value={value.checkoutCopy.walletNote} onChange={(v) => setCopy('checkoutCopy', 'walletNote', v)} span2 />
+          <Field label="Checkout income-wallet note" value={value.checkoutCopy.incomeWalletNote} onChange={(v) => setCopy('checkoutCopy', 'incomeWalletNote', v)} span2 />
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">Use the literal text <code>{'{amount}'}</code> in the income-wallet note where the balance should appear.</p>
+      </Panel>
+
+      <Panel title="Network / referrals (/network)">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Levels explainer" value={value.networkCopy.levelsExplainer} onChange={(v) => setCopy('networkCopy', 'levelsExplainer', v)} span2 />
+          <Field label="Empty-team title" value={value.networkCopy.emptyTitle} onChange={(v) => setCopy('networkCopy', 'emptyTitle', v)} />
+          <Field label="Empty-team body" value={value.networkCopy.emptyBody} onChange={(v) => setCopy('networkCopy', 'emptyBody', v)} />
+          <Field label="Income-disclosure notice (checked for income claims)" value={value.networkCopy.incomeDisclaimer} onChange={(v) => setCopy('networkCopy', 'incomeDisclaimer', v)} span2 />
+          <Field label="Invite-section intro (checked for income claims)" value={value.networkCopy.inviteIntro} onChange={(v) => setCopy('networkCopy', 'inviteIntro', v)} span2 />
+          <Field label="Storefront pitch" value={value.networkCopy.storefrontPitch} onChange={(v) => setCopy('networkCopy', 'storefrontPitch', v)} span2 />
+          <Field label="Share message (WhatsApp/Telegram/etc.)" value={value.networkCopy.shareMessageTemplate} onChange={(v) => setCopy('networkCopy', 'shareMessageTemplate', v)} span2 />
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">Use the literal text <code>{'{code}'}</code> in the share message where the member's referral code should appear.</p>
+      </Panel>
+
+      <Panel title="Wallet page (/wallet)">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Shopping-wallet card body" value={value.walletCopy.shoppingWalletBody} onChange={(v) => setCopy('walletCopy', 'shoppingWalletBody', v)} span2 />
+          <Field label="Income-wallet card body" value={value.walletCopy.incomeWalletBody} onChange={(v) => setCopy('walletCopy', 'incomeWalletBody', v)} span2 />
+          <Field label="Shopping-wallet empty statement" value={value.walletCopy.shoppingEmptyBody} onChange={(v) => setCopy('walletCopy', 'shoppingEmptyBody', v)} />
+          <Field label="Income-wallet empty statement" value={value.walletCopy.incomeEmptyBody} onChange={(v) => setCopy('walletCopy', 'incomeEmptyBody', v)} />
+        </div>
+      </Panel>
+
+      <Panel title="Withdraw page (/wallet/withdraw)">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Success note" value={value.withdrawCopy.successNote} onChange={(v) => setCopy('withdrawCopy', 'successNote', v)} span2 />
+          <Field label="Processing note" value={value.withdrawCopy.processingNote} onChange={(v) => setCopy('withdrawCopy', 'processingNote', v)} span2 />
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">Use the literal text <code>{'{amount}'}</code> in the success note where the amount should appear.</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {value.withdrawCopy.goodToKnow.map((item, i) => (
+            <Field key={i} label={`"Good to know" item ${i + 1}`} value={item} onChange={(v) => setGoodToKnow('withdrawCopy', i, v)} />
+          ))}
+        </div>
+      </Panel>
+
+      <Panel title="Account page (/account)">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Payout section note" value={value.accountCopy.payoutNote} onChange={(v) => setCopy('accountCopy', 'payoutNote', v)} span2 />
+          <Field label="Payout disclaimer" value={value.accountCopy.payoutDisclaimer} onChange={(v) => setCopy('accountCopy', 'payoutDisclaimer', v)} span2 />
+        </div>
+      </Panel>
+
+      <Panel title="Support and ID card pages">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Support page intro" value={value.supportCopy.intro} onChange={(v) => setCopy('supportCopy', 'intro', v)} span2 />
+          <Field label="ID card welcome banner" value={value.idCardCopy.welcome} onChange={(v) => setCopy('idCardCopy', 'welcome', v)} span2 />
+          <Field label="ID card design tagline" value={value.idCardCopy.tagline} onChange={(v) => setCopy('idCardCopy', 'tagline', v)} span2 />
+        </div>
+      </Panel>
+
+      <Panel title="Statement page (/statement)">
+        <Field label="Rejected-withdrawal note" value={value.statementCopy.rejectedNote} onChange={(v) => setCopy('statementCopy', 'rejectedNote', v)} span2 />
+      </Panel>
+
+      <Panel title="Shade finder and autoship">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Shade finder intro" value={value.shadeFinderCopy.intro} onChange={(v) => setCopy('shadeFinderCopy', 'intro', v)} />
+          <Field label="Shade finder privacy note" value={value.shadeFinderCopy.privacyNote} onChange={(v) => setCopy('shadeFinderCopy', 'privacyNote', v)} />
+          <Field label="Autoship intro" value={value.autoshipCopy.intro} onChange={(v) => setCopy('autoshipCopy', 'intro', v)} span2 />
+          <Field label="Autoship delivery note" value={value.autoshipCopy.deliveryNote} onChange={(v) => setCopy('autoshipCopy', 'deliveryNote', v)} span2 />
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">
+          The shade finder's privacy note states a fact about the system (photos are analysed then discarded) — keep it accurate, not just on-brand. Use the literal text <code>{'{targetClause}'}</code> in the autoship intro where the repurchase-target clause should appear.
+        </p>
+      </Panel>
+
+      <Panel title="Mobile recharge page">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Success note" value={value.mobileRechargeCopy.successNote} onChange={(v) => setCopy('mobileRechargeCopy', 'successNote', v)} span2 />
+          <Field label="Processing note" value={value.mobileRechargeCopy.processingNote} onChange={(v) => setCopy('mobileRechargeCopy', 'processingNote', v)} span2 />
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">Use the literal text <code>{'{amount}'}</code> and <code>{'{number}'}</code> in the success note where they should appear.</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {value.mobileRechargeCopy.goodToKnow.map((item, i) => (
+            <Field key={i} label={`"Good to know" item ${i + 1}`} value={item} onChange={(v) => setGoodToKnow('mobileRechargeCopy', i, v)} />
+          ))}
+        </div>
       </Panel>
 
       <Panel title="Festival banner">
