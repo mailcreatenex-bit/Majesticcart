@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, metaDescription, breadcrumbJsonLd } from '@/lib/seo';
 import { listProducts, listCategories, listBrands, categoryTree } from '@/lib/catalog';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
+import { CATEGORY_IMAGES } from '@/lib/categoryImages';
+import { playChipClass } from '@/lib/playColors';
 
 /**
  * The full catalogue.
@@ -62,19 +64,38 @@ export default async function ShopPage() {
         {departments.length > 0 && (
           <section aria-label="Shop by category" className="mt-6">
             <h2 className="text-sm font-semibold text-[var(--ink)]">Shop by category</h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {departments.map((d) => (
-                <div key={d.slug} className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
-                  <Link href={`/category/${d.slug}`} className="font-serif text-lg text-[var(--ink)] hover:text-[var(--accent)]">{d.name}</Link>
-                  <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                    {d.children.map((c) => (
-                      <li key={c.slug}>
-                        <Link href={`/category/${c.slug}`} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{c.name}</Link>
-                      </li>
-                    ))}
-                  </ul>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {departments.map((d) => {
+                const image = d.imageUrl || CATEGORY_IMAGES[d.slug];
+                return (
+                <div key={d.slug} className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
+                  {image && (
+                    <Link href={`/category/${d.slug}`} className="group relative block aspect-[16/9] overflow-hidden">
+                      <Image
+                        src={image}
+                        alt=""
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover object-[center_30%] transition duration-500 group-hover:scale-105"
+                      />
+                      <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${playChipClass(d.slug)}`}>
+                        {d.name}
+                      </span>
+                    </Link>
+                  )}
+                  <div className="p-4">
+                    <Link href={`/category/${d.slug}`} className="font-serif text-lg text-[var(--ink)] hover:text-[var(--accent)]">{d.name}</Link>
+                    <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                      {d.children.map((c) => (
+                        <li key={c.slug}>
+                          <Link href={`/category/${c.slug}`} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{c.name}</Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
