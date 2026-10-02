@@ -9,7 +9,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 
-const SUITES = ['pwa', 'seo', 'legal', 'cart', 'session'];
+const SUITES = ['pwa', 'seo', 'legal', 'cart', 'session', 'phrases'];
 
 mkdirSync('dist-tests', { recursive: true });
 

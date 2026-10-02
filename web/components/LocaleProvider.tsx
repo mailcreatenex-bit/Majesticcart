@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { LOCALES, LOCALE_HTML_LANG, LOCALE_NAME, isLocale, translate, type Locale, type TKey } from '@/lib/i18n';
+import { PageTranslator } from './PageTranslator';
 
 /**
  * The visitor's language, applied in the browser.
@@ -37,7 +38,12 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(() => ({ locale, setLocale }), [locale, setLocale]);
-  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
+  return (
+    <LocaleContext.Provider value={value}>
+      {children}
+      <PageTranslator locale={locale} />
+    </LocaleContext.Provider>
+  );
 }
 
 export const useLocale = () => useContext(LocaleContext);

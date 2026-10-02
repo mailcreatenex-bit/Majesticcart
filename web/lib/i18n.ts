@@ -1,14 +1,22 @@
 /**
  * Interface text in English, Hindi and Bengali.
  *
- * Covers the parts of the site people use every visit - the header and footer,
- * the shop buttons and filters, and the member area's navigation and headings.
- * Product and category names, the home page copy edited in the console, blog posts,
- * legal pages and policies stay in English: they are content, and a translation of a
- * policy is something to be reviewed by the company's lawyer, not added in a rush.
+ * Two layers. The key table below (`DICT`, used through `<T k>` / `useT()`)
+ * covers the header, footer, shop buttons and filters and the member area's
+ * navigation. Everything else is handled by the page translator: rendered text
+ * is matched, whole, against the phrase table in `lib/phrases/`, so the rest of
+ * the interface, the homepage, About, Join and FAQ copy and the member screens
+ * are translated without a key in every component.
+ *
+ * Deliberately left in English: product and brand names, product descriptions
+ * and other catalogue data, blog posts, anything an admin writes after the
+ * phrase table was made (it has no entry, so it is left alone, never guessed
+ * at), and the four legal documents - a translated policy is something for the
+ * company's lawyer to review, not something to add in a rush.
  *
  * Pages stay statically cached, so the language is applied in the browser after
- * the page loads (see LocaleProvider). Search engines read the English page.
+ * the page loads (see LocaleProvider and PageTranslator). Search engines read
+ * the English page.
  */
 
 export const LOCALES = ['en', 'hi', 'bn'] as const;
