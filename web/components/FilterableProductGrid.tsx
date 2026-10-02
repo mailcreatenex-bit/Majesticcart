@@ -6,6 +6,15 @@ import { ProductGrid } from './ProductCard';
 import { useT } from './LocaleProvider';
 
 type SortKey = 'featured' | 'price_asc' | 'price_desc' | 'discount' | 'bv_desc';
+type Sheet = 'category' | 'brand' | 'price' | 'bv' | 'sort';
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'featured', label: 'Featured' },
+  { value: 'price_asc', label: 'Price: low to high' },
+  { value: 'price_desc', label: 'Price: high to low' },
+  { value: 'bv_desc', label: 'Highest BV' },
+  { value: 'discount', label: 'Biggest discount' },
+];
 
 const rupees = (paise: number) => paise / 100;
 const bvOf = (p: CatalogProduct) => p.businessVolume.centi / 100;
@@ -73,7 +82,7 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
   const [priceMax, setPriceMax] = useState('');
   const [bvMin, setBvMin] = useState('');
   const [bvMax, setBvMax] = useState('');
-  const [open, setOpen] = useState(false);
+  const [sheet, setSheet] = useState<Sheet | null>(null);
 
   const toggle = (list: string[], set: (v: string[]) => void, value: string) =>
     set(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
@@ -146,22 +155,155 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
     </label>
   );
 
+  // Each filter group is built once and shown in two places: the desktop
+  // sidebar, and the phone bottom sheet opened from its tile.
+  const categoryBlock = tree.length > 0 ? (
+    <fieldset>
+      <legend className={legend}>{t('filter.category')}</legend>
+      <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+        {tree.map((d) => (
+          <div key={d.slug}>
+            {checkRow(d.slug, d.name, countIn(d.slug), selCategories.includes(d.slug), () => toggle(selCategories, setSelCategories, d.slug))}
+            <div className="ml-5 border-l border-[var(--line)] pl-2">
+              {d.children.map((c) =>
+                checkRow(c.slug, c.name, countIn(c.slug), selCategories.includes(c.slug), () => toggle(selCategories, setSelCategories, c.slug)),
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </fieldset>
+  ) : categories.length > 1 ? (
+    <fieldset>
+      <legend className={legend}>{t('filter.category')}</legend>
+      {categories.map((c) =>
+        checkRow(c.slug, c.name, categoryCounts.get(c.slug), selCategories.includes(c.slug), () => toggle(selCategories, setSelCategories, c.slug)),
+      )}
+    </fieldset>
+  ) : null;
+
+  const brandBlock = brands.length > 1 ? (
+    <fieldset>
+      <legend className={legend}>{t('filter.brand')}</legend>
+      <div className="max-h-72 overflow-y-auto pr-1">
+        {brands.map((b) => checkRow(b, b, brandCounts.get(b) ?? 0, selBrands.includes(b), () => toggle(selBrands, setSelBrands, b)))}
+      </div>
+    </fieldset>
+  ) : null;
+
+  const priceBlock = priceRange.max > priceRange.min ? (
+    <fieldset>
+      <legend className={legend}>{t('filter.price')}</legend>
+      <div className="flex items-center gap-2">
+        <input type="number" inputMode="numeric" min={0} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} placeholder={`Min ${priceRange.min.toLocaleString('en-IN')}`} aria-label="Minimum price in rupees" className={input} />
+        <span aria-hidden="true" className="text-[var(--faint)]">–</span>
+        <input type="number" inputMode="numeric" min={0} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} placeholder={`Max ${priceRange.max.toLocaleString('en-IN')}`} aria-label="Maximum price in rupees" className={input} />
+      </div>
+    </fieldset>
+  ) : null;
+
+  const bvBlock = bvRange.max > bvRange.min ? (
+    <fieldset>
+      <legend className={legend}>{t('filter.bv')}</legend>
+      <div className="flex items-center gap-2">
+        <input type="number" inputMode="numeric" min={0} value={bvMin} onChange={(e) => setBvMin(e.target.value)} placeholder={`Min ${bvRange.min.toLocaleString('en-IN')}`} aria-label="Minimum business volume" className={input} />
+        <span aria-hidden="true" className="text-[var(--faint)]">–</span>
+        <input type="number" inputMode="numeric" min={0} value={bvMax} onChange={(e) => setBvMax(e.target.value)} placeholder={`Max ${bvRange.max.toLocaleString('en-IN')}`} aria-label="Maximum business volume" className={input} />
+      </div>
+    </fieldset>
+  ) : null;
+
+  // What each phone tile shows under its label, the way Purplle's filter
+  // grid reads "Brands / All" until something is chosen.
+  const names = new Map<string, string>([
+    ...tree.flatMap((d) => [[d.slug, d.name] as const, ...d.children.map((c) => [c.slug, c.name] as const)]),
+    ...categories.map((c) => [c.slug, c.name] as const),
+  ]);
+  const summary = (picked: string[], label: (v: string) => string) =>
+    picked.length === 0 ? 'All' : picked.length === 1 ? label(picked[0]) : `${picked.length} selected`;
+  const range = (lo: string, hi: string) => (!lo && !hi ? 'All' : `${lo || '0'} – ${hi || 'any'}`);
+
+  const tile = (key: Sheet, label: string, value: string) => (
+    <button
+      key={key}
+      type="button"
+      onClick={() => setSheet(key)}
+      className="flex min-w-0 flex-col items-start border-b border-r border-[var(--line)] px-4 py-3 text-left"
+    >
+      <span className="flex w-full items-center justify-between gap-2 text-[15px] font-medium text-[var(--ink)]">
+        {label}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 text-[var(--muted)]"><path d="m6 9 6 6 6-6" /></svg>
+      </span>
+      <span className="mt-0.5 max-w-full truncate text-xs text-[var(--muted)]">{value}</span>
+    </button>
+  );
+
+  const sheetTitle: Record<Sheet, string> = {
+    category: t('filter.category'), brand: t('filter.brand'), price: t('filter.price'), bv: t('filter.bv'), sort: 'Sort by',
+  };
+  const sheetBody: Record<Sheet, React.ReactNode> = {
+    category: categoryBlock,
+    brand: brandBlock,
+    price: priceBlock,
+    bv: bvBlock,
+    sort: (
+      <div role="radiogroup" aria-label="Sort by" className="space-y-1">
+        {SORT_OPTIONS.map((o) => (
+          <label key={o.value} className="flex cursor-pointer items-center justify-between rounded-lg px-1 py-3 text-[15px] text-[var(--body)]">
+            {o.label}
+            <input type="radio" name="sort" checked={sort === o.value} onChange={() => { setSort(o.value); setSheet(null); }} className="h-4 w-4 accent-[var(--ink)]" />
+          </label>
+        ))}
+      </div>
+    ),
+  };
+
+  const pickedLabel = (slug: string) => names.get(slug) ?? slug;
+  const tiles = [
+    categoryBlock && tile('category', t('filter.category'), summary(selCategories, pickedLabel)),
+    brandBlock && tile('brand', t('filter.brand'), summary(selBrands, (b) => b)),
+    priceBlock && tile('price', t('filter.price'), range(priceMin, priceMax)),
+    bvBlock && tile('bv', t('filter.bv'), range(bvMin, bvMax)),
+    tile('sort', 'Sort By', SORT_OPTIONS.find((o) => o.value === sort)?.label ?? 'Featured'),
+  ].filter(Boolean);
+
   return (
     <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-      {/* Filters: a left sidebar from `lg` up, a collapsible panel below it. */}
-      <aside className="mb-4 lg:sticky lg:top-28 lg:mb-0">
+      {/* Phones: a grid of filter tiles, each opening a bottom sheet. */}
+      <div className="-mx-4 mb-4 lg:hidden">
+        <p className="px-4 pb-2 text-sm font-semibold text-[var(--ink)]">
+          Showing <span className="text-[var(--accent)]">{filtered.length}</span> Products
+          {activeCount > 0 && (
+            <button type="button" onClick={clear} className="ml-3 text-xs font-semibold text-[var(--accent)] underline">
+              {t('filter.clear')}
+            </button>
+          )}
+        </p>
+        <div className="grid grid-cols-2 border-l border-t border-[var(--line)] bg-[var(--surface)]">{tiles}</div>
+      </div>
+
+      {sheet && (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={sheetTitle[sheet]}>
+          <button type="button" aria-label="Close" onClick={() => setSheet(null)} className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-[var(--surface)] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-serif text-lg text-[var(--ink)]">{sheetTitle[sheet]}</h2>
+              <button type="button" onClick={() => setSheet(null)} className="rounded-full bg-[var(--ink)] px-4 py-1.5 text-sm font-semibold text-[var(--gold-pale)]">
+                Done
+              </button>
+            </div>
+            {sheetBody[sheet]}
+          </div>
+        </div>
+      )}
+
+      {/* Desktop: the sidebar. */}
+      <aside className="mb-4 hidden lg:sticky lg:top-28 lg:mb-0 lg:block">
         <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm">
           <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              aria-controls="product-filters"
-              className="font-semibold text-[var(--ink)] lg:pointer-events-none"
-            >
+            <span className="font-semibold text-[var(--ink)]">
               {t('filter.filters')}{activeCount > 0 ? ` (${activeCount})` : ''}
-              <span aria-hidden="true" className="ml-2 text-[var(--muted)] lg:hidden">{open ? '−' : '+'}</span>
-            </button>
+            </span>
             {activeCount > 0 && (
               <button type="button" onClick={clear} className="text-xs font-semibold text-[var(--accent)] hover:underline">
                 {t('filter.clear')}
@@ -169,70 +311,19 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
             )}
           </div>
 
-          <div id="product-filters" className={`${open ? 'block' : 'hidden'} lg:block`}>
+          <div id="product-filters">
             <div className="mt-4 space-y-6 border-t border-[var(--line)] pt-4">
-              {tree.length > 0 ? (
-                <fieldset>
-                  <legend className={legend}>{t('filter.category')}</legend>
-                  <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
-                    {tree.map((d) => (
-                      <div key={d.slug}>
-                        {checkRow(d.slug, d.name, countIn(d.slug), selCategories.includes(d.slug), () => toggle(selCategories, setSelCategories, d.slug))}
-                        <div className="ml-5 border-l border-[var(--line)] pl-2">
-                          {d.children.map((c) =>
-                            checkRow(c.slug, c.name, countIn(c.slug), selCategories.includes(c.slug), () => toggle(selCategories, setSelCategories, c.slug)),
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </fieldset>
-              ) : categories.length > 1 && (
-                <fieldset>
-                  <legend className={legend}>{t('filter.category')}</legend>
-                  {categories.map((c) =>
-                    checkRow(c.slug, c.name, categoryCounts.get(c.slug), selCategories.includes(c.slug), () => toggle(selCategories, setSelCategories, c.slug)),
-                  )}
-                </fieldset>
-              )}
-
-              {brands.length > 1 && (
-                <fieldset>
-                  <legend className={legend}>{t('filter.brand')}</legend>
-                  <div className="max-h-72 overflow-y-auto pr-1">
-                    {brands.map((b) => checkRow(b, b, brandCounts.get(b) ?? 0, selBrands.includes(b), () => toggle(selBrands, setSelBrands, b)))}
-                  </div>
-                </fieldset>
-              )}
-
-              {priceRange.max > priceRange.min && (
-                <fieldset>
-                  <legend className={legend}>{t('filter.price')}</legend>
-                  <div className="flex items-center gap-2">
-                    <input type="number" inputMode="numeric" min={0} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} placeholder={`Min ${priceRange.min.toLocaleString('en-IN')}`} aria-label="Minimum price in rupees" className={input} />
-                    <span aria-hidden="true" className="text-[var(--faint)]">–</span>
-                    <input type="number" inputMode="numeric" min={0} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} placeholder={`Max ${priceRange.max.toLocaleString('en-IN')}`} aria-label="Maximum price in rupees" className={input} />
-                  </div>
-                </fieldset>
-              )}
-
-              {bvRange.max > bvRange.min && (
-                <fieldset>
-                  <legend className={legend}>{t('filter.bv')}</legend>
-                  <div className="flex items-center gap-2">
-                    <input type="number" inputMode="numeric" min={0} value={bvMin} onChange={(e) => setBvMin(e.target.value)} placeholder={`Min ${bvRange.min.toLocaleString('en-IN')}`} aria-label="Minimum business volume" className={input} />
-                    <span aria-hidden="true" className="text-[var(--faint)]">–</span>
-                    <input type="number" inputMode="numeric" min={0} value={bvMax} onChange={(e) => setBvMax(e.target.value)} placeholder={`Max ${bvRange.max.toLocaleString('en-IN')}`} aria-label="Maximum business volume" className={input} />
-                  </div>
-                </fieldset>
-              )}
+              {categoryBlock}
+              {brandBlock}
+              {priceBlock}
+              {bvBlock}
             </div>
           </div>
         </div>
       </aside>
 
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm">
+        <div className="hidden flex-wrap items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm lg:flex">
           <label className="flex items-center gap-2 text-[var(--body)]">
             Sort
             <select
@@ -240,11 +331,7 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
               onChange={(e) => setSort(e.target.value as SortKey)}
               className="rounded-lg border border-[var(--line-strong)] bg-[var(--surface)] px-2 py-1.5 text-sm focus:border-[var(--ink)] focus:outline-none"
             >
-              <option value="featured">Featured</option>
-              <option value="price_asc">Price: low to high</option>
-              <option value="price_desc">Price: high to low</option>
-              <option value="bv_desc">Highest BV</option>
-              <option value="discount">Biggest discount</option>
+              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </label>
           <span className="ml-auto text-xs text-[var(--faint)]">
@@ -252,7 +339,7 @@ export function FilterableProductGrid({ products, allCategories, allBrands }: { 
           </span>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-0 lg:mt-4">
           {filtered.length > 0 ? (
             <ProductGrid products={filtered} withSidebar />
           ) : (

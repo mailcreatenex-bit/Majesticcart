@@ -20,7 +20,7 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
   const off = discountPercent(product.mrp.paise, product.price.paise);
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition hover:shadow-lg hover:shadow-rose-900/5">
+    <div className="group flex flex-col overflow-hidden bg-[var(--surface)] transition sm:rounded-2xl sm:border sm:border-[var(--line)] sm:hover:shadow-lg sm:hover:shadow-rose-900/5">
       <Link href={`/product/${product.slug}`} className="block flex-1">
       <div className="relative aspect-[4/5] overflow-hidden bg-[var(--page)]">
         {product.imageUrl ? (
@@ -38,13 +38,8 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
           </div>
         )}
 
-        {off !== null && (
-          <span className="glow-coral absolute left-3 top-3 rounded-full bg-[var(--play-coral)] px-2.5 py-1 text-[11px] font-semibold text-white">
-            {off}% off
-          </span>
-        )}
         {off !== null && off >= 20 && (
-          <span className="glow-violet absolute right-3 top-3 rounded-full bg-[var(--play-violet)] px-2.5 py-1 text-[11px] font-semibold text-white">
+          <span className="absolute right-0 top-3 bg-[var(--play-violet)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
             Hot deal
           </span>
         )}
@@ -55,7 +50,7 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
         )}
       </div>
 
-      <div className="p-4 pb-3">
+      <div className="p-3 pb-3 sm:p-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${playChipClass(product.category)}`}>
             {product.category}
@@ -75,6 +70,7 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
           {product.mrp.paise > product.price.paise && (
             <span className="text-xs text-[var(--faint)] line-through">{showMoney(product.mrp)}</span>
           )}
+          {off !== null && <span className="text-xs font-bold text-emerald-700">{off}% off</span>}
         </div>
 
         {/* BV is shown; what it pays is not. Earnings figures stay behind the
@@ -83,7 +79,7 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
       </div>
       </Link>
 
-      <div className="px-4 pb-3">
+      <div className="px-3 pb-3 sm:px-4">
         <CardAddToBag product={product} />
       </div>
     </div>
@@ -102,7 +98,7 @@ export function ProductGrid({ products, withSidebar = false }: { products: Catal
   return (
     // With a filter sidebar beside it the grid has a quarter less width, so it
     // stays at three columns on desktop to keep the cards the same size.
-    <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 ${withSidebar ? '' : 'lg:grid-cols-4'}`}>
+    <div className={`-mx-4 grid grid-cols-2 gap-px bg-[var(--line)] sm:mx-0 sm:gap-4 sm:bg-transparent sm:grid-cols-3 ${withSidebar ? '' : 'lg:grid-cols-4'}`}>
       {products.map((p, i) => (
         <ProductCard key={p.slug} product={p} priority={i < 4} />
       ))}

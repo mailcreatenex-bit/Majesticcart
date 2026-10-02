@@ -17,6 +17,12 @@ import { T } from './LocaleProvider';
 export function MobileCategoryTabs({ departments }: { departments: { slug: string; name: string }[] }) {
   const pathname = usePathname() ?? '/';
 
+  // Browsing pages only. On a product, the bag, an account page and the like the
+  // tabs are noise above what the visitor came to do (Purplle's own product
+  // and cart screens drop them too).
+  const browsing = pathname === '/' || pathname === '/shop' || pathname.startsWith('/category') || pathname.startsWith('/brand') || pathname.startsWith('/search');
+  if (!browsing) return null;
+
   const tabs = [
     { key: 'all', href: '/', label: null as string | null, active: pathname === '/' || pathname === '/shop' },
     ...departments.map((d) => ({

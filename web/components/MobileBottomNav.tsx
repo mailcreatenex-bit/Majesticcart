@@ -11,9 +11,10 @@ import { useCart } from './CartProvider';
  * full catalogue, wallet, bag and account — rather than tabs for pages we
  * do not offer.
  *
- * Hidden from xl up, where the desktop header carries all of this, and on
+ * Hidden from xl up, where the desktop header carries all of this; on
  * checkout, where a second row of navigation under the pay button invites a
- * mis-tap away from a half-finished order.
+ * mis-tap away from a half-finished order; and on product pages, where the
+ * pinned price-and-buy bar (AddToBag) takes the same spot.
  */
 const TABS = [
   { href: '/', label: 'Home', icon: HomeIcon, match: (p: string) => p === '/' },
@@ -26,7 +27,7 @@ const TABS = [
 export function MobileBottomNav() {
   const pathname = usePathname() ?? '/';
   const { totals, ready } = useCart();
-  if (pathname.startsWith('/checkout')) return null;
+  if (pathname.startsWith('/checkout') || pathname.startsWith('/product')) return null;
 
   return (
     <nav
