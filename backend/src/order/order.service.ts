@@ -8,6 +8,7 @@ import { priceOrder, applyCouponDiscount, assertJoiningMinimum, normaliseCart, C
 import { formatInr } from '../common/money';
 import { money, volume } from '../common/serialization';
 import { isIntraState } from '../common/gst-state';
+import { courierLabel, trackingUrl, isDeliveredStatus } from './courier';
 
 /**
  * Orders.
@@ -344,7 +345,11 @@ export class OrderService {
    * on a button, and a transient failure is retried by the queue rather than
    * losing the payout.
    */
-  async transition(orderId: string, next: OrderStatus, args: { actorId?: string; note?: string } = {}) {
+  async transition(
+    orderId: string,
+    next: OrderStatus,
+    args: { actorId?: string; note?: string; courier?: string; trackingNo?: string } = {},
+  ) {
     const order = await this.prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<{ id: string; status: OrderStatus }[]>`
         SELECT id, status FROM "Order" WHERE id = ${orderId} FOR UPDATE
@@ -358,6 +363,13 @@ export class OrderService {
       if (next === 'CANCELLED') return this.applyCancellation(tx, orderId, args);
 
       const patch: Record<string, unknown> = { status: next };
+      if (next === 'SHIPPED') {
+        patch.shippedAt = new Date();
+        if (args.courier && args.trackingNo) {
+          patch.courier = args.courier;
+          patch.trackingNo = args.trackingNo;
+        }
+      }
       if (next === 'DELIVERED') {
         patch.deliveredAt = new Date();
         // Pin the plan now, so a rate change tomorrow cannot alter this payout.
@@ -372,7 +384,7 @@ export class OrderService {
         data: {
           memberId: updated.memberId,
           title: next === 'DELIVERED' ? 'Order delivered' : `Order ${next.toLowerCase()}`,
-          body: `${updated.orderNo} is ${next.toLowerCase()}.`,
+          body: this.statusMessage(updated, next),
           kind: 'ORDER',
         },
       });
@@ -384,6 +396,35 @@ export class OrderService {
 
     if (next === 'DELIVERED') await this.enqueueCommission(orderId);
     return order;
+  }
+
+  /** What the member is told when an order moves; a shipped order says who has it and how to follow it. */
+  private statusMessage(order: { orderNo: string; courier: string | null; trackingNo: string | null }, next: OrderStatus): string {
+    const base = `${order.orderNo} is ${next.toLowerCase()}.`;
+    if (next !== 'SHIPPED' || !order.courier || !order.trackingNo) return base;
+    const via = courierLabel(order.courier) ?? 'the courier';
+    const url = trackingUrl(order.courier, order.trackingNo);
+    return `${base} Sent with ${via}, tracking no. ${order.trackingNo}.${url ? ` Track: ${url}` : ''}`;
+  }
+
+  /**
+   * A courier's webhook or poll reporting progress on a parcel by its AWB.
+   *
+   * Always remembers the courier's own wording; a "delivered" report also moves
+   * a shipped order to DELIVERED, so the invoice and commission run without
+   * anyone clicking. Reports for unknown AWBs, or for orders that are not
+   * shipped, are ignored rather than rejected — a courier retries on an error
+   * and there is nothing to retry.
+   */
+  async courierUpdate(awb: string, status: string): Promise<'updated' | 'delivered' | 'ignored'> {
+    const order = await this.prisma.order.findFirst({ where: { trackingNo: awb }, select: { id: true, status: true } });
+    if (!order) return 'ignored';
+    await this.prisma.order.update({ where: { id: order.id }, data: { courierStatus: status.slice(0, 120), courierUpdatedAt: new Date() } });
+    if (order.status === 'SHIPPED' && isDeliveredStatus(status)) {
+      await this.transition(order.id, 'DELIVERED', { note: 'Delivered, per the courier' });
+      return 'delivered';
+    }
+    return 'updated';
   }
 
   /**

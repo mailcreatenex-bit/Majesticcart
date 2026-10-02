@@ -30,9 +30,15 @@ interface OrderDetail {
   }[];
   timeline: { status: string; note: string | null; at: string }[];
   invoice: { number: string; at: string } | null;
+  tracking: { courier: string; trackingNo: string; url: string | null; shippedAt: string | null; lastStatus: string | null; lastStatusAt: string | null } | null;
   placedAt: string;
   deliveredAt: string | null;
 }
+
+interface Scans { available: boolean; status: string | null; scans: { at: string | null; text: string; location: string | null }[] }
+
+/** The four steps a parcel passes through, for the progress bar above the timeline. */
+const STEPS = [['PLACED', 'Placed'], ['PACKED', 'Packed'], ['SHIPPED', 'Shipped'], ['DELIVERED', 'Delivered']] as const;
 
 /** Statuses from which a member may still cancel themselves. */
 const CANCELLABLE = new Set(['PLACED', 'PACKED']);
@@ -53,6 +59,20 @@ function Detail({ orderId, onChange }: { orderId: string; onChange: () => void }
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [nonce, setNonce] = useState(0);
+  const [scans, setScans] = useState<Scans | null>(null);
+
+  const trackingNo = order?.tracking?.trackingNo;
+  const shipped = order?.status === 'SHIPPED';
+  // The courier's own scans load after the page, since they come from a third party and can be slow.
+  useEffect(() => {
+    if (!trackingNo) return;
+    let cancelled = false;
+    const fetchScans = () => api<Scans>(`/me/orders/${orderId}/scans`).then((r) => { if (!cancelled) setScans(r); }).catch(() => undefined);
+    void fetchScans();
+    // While it is on the way, check again every two minutes without a reload.
+    const t = shipped ? setInterval(() => void fetchScans(), 120_000) : undefined;
+    return () => { cancelled = true; if (t) clearInterval(t); };
+  }, [orderId, trackingNo, shipped]);
 
   useEffect(() => {
     let cancelled = false;
@@ -138,6 +158,52 @@ function Detail({ orderId, onChange }: { orderId: string; onChange: () => void }
           </p>
         )}
       </div>
+
+      {/* ------------------------------------------------------- tracking */}
+      {order.status !== 'CANCELLED' && order.status !== 'RETURNED' && (
+        <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
+          <h2 className="font-serif text-lg text-[var(--ink)]">Track your order</h2>
+          <StepBar status={order.status} />
+
+          {order.tracking ? (
+            <div className="mt-5 rounded-xl bg-[var(--page)] p-4">
+              <p className="text-sm text-[var(--ink)]">
+                With <strong>{order.tracking.courier}</strong> · tracking no.{' '}
+                <span className="font-mono">{order.tracking.trackingNo}</span>
+              </p>
+              {(scans?.status ?? order.tracking.lastStatus) && (
+                <p className="mt-1 text-sm font-semibold text-[var(--accent)]">{scans?.status ?? order.tracking.lastStatus}</p>
+              )}
+              {order.tracking.url && (
+                <a
+                  href={order.tracking.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                >
+                  Track on {order.tracking.courier}
+                </a>
+              )}
+              {scans && scans.scans.length > 0 && (
+                <ol className="mt-4 space-y-3 border-t border-[var(--line)] pt-4">
+                  {scans.scans.slice(0, 12).map((s, i) => (
+                    <li key={`${s.at}-${i}`} className="text-sm">
+                      <p className="text-[var(--ink)]">{s.text}</p>
+                      <p className="text-xs text-[var(--faint)]">
+                        {[s.at ? formatDate(s.at, { time: true }) : null, s.location].filter(Boolean).join(' · ')}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          ) : order.status === 'SHIPPED' ? (
+            <p className="mt-4 text-sm text-[var(--muted)]">Your parcel is on its way. We will message you the moment it is delivered.</p>
+          ) : order.status !== 'DELIVERED' ? (
+            <p className="mt-4 text-sm text-[var(--muted)]">We will message you on WhatsApp and SMS when it ships, with a tracking link.</p>
+          ) : null}
+        </section>
+      )}
 
       {/* ------------------------------------------------------- timeline */}
       {order.timeline.length > 0 && (
@@ -244,5 +310,26 @@ function Detail({ orderId, onChange }: { orderId: string; onChange: () => void }
         )}
       </div>
     </div>
+  );
+}
+
+/** Placed → Packed → Shipped → Delivered, with everything up to the current step filled in. */
+function StepBar({ status }: { status: string }) {
+  const at = Math.max(0, STEPS.findIndex(([k]) => k === status));
+  return (
+    <ol className="mt-4 flex items-start">
+      {STEPS.map(([key, label], i) => {
+        const done = i <= at;
+        return (
+          <li key={key} className="relative flex flex-1 flex-col items-center text-center">
+            {i > 0 && <span className={`absolute right-1/2 top-3 h-0.5 w-full ${i <= at ? 'bg-[var(--accent)]' : 'bg-[#E6DAE0]'}`} aria-hidden />}
+            <span className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${done ? 'bg-[var(--accent)] text-white' : 'bg-[#E6DAE0] text-[var(--faint)]'}`}>
+              {done ? '✓' : i + 1}
+            </span>
+            <span className={`mt-1.5 text-xs ${done ? 'font-semibold text-[var(--ink)]' : 'text-[var(--faint)]'}`}>{label}</span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

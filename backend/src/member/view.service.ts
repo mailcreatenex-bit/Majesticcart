@@ -4,6 +4,7 @@ import { money, volume } from '../common/serialization';
 import { isoPeriod } from '../common/period';
 import { downlinePrefix } from './genealogy';
 import { parsePlan, type PlanConfig } from '../plan/plan.config';
+import { courierLabel, trackingUrl, liveTracking } from '../order/courier';
 
 /**
  * Read models for the member app.
@@ -383,6 +384,7 @@ export class MemberViewService {
         shipName: true, shipPhone: true, shipLine: true, shipCity: true,
         shipState: true, shipPincode: true,
         invoiceNo: true, invoicedAt: true, createdAt: true, deliveredAt: true,
+        courier: true, trackingNo: true, shippedAt: true, courierStatus: true, courierUpdatedAt: true,
         items: {
           select: {
             nameSnapshot: true, pricePaise: true, mrpPaise: true,
@@ -425,9 +427,43 @@ export class MemberViewService {
       })),
       timeline: o.events.map((e: OrderEventRow) => ({ status: e.status, note: e.note, at: e.createdAt })),
       invoice: o.invoiceNo ? { number: o.invoiceNo, at: o.invoicedAt } : null,
+      tracking: o.trackingNo
+        ? {
+            courier: courierLabel(o.courier) ?? 'Courier',
+            trackingNo: o.trackingNo,
+            url: trackingUrl(o.courier, o.trackingNo),
+            shippedAt: o.shippedAt,
+            lastStatus: o.courierStatus,
+            lastStatusAt: o.courierUpdatedAt,
+          }
+        : null,
       placedAt: o.createdAt,
       deliveredAt: o.deliveredAt,
     };
+  }
+
+  /**
+   * The courier's own scan history for an order, when a courier is configured.
+   *
+   * Separate from `order()` so the page paints at once from our database and
+   * the (slower, third-party) scans fill in after. Scoped to the member in the
+   * WHERE clause, like `order()`.
+   */
+  async orderScans(memberId: string, orderId: string) {
+    const o = await this.prisma.order.findFirst({
+      where: { id: orderId, memberId },
+      select: { id: true, courier: true, trackingNo: true, status: true },
+    });
+    if (!o) throw new NotFoundException('Order not found');
+    const live = await liveTracking(o.courier, o.trackingNo);
+    // Keep our own copy of the courier's latest word, so the order list and the
+    // admin queue show it without calling the courier.
+    if (live?.status && o.status === 'SHIPPED') {
+      await this.prisma.order
+        .update({ where: { id: o.id }, data: { courierStatus: live.status.slice(0, 120), courierUpdatedAt: new Date() } })
+        .catch(() => undefined);
+    }
+    return { available: !!live, status: live?.status ?? null, scans: live?.scans ?? [] };
   }
 
   /* -------------------------------------------------------------- network */

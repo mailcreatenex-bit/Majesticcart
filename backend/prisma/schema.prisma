@@ -534,6 +534,15 @@ model Order {
   invoiceNo  String?   @unique
   invoicedAt DateTime?
 
+  // Set when the order is handed to a courier. `courier` is a key from
+  // order/courier.ts; `courierStatus` is the courier's own last word (kept as
+  // text because every courier phrases it differently).
+  courier          String?
+  trackingNo       String?
+  shippedAt        DateTime?
+  courierStatus    String?
+  courierUpdatedAt DateTime?
+
   commissionRunAt DateTime?
   deliveredAt     DateTime?
   createdAt       DateTime  @default(now())
@@ -546,6 +555,7 @@ model Order {
   @@index([memberId, createdAt])
   @@index([status, createdAt])
   @@index([createdAt])
+  @@index([trackingNo])
 }
 
 model OrderItem {

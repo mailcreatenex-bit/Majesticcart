@@ -32,6 +32,14 @@ services:
         value: "1"
       - key: SMS_PROVIDER
         value: console
+      - key: DELHIVERY_API_TOKEN
+        sync: false
+      - key: SHIPROCKET_EMAIL
+        sync: false
+      - key: SHIPROCKET_PASSWORD
+        sync: false
+      - key: COURIER_WEBHOOK_SECRET
+        sync: false
       - key: SEED_ADMIN_EMAIL
         sync: false
       - key: SEED_ADMIN_PASSWORD

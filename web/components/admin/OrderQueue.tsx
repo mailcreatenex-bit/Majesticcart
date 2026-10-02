@@ -30,9 +30,17 @@ interface AdminOrder {
   shipping: { name: string; phone: string; line: string; city: string; state: string; pincode: string };
   items: string[];
   invoiceNo: string | null;
+  courier?: string | null;
+  trackingNo?: string | null;
+  courierStatus?: string | null;
   createdAt: string;
   deliveredAt: string | null;
 }
+
+const COURIER_OPTIONS: [string, string][] = [
+  ['delhivery', 'Delhivery'], ['shiprocket', 'Shiprocket'], ['bluedart', 'Blue Dart'],
+  ['dtdc', 'DTDC'], ['ecom', 'Ecom Express'], ['indiapost', 'India Post'], ['other', 'Other courier'],
+];
 
 /** What each status may become, mirroring the server's transition table. */
 const NEXT: Record<string, { status: string; label: string; consequential?: boolean }[]> = {
@@ -157,16 +165,20 @@ function OrderCard({ order, onUpdate }: { order: AdminOrder; onUpdate: (n: Parti
   const [reason, setReason] = useState('');
   const [restock, setRestock] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [shipping, setShipping] = useState(false);
+  const [courier, setCourier] = useState('delhivery');
+  const [awb, setAwb] = useState('');
 
   const transitions = NEXT[order.status] ?? [];
 
-  const move = async (status: string) => {
+  const move = async (status: string, extra: Record<string, string> = {}) => {
     if (busy) return;
     setBusy(status);
     setError(null);
     try {
-      await api(`/admin/orders/${order.id}/status`, { method: 'POST', body: { status } });
-      onUpdate({ status });
+      await api(`/admin/orders/${order.id}/status`, { method: 'POST', body: { status, ...extra } });
+      onUpdate({ status, ...(extra.trackingNo ? { courier: extra.courier, trackingNo: extra.trackingNo } : {}) });
+      setShipping(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not update this order.');
     } finally {
@@ -248,6 +260,52 @@ function OrderCard({ order, onUpdate }: { order: AdminOrder; onUpdate: (n: Parti
         <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
       )}
 
+      {order.trackingNo && (
+        <p className="mt-3 text-xs text-neutral-600">
+          Shipped with <strong>{COURIER_OPTIONS.find(([k]) => k === order.courier)?.[1] ?? order.courier}</strong> · AWB{' '}
+          <span className="font-mono">{order.trackingNo}</span>
+          {order.courierStatus ? ` · ${order.courierStatus}` : ''}
+        </p>
+      )}
+
+      {shipping && (
+        <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+          <p className="text-xs leading-relaxed text-neutral-600">
+            The member is messaged with this tracking number and a link. Leave it blank only if the parcel has no tracking.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <select
+              value={courier}
+              onChange={(e) => setCourier(e.target.value)}
+              aria-label="Courier"
+              className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm"
+            >
+              {COURIER_OPTIONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+            <input
+              value={awb}
+              onChange={(e) => setAwb(e.target.value)}
+              aria-label="Tracking number (AWB)"
+              placeholder="Tracking number (AWB)"
+              className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-2 font-mono text-sm focus:border-neutral-900 focus:outline-none"
+            />
+          </div>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              disabled={!!busy || (awb.trim().length > 0 && awb.trim().length < 4)}
+              onClick={() => void move('SHIPPED', awb.trim() ? { courier, trackingNo: awb.trim() } : {})}
+              className="rounded-lg bg-neutral-900 px-4 py-2 text-xs font-semibold text-white disabled:bg-neutral-300"
+            >
+              {busy === 'SHIPPED' ? 'Working…' : 'Mark shipped'}
+            </button>
+            <button type="button" onClick={() => setShipping(false)} className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-xs font-semibold text-neutral-700">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {returning ? (
         <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3">
           <p className="text-xs leading-relaxed text-red-800">
@@ -290,7 +348,7 @@ function OrderCard({ order, onUpdate }: { order: AdminOrder; onUpdate: (n: Parti
             <button
               key={t.status}
               type="button"
-              onClick={() => move(t.status)}
+              onClick={() => (t.status === 'SHIPPED' ? setShipping(true) : void move(t.status))}
               disabled={!!busy}
               className={`rounded-lg px-4 py-2 text-sm font-semibold disabled:bg-neutral-300 disabled:text-neutral-500 ${
                 t.consequential

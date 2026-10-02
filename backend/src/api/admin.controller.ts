@@ -13,6 +13,7 @@ import { MobileRechargeService } from '../mobile-recharge/mobile-recharge.servic
 import { SecurityAlertService } from '../security/security-alert.service';
 import { SettingsService } from '../settings/settings.service';
 import { OrderService } from '../order/order.service';
+import { COURIER_KEYS, courierLabel } from '../order/courier';
 import { CouponService, CouponInputSchema } from '../coupon/coupon.service';
 import { CommissionService } from '../commission/commission.service';
 import { DashboardService } from '../admin/dashboard.service';
@@ -260,6 +261,9 @@ export class AdminOrderController {
         },
         items: o.items.map((i: any) => `${i.nameSnapshot} × ${i.quantity}`),
         invoiceNo: o.invoiceNo,
+        courier: courierLabel(o.courier),
+        trackingNo: o.trackingNo,
+        courierStatus: o.courierStatus,
         createdAt: o.createdAt,
         deliveredAt: o.deliveredAt,
       })),
@@ -275,9 +279,13 @@ export class AdminOrderController {
     @Body(zodBody(z.object({
       status: z.enum(['PACKED', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
       note: z.string().trim().max(200).optional(),
-    }))) body: { status: 'PACKED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'; note?: string },
+      // Given when shipping: who has the parcel and its AWB, so the member can follow it.
+      courier: z.enum(COURIER_KEYS).optional(),
+      trackingNo: z.string().trim().min(4).max(40).regex(/^[A-Za-z0-9\-_/]+$/, 'Tracking number: letters, digits and dashes only.').optional(),
+    }).refine((b) => !b.courier === !b.trackingNo, { message: 'Give both the courier and the tracking number, or neither.' })))
+    body: { status: 'PACKED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'; note?: string; courier?: string; trackingNo?: string },
   ) {
-    return this.orders.transition(id, body.status, { actorId, note: body.note });
+    return this.orders.transition(id, body.status, { actorId, note: body.note, courier: body.courier, trackingNo: body.trackingNo });
   }
 
   /**

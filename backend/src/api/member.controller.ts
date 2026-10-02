@@ -578,6 +578,11 @@ export class MemberViewController {
     return this.view.order(memberId, id);
   }
 
+  @Get('orders/:id/scans')
+  orderScans(@CurrentUser('sub') memberId: string, @Param('id') id: string) {
+    return this.view.orderScans(memberId, id);
+  }
+
   @Get('income-statement')
   incomeStatement(@CurrentUser('sub') memberId: string, @Query('period') period?: string) {
     return this.view.incomeStatement(memberId, period);
