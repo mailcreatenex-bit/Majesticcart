@@ -13,6 +13,7 @@ import { LedgerService } from './ledger/ledger.service';
 import { CommissionService } from './commission/commission.service';
 import { CommissionProcessor } from './commission/commission.processor';
 import { OrderService } from './order/order.service';
+import { TeamDashboardService } from './member/team-dashboard.service';
 import { WishlistController } from './api/wishlist.controller';
 import { WishlistService } from './catalog/wishlist.service';
 import { CourierWebhookController } from './api/courier.controller';
@@ -146,7 +147,7 @@ export class SettingsModule {}
 @Module({
   imports: [SettingsModule, MediaModule],
   controllers: [MemberViewController, ShadeFinderController],
-  providers: [ProfileService, MemberViewService, ShadeFinderService],
+  providers: [ProfileService, MemberViewService, ShadeFinderService, TeamDashboardService],
   exports: [ProfileService, MemberViewService],
 })
 export class MemberModule {}

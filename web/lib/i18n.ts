@@ -62,6 +62,7 @@ export const DICT = {
   'member.overview': { en: 'Overview', hi: 'सारांश', bn: 'ওভারভিউ' },
   'member.wallet': { en: 'Wallet', hi: 'वॉलेट', bn: 'ওয়ালেট' },
   'member.orders': { en: 'Orders', hi: 'ऑर्डर', bn: 'অর্ডার' },
+  'member.dashboard': { en: 'Dashboard', hi: 'डैशबोर्ड', bn: 'ড্যাশবোর্ড' },
   'member.wishlist': { en: 'Wishlist', hi: 'विशलिस्ट', bn: 'উইশলিস্ট' },
   'member.autoship': { en: 'Autoship', hi: 'ऑटोशिप', bn: 'অটোশিপ' },
   'member.team': { en: 'My team', hi: 'मेरी टीम', bn: 'আমার দল' },

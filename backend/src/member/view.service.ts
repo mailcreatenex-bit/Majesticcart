@@ -752,7 +752,7 @@ const CATEGORY_LABELS: Record<string, string> = {
  * should degrade to "no rank shown" rather than lock every member out of their
  * own wallet balance.
  */
-function safeParsePlan(config: unknown): PlanConfig | null {
+export function safeParsePlan(config: unknown): PlanConfig | null {
   if (config == null) return null;
   try {
     return parsePlan(config);

@@ -40,6 +40,7 @@ export interface MemberSummary {
 
 const NAV = [
   { href: '/account', label: 'Overview', k: 'member.overview' as TKey },
+  { href: '/dashboard', label: 'Dashboard', k: 'member.dashboard' as TKey },
   { href: '/wallet', label: 'Wallet', k: 'member.wallet' as TKey },
   { href: '/orders', label: 'Orders', k: 'member.orders' as TKey },
   { href: '/wishlist', label: 'Wishlist', k: 'member.wishlist' as TKey },

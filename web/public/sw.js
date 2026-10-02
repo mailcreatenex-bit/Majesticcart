@@ -41,6 +41,7 @@ const NEVER_CACHE = [
   /^\/autoship/,
   /^\/support/,
   /^\/wishlist/,
+  /^\/dashboard/,
   /^\/account/,
   /^\/recharge/,
   /^\/cart/,

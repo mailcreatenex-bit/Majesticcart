@@ -16,6 +16,7 @@ import { RechargePlansService, type PlanOperator } from '../mobile-recharge/rech
 import { ShadeFinderService } from '../shade-finder/shade-finder.service';
 import { StorageService } from '../media/storage.service';
 import { MemberViewService } from '../member/view.service';
+import { TeamDashboardService } from '../member/team-dashboard.service';
 import { ProfileService } from '../member/profile.service';
 
 /**
@@ -454,7 +455,21 @@ export class MemberViewController {
     private readonly view: MemberViewService,
     private readonly profile: ProfileService,
     private readonly storage: StorageService,
+    private readonly teamDash: TeamDashboardService,
   ) {}
+
+  /** Team size, this month against target, rank progress and who needs a nudge. Volume only: no income figures. */
+  @Get('team-dashboard')
+  teamDashboard(@CurrentUser('sub') memberId: string) {
+    return this.teamDash.dashboard(memberId);
+  }
+
+  /** A friendly, fixed-wording reminder to one of the direct team who is behind. Once per person every three days. */
+  @Post('team/:childId/nudge')
+  @HttpCode(200)
+  nudge(@CurrentUser('sub') memberId: string, @Param('childId') childId: string) {
+    return this.teamDash.nudge(memberId, childId);
+  }
 
   @Get()
   async dashboard(@CurrentUser('sub') memberId: string) {
