@@ -42,6 +42,7 @@ const NAV = [
   { href: '/account', label: 'Overview', k: 'member.overview' as TKey },
   { href: '/wallet', label: 'Wallet', k: 'member.wallet' as TKey },
   { href: '/orders', label: 'Orders', k: 'member.orders' as TKey },
+  { href: '/wishlist', label: 'Wishlist', k: 'member.wishlist' as TKey },
   { href: '/autoship', label: 'Autoship', k: 'member.autoship' as TKey },
   { href: '/network', label: 'My team', k: 'member.team' as TKey },
   { href: '/statement', label: 'Statement', k: 'member.statement' as TKey },

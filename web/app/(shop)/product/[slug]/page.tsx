@@ -9,6 +9,7 @@ import { getProduct, listProducts, categoryCopy } from '@/lib/catalog';
 import { playChipClass } from '@/lib/playColors';
 import { showMoney, showVolume, discountPercent } from '@/lib/money';
 import { AddToBag } from '@/components/AddToBag';
+import { WishButton } from '@/components/WishButton';
 import { ProductCard } from '@/components/ProductCard';
 import { ProductGallery } from '@/components/ProductGallery';
 
@@ -145,7 +146,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               )}
             </div>
             {/* Exactly one h1 per page, and it is the product name. */}
-            <h1 className="mt-1 font-serif text-3xl leading-tight text-[var(--ink)]">{product.name}</h1>
+            <div className="mt-1 flex items-start justify-between gap-3">
+              <h1 className="font-serif text-3xl leading-tight text-[var(--ink)]">{product.name}</h1>
+              <WishButton slug={product.slug} name={product.name} className="h-10 w-10 shrink-0 border border-[var(--line)] bg-[var(--surface)]" />
+            </div>
 
             <div className="mt-4 flex items-baseline gap-3">
               <span className="text-3xl font-semibold text-[var(--ink)]">{showMoney(product.price)}</span>

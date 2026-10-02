@@ -310,7 +310,7 @@ export class InvoiceController {
 }
 
 /** The shape the storefront gets. No cost or margin fields leak out. */
-function publicProduct(p: any) {
+export function publicProduct(p: any) {
   return {
     id: p.id,
     slug: p.slug,

@@ -40,6 +40,7 @@ const NEVER_CACHE = [
   /^\/share/,
   /^\/autoship/,
   /^\/support/,
+  /^\/wishlist/,
   /^\/account/,
   /^\/recharge/,
   /^\/cart/,

@@ -4,6 +4,7 @@ import { Header, Footer } from '@/components/Chrome';
 import { PwaRegister, installCaptureScript } from '@/components/PwaRegister';
 import { InstallPromptPopup } from '@/components/InstallPrompt';
 import { CartProvider } from '@/components/CartProvider';
+import { WishlistProvider } from '@/components/WishlistProvider';
 import { SITE, organizationJsonLd } from '@/lib/seo';
 import { getTheme, getCompanyInfo } from '@/lib/content';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
@@ -96,11 +97,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             the same cart the pages write to. */}
         <LocaleProvider>
         <CartProvider>
+        <WishlistProvider>
           <AnnouncementBar a={theme.announcement} />
           <Header />
           <main id="main">{children}</main>
           <Footer />
           <MobileBottomNav />
+        </WishlistProvider>
         </CartProvider>
         </LocaleProvider>
         {/* Last in the body, not first: `fixed inset-0` paints over everything

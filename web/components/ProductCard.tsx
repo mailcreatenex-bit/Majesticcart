@@ -4,6 +4,7 @@ import type { CatalogProduct } from '@/lib/catalog';
 import { discountPercent, showMoney, showVolume } from '@/lib/money';
 import { playChipClass } from '@/lib/playColors';
 import { CardAddToBag } from './CardAddToBag';
+import { WishButton } from './WishButton';
 
 /**
  * A product in a grid.
@@ -20,7 +21,7 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
   const off = discountPercent(product.mrp.paise, product.price.paise);
 
   return (
-    <div className="group flex flex-col overflow-hidden bg-[var(--surface)] transition sm:rounded-2xl sm:border sm:border-[var(--line)] sm:hover:shadow-lg sm:hover:shadow-rose-900/5">
+    <div className="group relative flex flex-col overflow-hidden bg-[var(--surface)] transition sm:rounded-2xl sm:border sm:border-[var(--line)] sm:hover:shadow-lg sm:hover:shadow-rose-900/5">
       <Link href={`/product/${product.slug}`} className="block flex-1">
       <div className="relative aspect-[4/5] overflow-hidden bg-[var(--page)]">
         {product.imageUrl ? (
@@ -39,7 +40,7 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
         )}
 
         {off !== null && off >= 20 && (
-          <span className="absolute right-0 top-3 bg-[var(--play-violet)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+          <span className="absolute left-0 top-3 bg-[var(--play-violet)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
             Hot deal
           </span>
         )}
@@ -78,6 +79,9 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
         <p className="mt-1.5 text-[11px] text-[var(--muted)]">{showVolume(product.businessVolume)} per unit</p>
       </div>
       </Link>
+
+      {/* Outside the link, so tapping the heart saves rather than navigates. */}
+      <WishButton slug={product.slug} name={product.name} className="absolute right-2 top-2" />
 
       <div className="px-3 pb-3 sm:px-4">
         <CardAddToBag product={product} />

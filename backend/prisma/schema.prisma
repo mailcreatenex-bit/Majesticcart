@@ -108,6 +108,8 @@ model Member {
   @@index([payoutAccountIndex])
   @@index([rankIndex])
   @@index([status])
+
+  wishlist WishlistItem[]
 }
 
 model DeviceLink {
@@ -285,11 +287,27 @@ model Product {
   updatedAt     DateTime @updatedAt
 
   orderItems OrderItem[]
+  wishlisted WishlistItem[]
 
   @@index([categoryId, isActive])
   @@index([isActive, sold])
   @@index([slug])
   @@index([brandId, isActive])
+}
+
+// A product a member has saved. `alertWhenBack` is set only while the product is
+// out of stock: the member asked to be told, and it clears once they have been.
+model WishlistItem {
+  id            String   @id @default(cuid())
+  memberId      String
+  member        Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  alertWhenBack Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@unique([memberId, productId])
+  @@index([alertWhenBack, productId])
 }
 
 // ------------------------------------------------------------------- content

@@ -169,6 +169,16 @@ export async function Header() {
             >
               <WalletIcon />
             </Link>
+            <Link
+              href="/wishlist"
+              aria-label="Wishlist"
+              title="Wishlist"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+              </svg>
+            </Link>
             <Link href="/cart" aria-label="Bag" title="Bag" className="inline-flex items-center rounded-full px-3 py-2 text-[var(--muted)] hover:text-[var(--ink)]">
               <CartIcon />
               <CartCount />

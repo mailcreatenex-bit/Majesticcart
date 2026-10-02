@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from './CartProvider';
 import { useT } from './LocaleProvider';
+import { NotifyMe } from './WishButton';
 import { MAX_QUANTITY } from '@/lib/cart';
 import { showMoney } from '@/lib/money';
 import type { CatalogProduct } from '@/lib/catalog';
@@ -31,7 +32,8 @@ export function AddToBag({ product }: { product: CatalogProduct }) {
   if (!product.inStock) {
     return (
       <div className="mt-6 rounded-xl border border-[var(--line-strong)] bg-[var(--page)] px-5 py-4 text-sm text-[var(--muted)]">
-        Out of stock. This product will be back — check the shop for what is available now.
+        Out of stock. Save it and we will message you the moment it is back.
+        <NotifyMe slug={product.slug} />
       </div>
     );
   }

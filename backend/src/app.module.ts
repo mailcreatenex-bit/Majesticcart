@@ -13,6 +13,8 @@ import { LedgerService } from './ledger/ledger.service';
 import { CommissionService } from './commission/commission.service';
 import { CommissionProcessor } from './commission/commission.processor';
 import { OrderService } from './order/order.service';
+import { WishlistController } from './api/wishlist.controller';
+import { WishlistService } from './catalog/wishlist.service';
 import { CourierWebhookController } from './api/courier.controller';
 import { AutoshipService } from './order/autoship.service';
 import { AutoshipController } from './api/autoship.controller';
@@ -150,8 +152,8 @@ export class SettingsModule {}
 export class MemberModule {}
 
 @Module({
-  controllers: [CatalogController, AdminCatalogController, MemberReviewController],
-  providers: [CatalogService, ReviewService],
+  controllers: [CatalogController, AdminCatalogController, MemberReviewController, WishlistController],
+  providers: [CatalogService, ReviewService, WishlistService],
   exports: [CatalogService],
 })
 export class CatalogModule {}
