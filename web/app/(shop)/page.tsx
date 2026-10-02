@@ -225,21 +225,21 @@ export default async function HomePage() {
       {/* -------------------------------------------------------- featured */}
       <section className={`${SECTION_BG[sections.featuredBg]} px-4 py-16`}>
         <div className="mx-auto max-w-6xl">
-        <div className="flex items-end justify-between">
+        <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
           <h2 className="font-serif text-2xl text-[var(--ink)]">{sections.featuredHeading}</h2>
           <Link href="/shop" className="text-sm font-semibold text-[var(--accent)] hover:underline">
-            See all
+            View all →
           </Link>
         </div>
         <div className="mt-6">
-          <ProductGrid products={featured} />
+          <ProductGrid products={featured} row />
         </div>
         </div>
       </section>
 
       {/* ------------------------------------------------------- about us */}
       <section className={`border-y border-[var(--line)] ${SECTION_BG[sections.aboutBg]}`}>
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 sm:items-center">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 py-14 sm:grid-cols-2 sm:items-center">
           <div className="order-2 flex gap-4 sm:order-1">
             <div className="relative mt-8 aspect-[3/4] w-1/2 overflow-hidden rounded-2xl shadow-lg">
               <Image src={theme.aboutUs.images[0]} alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />

@@ -86,7 +86,13 @@ export function ProductCard({ product, priority = false }: { product: CatalogPro
   );
 }
 
-export function ProductGrid({ products, withSidebar = false }: { products: CatalogProduct[]; withSidebar?: boolean }) {
+/**
+ * `row` turns the phone layout into a single horizontally swiping row (the
+ * "Handpicked for you" shelf pattern of shopping apps) instead of a two-column
+ * grid; from sm up it is the same grid either way, so one set of cards
+ * serves both rather than rendering the products twice.
+ */
+export function ProductGrid({ products, withSidebar = false, row = false }: { products: CatalogProduct[]; withSidebar?: boolean; row?: boolean }) {
   if (products.length === 0) {
     return (
       <p className="rounded-2xl border border-dashed border-[var(--line-strong)] bg-[var(--surface)] px-6 py-12 text-center text-sm text-[var(--muted)]">
@@ -95,13 +101,26 @@ export function ProductGrid({ products, withSidebar = false }: { products: Catal
     );
   }
 
+  const grid = `sm:mx-0 sm:grid sm:gap-4 sm:bg-transparent sm:grid-cols-3 ${withSidebar ? '' : 'lg:grid-cols-4'}`;
   return (
     // With a filter sidebar beside it the grid has a quarter less width, so it
     // stays at three columns on desktop to keep the cards the same size.
-    <div className={`-mx-4 grid grid-cols-2 gap-px bg-[var(--line)] sm:mx-0 sm:gap-4 sm:bg-transparent sm:grid-cols-3 ${withSidebar ? '' : 'lg:grid-cols-4'}`}>
-      {products.map((p, i) => (
-        <ProductCard key={p.slug} product={p} priority={i < 4} />
-      ))}
+    <div
+      className={
+        row
+          ? `no-scrollbar -mx-4 flex snap-x snap-mandatory gap-px overflow-x-auto bg-[var(--line)] ${grid}`
+          : `-mx-4 grid grid-cols-2 gap-px bg-[var(--line)] ${grid}`
+      }
+    >
+      {products.map((p, i) =>
+        row ? (
+          <div key={p.slug} className="w-[46vw] shrink-0 snap-start sm:w-auto">
+            <ProductCard product={p} priority={i < 4} />
+          </div>
+        ) : (
+          <ProductCard key={p.slug} product={p} priority={i < 4} />
+        ),
+      )}
     </div>
   );
 }

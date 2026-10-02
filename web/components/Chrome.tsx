@@ -90,7 +90,7 @@ export async function Header() {
                 <CartIcon />
                 <CartCount tone="onColor" />
               </Link>
-              <AccountLink />
+              <AccountLink compact />
             </div>
           </div>
           <div className="pb-3">
