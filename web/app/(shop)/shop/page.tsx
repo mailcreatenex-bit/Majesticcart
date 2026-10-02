@@ -3,10 +3,8 @@ import Image from 'next/image';
 import { faceCrop } from '@/lib/focal';
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, metaDescription, breadcrumbJsonLd } from '@/lib/seo';
-import { listProducts, listCategories, listBrands, categoryTree } from '@/lib/catalog';
+import { listProducts, listCategories, listBrands } from '@/lib/catalog';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
-import { CATEGORY_IMAGES } from '@/lib/categoryImages';
-import { playChipClass } from '@/lib/playColors';
 
 /**
  * The full catalogue.
@@ -36,7 +34,6 @@ export const metadata: Metadata = buildMetadata({
 
 export default async function ShopPage() {
   const [products, categories, allBrands] = await Promise.all([listProducts(), listCategories(), listBrands()]);
-  const departments = categoryTree(categories).filter((d) => d.children.length > 0);
 
   const jsonLd = breadcrumbJsonLd([
     { name: 'Home', path: '/' },
@@ -61,46 +58,6 @@ export default async function ShopPage() {
 
         <h1 className="mt-3 font-serif text-3xl text-[var(--ink)]">All products</h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--muted)]">{DESCRIPTION}</p>
-
-        {departments.length > 0 && (
-          <section aria-label="Shop by category" className="mt-6">
-            <h2 className="text-sm font-semibold text-[var(--ink)]">Shop by category</h2>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {departments.map((d) => {
-                const image = d.imageUrl || CATEGORY_IMAGES[d.slug];
-                return (
-                <div key={d.slug} className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
-                  {image && (
-                    <Link href={`/category/${d.slug}`} className="group relative block aspect-[16/9] overflow-hidden">
-                      <Image
-                        src={image}
-                        alt=""
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        {...faceCrop(image, 16 / 9)}
-                        className={`${faceCrop(image, 16 / 9).className} transition duration-500 group-hover:scale-105`}
-                      />
-                      <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${playChipClass(d.slug)}`}>
-                        {d.name}
-                      </span>
-                    </Link>
-                  )}
-                  <div className="p-4">
-                    <Link href={`/category/${d.slug}`} className="font-serif text-lg text-[var(--ink)] hover:text-[var(--accent)]">{d.name}</Link>
-                    <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                      {d.children.map((c) => (
-                        <li key={c.slug}>
-                          <Link href={`/category/${c.slug}`} className="text-sm text-[var(--muted)] hover:text-[var(--ink)]">{c.name}</Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
 
         <p className="mt-6 text-xs text-[var(--faint)]">
           {products.length} {products.length === 1 ? 'product' : 'products'}
