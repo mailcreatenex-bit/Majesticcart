@@ -64,6 +64,7 @@ interface ThemeValue {
   shadeFinderCopy: { intro: string; privacyNote: string };
   autoshipCopy: { intro: string; deliveryNote: string };
   mobileRechargeCopy: { successNote: string; processingNote: string; goodToKnow: [string, string, string] };
+  trainingVideos: { title: string; url: string; blurb: string }[];
 }
 
 const NO_BANNER: ThemeValue['announcement'] = { enabled: false, text: '', linkLabel: '', linkHref: '', couponCode: '', startsOn: '', endsOn: '' };
@@ -154,6 +155,7 @@ function Theme() {
         shadeFinderCopy: { ...NO_SHADE_FINDER, ...v.shadeFinderCopy },
         autoshipCopy: { ...NO_AUTOSHIP, ...v.autoshipCopy },
         mobileRechargeCopy: { ...NO_MOBILE_RECHARGE, ...v.mobileRechargeCopy, goodToKnow: NO_MOBILE_RECHARGE.goodToKnow.map((d, i) => v.mobileRechargeCopy?.goodToKnow?.[i] ?? d) as ThemeValue['mobileRechargeCopy']['goodToKnow'] },
+        trainingVideos: Array.isArray(v.trainingVideos) ? v.trainingVideos : [],
       }))
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load theme settings.'));
   }, []);
@@ -540,6 +542,27 @@ function Theme() {
             <Field key={i} label={`"Good to know" item ${i + 1}`} value={item} onChange={(v) => setGoodToKnow('mobileRechargeCopy', i, v)} />
           ))}
         </div>
+      </Panel>
+
+      <Panel title="Training videos (members' share kit)">
+        <p className="text-xs text-neutral-500">
+          Short videos shown on the members' Share page. Paste a YouTube or Vimeo link, or a direct link to an .mp4 file. Keep titles and descriptions free of earnings claims; they are checked when you save.
+        </p>
+        <div className="mt-3 space-y-3">
+          {value.trainingVideos.map((vid, i) => (
+            <div key={i} className="grid gap-3 rounded-lg border border-neutral-200 p-3 sm:grid-cols-2">
+              <Field label="Title" value={vid.title} onChange={(t) => setValue({ ...value, trainingVideos: value.trainingVideos.map((x, j) => (j === i ? { ...x, title: t } : x)) })} />
+              <Field label="Video link (https://…)" value={vid.url} onChange={(t) => setValue({ ...value, trainingVideos: value.trainingVideos.map((x, j) => (j === i ? { ...x, url: t } : x)) })} />
+              <Field label="One-line description" value={vid.blurb} onChange={(t) => setValue({ ...value, trainingVideos: value.trainingVideos.map((x, j) => (j === i ? { ...x, blurb: t } : x)) })} span2 />
+              <button type="button" onClick={() => setValue({ ...value, trainingVideos: value.trainingVideos.filter((_, j) => j !== i) })} className="justify-self-start text-sm font-semibold text-red-700 hover:underline">Remove this video</button>
+            </div>
+          ))}
+        </div>
+        {value.trainingVideos.length < 12 && (
+          <button type="button" onClick={() => setValue({ ...value, trainingVideos: [...value.trainingVideos, { title: '', url: '', blurb: '' }] })} className="mt-3 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100">
+            Add a video
+          </button>
+        )}
       </Panel>
 
       <Panel title="Festival banner">

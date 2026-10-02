@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { MemberShell, type MemberSummary } from './MemberShell';
 import { buildShareSvg, shareMessages, whatsappUrl, SHARE_SIZE, type ShareKind } from '@/lib/sharecards';
 import { buildReferralLink } from '@/lib/referral';
+import { ShareKit, type TrainingVideo } from './ShareKit';
 
 /**
  * Ready-made things a member can send: WhatsApp messages carrying their link, and
@@ -29,15 +30,15 @@ async function toDataUrl(url: string): Promise<string | null> {
   }
 }
 
-export function ShareView() {
+export function ShareView({ videos = [] }: { videos?: TrainingVideo[] }) {
   return (
     <MemberShell title="Share">
-      {(data) => <Share data={data} />}
+      {(data) => <Share data={data} videos={videos} />}
     </MemberShell>
   );
 }
 
-function Share({ data }: { data: MemberSummary }) {
+function Share({ data, videos }: { data: MemberSummary; videos: TrainingVideo[] }) {
   const [origin, setOrigin] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
   const [qrSvg, setQrSvg] = useState<string | null>(null);
@@ -128,6 +129,7 @@ function Share({ data }: { data: MemberSummary }) {
   };
 
   return (
+    <>
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-6">
         <section>
@@ -195,5 +197,7 @@ function Share({ data }: { data: MemberSummary }) {
         {notice && <p role="status" className="mt-3 text-sm text-[var(--muted)]">{notice}</p>}
       </aside>
     </div>
+    {origin && <ShareKit name={data.member.name} code={data.member.code} origin={origin} logo={logo} videos={videos} />}
+    </>
   );
 }

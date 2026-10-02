@@ -125,6 +125,7 @@ export interface ThemeSettings {
   shadeFinderCopy: { intro: string; privacyNote: string };
   autoshipCopy: { intro: string; deliveryNote: string };
   mobileRechargeCopy: { successNote: string; processingNote: string; goodToKnow: [string, string, string] };
+  trainingVideos: { title: string; url: string; blurb: string }[];
 }
 
 export interface TitleBody {
@@ -404,6 +405,7 @@ const DEFAULT_THEME: ThemeSettings = {
   shadeFinderCopy: DEFAULT_SHADE_FINDER_COPY,
   autoshipCopy: DEFAULT_AUTOSHIP_COPY,
   mobileRechargeCopy: DEFAULT_MOBILE_RECHARGE_COPY,
+  trainingVideos: [],
 };
 
 const API = () => {
@@ -500,6 +502,7 @@ export async function getTheme(): Promise<ThemeSettings> {
       ...DEFAULT_MOBILE_RECHARGE_COPY, ...t.mobileRechargeCopy,
       goodToKnow: DEFAULT_MOBILE_RECHARGE_COPY.goodToKnow.map((d, i) => t.mobileRechargeCopy?.goodToKnow?.[i] ?? d) as ThemeSettings['mobileRechargeCopy']['goodToKnow'],
     },
+    trainingVideos: Array.isArray(t.trainingVideos) ? t.trainingVideos : [],
   };
 }
 

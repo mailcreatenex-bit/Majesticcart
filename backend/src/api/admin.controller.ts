@@ -957,6 +957,11 @@ const ThemeSettingSchema = z.object({
     processingNote: z.string().trim().max(300),
     goodToKnow: z.tuple([z.string().trim().max(200), z.string().trim().max(200), z.string().trim().max(200)]),
   }),
+  trainingVideos: z.array(z.object({
+    title: z.string().trim().min(1).max(100),
+    url: z.string().trim().max(300).regex(/^https:\/\//, 'A video link must start with https://'),
+    blurb: z.string().trim().max(200),
+  })).max(12),
 });
 
 /** Read by the storefront on every homepage render — public, since it's exactly what the page already shows every visitor. */

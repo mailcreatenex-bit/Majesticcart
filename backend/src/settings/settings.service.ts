@@ -253,6 +253,8 @@ export interface ThemeSettingValue {
   autoshipCopy: { intro: string; deliveryNote: string };
   /** {amount} and {number} are replaced with the recharge amount and the mobile number. */
   mobileRechargeCopy: { successNote: string; processingNote: string; goodToKnow: [string, string, string] };
+  /** Short training videos shown in the members' share kit: a YouTube / Vimeo link or a direct .mp4. */
+  trainingVideos: { title: string; url: string; blurb: string }[];
 }
 
 interface TitleBody {
@@ -487,6 +489,8 @@ const DEFAULT_MOBILE_RECHARGE_COPY: ThemeSettingValue['mobileRechargeCopy'] = {
   ],
 };
 
+const DEFAULT_TRAINING_VIDEOS: ThemeSettingValue['trainingVideos'] = [];
+
 const DEFAULT_THEME: ThemeSettingValue = {
   colors: { ink: '#341316', accent: '#B84654', gold: '#D9B25A' },
   logoUrl: '',
@@ -529,6 +533,7 @@ const DEFAULT_THEME: ThemeSettingValue = {
   shadeFinderCopy: DEFAULT_SHADE_FINDER_COPY,
   autoshipCopy: DEFAULT_AUTOSHIP_COPY,
   mobileRechargeCopy: DEFAULT_MOBILE_RECHARGE_COPY,
+  trainingVideos: DEFAULT_TRAINING_VIDEOS,
 };
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
@@ -741,6 +746,7 @@ export class SettingsService {
         ...DEFAULT_MOBILE_RECHARGE_COPY, ...stored?.mobileRechargeCopy,
         goodToKnow: DEFAULT_MOBILE_RECHARGE_COPY.goodToKnow.map((d, i) => stored?.mobileRechargeCopy?.goodToKnow?.[i] ?? d) as ThemeSettingValue['mobileRechargeCopy']['goodToKnow'],
       },
+      trainingVideos: Array.isArray(stored?.trainingVideos) ? stored.trainingVideos : DEFAULT_TRAINING_VIDEOS,
     };
   }
 
@@ -800,6 +806,7 @@ export class SettingsService {
           input.walletCopy.shoppingWalletBody, input.walletCopy.incomeWalletBody,
           input.withdrawCopy.successNote, input.withdrawCopy.processingNote, ...input.withdrawCopy.goodToKnow,
           input.accountCopy.payoutNote, input.accountCopy.payoutDisclaimer,
+          ...input.trainingVideos.flatMap((v) => [v.title, v.blurb]),
         ].join(' '),
         'The site copy',
       );
