@@ -269,6 +269,10 @@
 .glow-lime { box-shadow: 0 10px 32px -8px rgba(139, 197, 63, 0.5); }
 .glow-pink { box-shadow: 0 10px 32px -8px rgba(255, 45, 149, 0.55); }
 
+/* A native horizontal scroller with its scrollbar hidden — the phone department tabs. */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* Printing the ID card: only the card, at ID-card size, with no page chrome. */
 @media print {
   @page { margin: 8mm; }

@@ -8,6 +8,7 @@ import { SITE, organizationJsonLd } from '@/lib/seo';
 import { getTheme, getCompanyInfo } from '@/lib/content';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { MobileSplash } from '@/components/MobileSplash';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { LocaleProvider } from '@/components/LocaleProvider';
 import '@/app/globals.css';
 
@@ -85,8 +86,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-title" content="Majestic Cart" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className="bg-[var(--page)] font-sans text-[var(--ink)] antialiased">
-        <MobileSplash />
+      <body className="bg-[var(--page)] font-sans text-[var(--ink)] antialiased max-xl:pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
         {/* Keyboard users should not have to tab through the whole nav. */}
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[var(--surface)] focus:px-4 focus:py-2 focus:shadow">
           Skip to content
@@ -100,8 +100,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Header />
           <main id="main">{children}</main>
           <Footer />
+          <MobileBottomNav />
         </CartProvider>
         </LocaleProvider>
+        {/* Last in the body, not first: `fixed inset-0` paints over everything
+            wherever it sits in the DOM, and as the body's first child its server
+            HTML collided with the <meta> tags Next hoists there, which threw a
+            hydration mismatch on every load. */}
+        <MobileSplash />
         <PwaRegister />
         {/* Appears after 30 seconds of visible browsing, never to someone who
             already installed it or said no recently. */}

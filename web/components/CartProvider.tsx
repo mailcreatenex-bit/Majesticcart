@@ -80,12 +80,15 @@ export function useCart(): CartContextValue {
  * Renders nothing until the stored cart has loaded, rather than flashing a zero
  * and then the real number on every page load.
  */
-export function CartCount() {
+export function CartCount({ tone = 'default' }: { tone?: 'default' | 'onColor' } = {}) {
   const { totals: t, ready } = useCart();
   if (!ready || t.itemCount === 0) return null;
 
+  // `onColor`: the phone header is itself the accent colour, so the badge
+  // flips to white-on-accent to stay visible instead of vanishing into it.
+  const colours = tone === 'onColor' ? 'bg-white text-[var(--accent)]' : 'bg-[var(--accent)] text-white';
   return (
-    <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1.5 text-[11px] font-semibold text-white">
+    <span className={`ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold ${colours}`}>
       {t.itemCount}
     </span>
   );

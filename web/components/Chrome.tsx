@@ -6,6 +6,8 @@ import { getCompanyInfo } from '@/lib/content';
 import { InstallButton } from './InstallPrompt';
 import { CartCount } from './CartProvider';
 import { MobileMenu } from './MobileMenu';
+import { MobileSearchBar } from './MobileSearchBar';
+import { MobileCategoryTabs } from './MobileCategoryTabs';
 import { AccountLink } from './AccountLink';
 import { CategoryNav } from './CategoryNav';
 import { T, LanguageSwitcher } from './LocaleProvider';
@@ -57,89 +59,123 @@ async function shopMenu() {
 
 export async function Header() {
   const { tree, links } = await shopMenu();
-  return (
-    // The extra top padding only ever does anything on a notched/Dynamic
-    // Island phone with the PWA installed (`viewport-fit: cover` in the shop
-    // layout lets content draw under the status bar in the first place) — on
-    // everything else `env(safe-area-inset-top)` resolves to 0 and this is a
-    // no-op.
-    <header className="chrome-bright sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--surface)] pt-[env(safe-area-inset-top)] backdrop-blur">
-      <nav className="mx-auto flex h-16 max-w-6xl sm:h-20 items-center gap-2 px-4 sm:gap-6" aria-label="Main">
-        {/* The wordmark is dropped here deliberately: the seal alone is what
-            carries brand recognition, and skipping the text is what leaves
-            the mobile header room for the menu, wallet and bag icons without
-            crowding. `aria-label` keeps the link named for anyone not seeing
-            the image. */}
-        <Link href="/" aria-label={SITE.name} className="flex shrink-0 items-center">
-          <Image
-            src="/brand/majestic-cart-logo.webp"
-            alt=""
-            width={512}
-            height={512}
-            priority
-            className="h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem]"
-          />
-        </Link>
-        <MobileMenu links={links} />
-        {tree.length ? (
-          <CategoryNav tree={tree} />
-        ) : (
-          <ul className="hidden gap-1 xl:flex">
-            {SHOP_LINKS.slice(0, 4).map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="rounded-full px-3 py-2 text-sm text-[var(--muted)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]">
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-        {/* Only reachable at xl+, where the hamburger (and the search bar and
-            language switcher inside it) is hidden in favour of the pill nav —
-            this is the desktop replacement for both. */}
-        <form action="/search" method="get" role="search" className="hidden max-w-xs flex-1 xl:flex">
-          <label className="relative w-full">
-            <span className="sr-only">Search</span>
-            <input
-              type="search"
-              name="q"
-              placeholder="Search products, brands…"
-              className="w-full rounded-full border border-[var(--line-strong)] bg-[var(--page)] py-2 pl-4 pr-9 text-sm text-[var(--ink)] outline-none focus:border-[#B8862B]"
-            />
-            <button
-              type="submit"
-              aria-label="Search"
-              className="absolute inset-y-0 right-1 flex items-center px-2 text-[var(--muted)] hover:text-[var(--ink)]"
-            >
-              <SearchIcon />
-            </button>
-          </label>
-        </form>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-          <div className="hidden xl:inline-flex"><LanguageSwitcher /></div>
-          {/* Renders nothing where installing is impossible, so the nav does
-              not carry a dead control on Firefox or inside WhatsApp. */}
-          <InstallButton variant="header" />
-          {/* Goes to the member's wallet. A guest lands here too — MemberShell's
-              own 401 handling sends them on to login, the same as any other
-              account page, so this needs no auth check of its own. */}
-          <Link
-            href="/wallet"
-            aria-label="Wallet"
-            title="Wallet"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
-          >
-            <WalletIcon />
-          </Link>
-          <Link href="/cart" aria-label="Bag" title="Bag" className="inline-flex items-center rounded-full px-2 py-2 text-[var(--muted)] hover:text-[var(--ink)] sm:px-3">
-            <CartIcon />
-            <CartCount />
-          </Link>
-          <AccountLink />
+  // Example searches for the phone search bar's rotating placeholder, taken
+  // from the live catalogue's own sub-category names so they are always
+  // things the shop actually sells.
+  const suggestions = [...new Set(tree.flatMap((d) => d.children.map((c) => c.name)))].slice(0, 8);
+  const tabs = tree.map((d) => ({ slug: d.slug, name: d.name }));
+
+  return (
+    <>
+      {/* The extra top padding only ever does anything on a notched/Dynamic
+          Island phone with the PWA installed (`viewport-fit: cover` in the
+          shop layout lets content draw under the status bar in the first
+          place) — on everything else `env(safe-area-inset-top)` resolves to
+          0 and this is a no-op. Below xl the whole header is the coloured
+          band (Purplle-app style); from xl up it is the white desktop bar. */}
+      <header className="chrome-bright sticky top-0 z-40 bg-[var(--accent)] pt-[env(safe-area-inset-top)] xl:border-b xl:border-[var(--line)] xl:bg-[var(--surface)] xl:backdrop-blur">
+        {/* ------------------------------------------------ phone and tablet */}
+        <div className="text-white xl:hidden">
+          <div className="flex items-center gap-1 px-3 pb-3 pt-3">
+            <MobileMenu links={links} onColor />
+            <Link href="/" aria-label={SITE.name} className="ml-1 flex shrink-0 items-center rounded-full bg-white p-0.5 shadow-sm">
+              <Image src="/brand/majestic-cart-logo.webp" alt="" width={512} height={512} priority className="h-10 w-10" />
+            </Link>
+            <div className="ml-auto flex shrink-0 items-center gap-0.5">
+              <Link href="/wallet" aria-label="Wallet" title="Wallet" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15">
+                <WalletIcon />
+              </Link>
+              <Link href="/cart" aria-label="Bag" title="Bag" className="inline-flex h-10 items-center rounded-full px-2.5 text-white transition-colors hover:bg-white/15">
+                <CartIcon />
+                <CartCount tone="onColor" />
+              </Link>
+              <AccountLink />
+            </div>
+          </div>
+          <div className="pb-3">
+            <MobileSearchBar suggestions={suggestions.length ? suggestions : tabs.map((t) => t.name)} />
+          </div>
         </div>
-      </nav>
-    </header>
+
+        {/* ----------------------------------------------------- desktop */}
+        <nav className="mx-auto hidden h-20 max-w-6xl items-center gap-6 px-4 xl:flex" aria-label="Main">
+          {/* The wordmark is dropped here deliberately: the seal alone is what
+              carries brand recognition. `aria-label` keeps the link named for
+              anyone not seeing the image. */}
+          <Link href="/" aria-label={SITE.name} className="flex shrink-0 items-center">
+            <Image
+              src="/brand/majestic-cart-logo.webp"
+              alt=""
+              width={512}
+              height={512}
+              priority
+              className="h-[4.5rem] w-[4.5rem]"
+            />
+          </Link>
+          {tree.length ? (
+            <CategoryNav tree={tree} />
+          ) : (
+            <ul className="flex gap-1">
+              {SHOP_LINKS.slice(0, 4).map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="rounded-full px-3 py-2 text-sm text-[var(--muted)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <form action="/search" method="get" role="search" className="flex max-w-xs flex-1">
+            <label className="relative w-full">
+              <span className="sr-only">Search</span>
+              <input
+                type="search"
+                name="q"
+                placeholder="Search products, brands…"
+                className="w-full rounded-full border border-[var(--line-strong)] bg-[var(--page)] py-2 pl-4 pr-9 text-sm text-[var(--ink)] outline-none focus:border-[#B8862B]"
+              />
+              <button
+                type="submit"
+                aria-label="Search"
+                className="absolute inset-y-0 right-1 flex items-center px-2 text-[var(--muted)] hover:text-[var(--ink)]"
+              >
+                <SearchIcon />
+              </button>
+            </label>
+          </form>
+
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <LanguageSwitcher />
+            {/* Renders nothing where installing is impossible, so the nav does
+                not carry a dead control on Firefox or inside WhatsApp. */}
+            <InstallButton variant="header" />
+            {/* Goes to the member's wallet. A guest lands here too — MemberShell's
+                own 401 handling sends them on to login, the same as any other
+                account page, so this needs no auth check of its own. */}
+            <Link
+              href="/wallet"
+              aria-label="Wallet"
+              title="Wallet"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
+            >
+              <WalletIcon />
+            </Link>
+            <Link href="/cart" aria-label="Bag" title="Bag" className="inline-flex items-center rounded-full px-3 py-2 text-[var(--muted)] hover:text-[var(--ink)]">
+              <CartIcon />
+              <CartCount />
+            </Link>
+            <AccountLink />
+          </div>
+        </nav>
+      </header>
+
+      {/* Scrolls away with the page while the bar above stays put — like the
+          Purplle app, where the department tabs are not part of the pinned bar. */}
+      <div className="bg-[var(--accent)] text-white xl:hidden">
+        <MobileCategoryTabs departments={tabs} />
+      </div>
+    </>
   );
 }
 

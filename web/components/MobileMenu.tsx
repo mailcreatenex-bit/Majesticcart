@@ -15,7 +15,7 @@ import type { TKey } from '@/lib/i18n';
  */
 export interface MenuGroup { href: string; label: string; k?: TKey; children?: { href: string; label: string }[] }
 
-export function MobileMenu({ links }: { links: MenuGroup[] }) {
+export function MobileMenu({ links, onColor = false }: { links: MenuGroup[]; onColor?: boolean }) {
   const [open, setOpen] = useState(false);
 
   // Closing on route change would need a router event; closing on Escape and
@@ -40,7 +40,7 @@ export function MobileMenu({ links }: { links: MenuGroup[] }) {
         aria-expanded={open}
         aria-controls="mobile-shop-menu"
         aria-label={open ? 'Close menu' : 'Open menu'}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
+        className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors ${onColor ? 'text-white hover:bg-white/15' : 'text-[var(--muted)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]'}`}
       >
         {open ? <CloseIcon /> : <MenuIcon />}
       </button>
@@ -49,31 +49,15 @@ export function MobileMenu({ links }: { links: MenuGroup[] }) {
         <>
           {/* Click-outside target, not a visual scrim — the panel below already
               reads as attached to the header. */}
-          <div className="fixed inset-0 top-16 z-30" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} aria-hidden="true" />
           <div
             id="mobile-shop-menu"
-            className="absolute inset-x-0 top-full z-40 max-h-[80vh] overflow-y-auto border-b border-[var(--line)] bg-[var(--surface)] px-4 py-3 shadow-lg"
+            className="absolute inset-x-0 top-full z-40 max-h-[80vh] overflow-y-auto border-b border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[var(--body)] shadow-lg"
           >
-            {/* A real GET form: it works before hydration and needs no client
-                search state of its own — /search reads the query string. */}
-            <form action="/search" method="get" role="search" className="flex items-center gap-2">
-              <input
-                type="search"
-                name="q"
-                placeholder="Search products, brands…"
-                aria-label="Search"
-                className="w-full rounded-full border border-[var(--line-strong)] bg-[var(--page)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[#B8862B]"
-              />
-              <button
-                type="submit"
-                aria-label="Search"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--muted)] hover:bg-[var(--surface-tint)] hover:text-[var(--ink)]"
-              >
-                <SearchIcon />
-              </button>
-            </form>
-
-            <ul className="mt-2">
+            {/* Search lives in the header band itself on phones now (see
+                MobileSearchBar), so this panel is just the department list
+                and the language choice. */}
+            <ul>
             {links.map((l) => (
               <li key={l.href}>
                 {l.children && l.children.length > 0 ? (
@@ -117,15 +101,6 @@ export function MobileMenu({ links }: { links: MenuGroup[] }) {
         </>
       )}
     </div>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m21 21-4.3-4.3" />
-    </svg>
   );
 }
 
