@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { translatePhrase, type Lang } from '@/lib/phrases';
+import type { Lang } from '@/lib/phrases';
+
+type Translate = (text: string, lang: Lang) => string | null;
 
 /**
  * Applies the chosen language to everything on the page — text, and the
@@ -14,6 +16,10 @@ import { translatePhrase, type Lang } from '@/lib/phrases';
  * remembered per node so switching back to English restores it exactly, and so
  * a node React later rewrites with fresh English is translated afresh rather
  * than trusted as already done.
+ *
+ * The phrase tables are about 45 KB of Hindi and Bengali that an English visitor
+ * never needs, so they are fetched only when a language other than English is
+ * chosen, and not shipped with every page.
  *
  * Skipped on purpose: anything inside `[data-no-translate]` or `translate="no"`
  * (brand names, user-entered text), scripts and styles, and form values.
@@ -32,7 +38,7 @@ function leadTrail(s: string): [string, string] {
   return [/^\s*/.exec(s)![0], /\s*$/.exec(s)![0]];
 }
 
-function run(lang: Lang | null) {
+function run(lang: Lang | null, translatePhrase: Translate | null) {
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode() as Text | null; n; n = walker.nextNode() as Text | null) {
     if (skipped(n.parentElement)) continue;
@@ -45,7 +51,7 @@ function run(lang: Lang | null) {
       textApplied.delete(n);
       continue;
     }
-    const translated = translatePhrase(original, lang);
+    const translated = translatePhrase ? translatePhrase(original, lang) : null;
     if (translated === null) {
       if (textOriginal.has(n) && current !== original) n.nodeValue = original;
       continue;
@@ -73,7 +79,7 @@ function run(lang: Lang | null) {
         applied.delete(a);
         continue;
       }
-      const translated = translatePhrase(original, lang);
+      const translated = translatePhrase ? translatePhrase(original, lang) : null;
       if (translated === null) continue;
       if (!originals.has(a)) originals.set(a, original);
       if (current !== translated) el.setAttribute(a, translated);
@@ -89,23 +95,36 @@ export function PageTranslator({ locale }: { locale: 'en' | Lang }) {
     const lang: Lang | null = locale === 'en' ? null : locale;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let observer: MutationObserver | undefined;
+    let translate: Translate | null = null;
+    let stopped = false;
+    const startedAt = Date.now();
 
     const schedule = (delay: number) => {
       clearTimeout(timer);
       timer = setTimeout(() => {
         // Our own writes trigger the observer; pause it so a pass does not feed itself.
         observer?.disconnect();
-        run(lang);
+        run(lang, translate);
         observer?.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: [...ATTRS] });
       }, delay);
     };
 
     observer = new MutationObserver(() => schedule(60));
+    // English needs nothing loaded; another language fetches its phrase table, then starts.
+    if (lang) {
+      void import('@/lib/phrases').then((m) => {
+        if (stopped) return;
+        translate = m.translatePhrase;
+        // Never earlier than the post-hydration pause below, however fast the chunk arrived.
+        schedule(Math.max(0, 400 - (Date.now() - startedAt)));
+      });
+    }
     // First pass a beat after mount so React has finished hydrating the regions
     // it is about to touch; rewriting text under a region still hydrating makes
     // React discard and rebuild it.
     schedule(lang ? 400 : 0);
     return () => {
+      stopped = true;
       clearTimeout(timer);
       observer?.disconnect();
     };

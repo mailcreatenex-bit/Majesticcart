@@ -38,9 +38,9 @@ export async function BrandCarousel() {
                   aria-label={copy === 1 ? undefined : `Shop ${b.name}`}
                   className="brand-chip flex h-14 w-36 items-center justify-center px-4 sm:h-16 sm:w-44 sm:px-6"
                 >
-                  {/* Plain <img>: small static marks, already sized by CSS. */}
+                  {/* Plain <img>: small static marks, already sized by CSS. Low priority so the hero photo gets the bandwidth first; the second (looping) copy loads lazily. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={b.logoUrl as string} alt={copy === 1 ? '' : b.name} loading="eager" className="brand-logo max-h-9 max-w-full object-contain sm:max-h-11" />
+                  <img src={b.logoUrl as string} alt={copy === 1 ? '' : b.name} loading={copy === 0 ? 'eager' : 'lazy'} decoding="async" fetchPriority="low" className="brand-logo max-h-9 max-w-full object-contain sm:max-h-11" />
                 </Link>
               </li>
             )),
