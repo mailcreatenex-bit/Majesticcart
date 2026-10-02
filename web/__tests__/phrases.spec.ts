@@ -4,9 +4,10 @@ import { UI } from '@/lib/phrases/ui';
 import { MEMBER } from '@/lib/phrases/member';
 import { PAGES } from '@/lib/phrases/pages';
 import { MISC } from '@/lib/phrases/misc';
+import { FEATURES } from '@/lib/phrases/features';
 import { translatePhrase } from '@/lib/phrases';
 
-const ALL = [...UI, ...MEMBER, ...PAGES, ...MISC];
+const ALL = [...UI, ...MEMBER, ...PAGES, ...MISC, ...FEATURES];
 const norm = (s: string) => s.replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
 const tokens = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
 

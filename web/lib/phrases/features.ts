@@ -1,0 +1,80 @@
+import type { Phrase } from './types';
+
+/**
+ * The newer features: order tracking, wishlist and back-in-stock, search
+ * suggestions, the member dashboard, the share kit and the shade finder.
+ * Whole text nodes only; a sentence that has a name or number woven into it is
+ * written with {tokens} so the name or number is carried across.
+ */
+export const FEATURES: Phrase[] = [
+  // order tracking
+  ['Track your order', 'अपना ऑर्डर ट्रैक करें', 'আপনার অর্ডার ট্র্যাক করুন'],
+  ['Placed', 'दिया गया', 'দেওয়া হয়েছে'],
+  ['Your parcel is on its way. We will message you the moment it is delivered.', 'आपका पार्सल रास्ते में है। डिलीवर होते ही हम आपको संदेश भेजेंगे।', 'আপনার পার্সেল পথে আছে। ডেলিভারি হওয়ামাত্র আমরা আপনাকে বার্তা পাঠাব।'],
+  ['We will message you on WhatsApp and SMS when it ships, with a tracking link.', 'जब यह शिप होगा तो हम आपको WhatsApp और SMS पर ट्रैकिंग लिंक के साथ संदेश भेजेंगे।', 'এটি শিপ হলে আমরা আপনাকে WhatsApp ও SMS-এ ট্র্যাকিং লিঙ্ক সহ বার্তা পাঠাব।'],
+  ['Track on {name}', '{name} पर ट्रैक करें', '{name}-এ ট্র্যাক করুন'],
+  ['Progress', 'प्रगति', 'অগ্রগতি'],
+  // wishlist
+  ['Wishlist', 'विशलिस्ट', 'উইশলিস্ট'],
+  ['Your wishlist', 'आपकी विशलिस्ट', 'আপনার উইশলিস্ট'],
+  ['Nothing saved yet', 'अभी तक कुछ सेव नहीं किया', 'এখনও কিছু সংরক্ষণ করা হয়নি'],
+  ['Tap the heart on any product to keep it here. Save something that is out of stock and we will message you when it is back.', 'किसी भी उत्पाद पर दिल दबाकर उसे यहाँ रखें। जो स्टॉक में नहीं है उसे सेव करें, वापस आने पर हम आपको संदेश भेजेंगे।', 'যেকোনো পণ্যে হার্ট চেপে এখানে রাখুন। স্টকে নেই এমন কিছু সংরক্ষণ করুন, ফিরে এলে আমরা আপনাকে বার্তা পাঠাব।'],
+  ['Browse the shop', 'शॉप देखें', 'শপ ঘুরে দেখুন'],
+  ['Notify me when it is back', 'वापस आने पर मुझे बताएँ', 'ফিরে এলে আমাকে জানান'],
+  ['Out of stock. Save it and we will message you the moment it is back.', 'स्टॉक में नहीं है। इसे सेव करें, वापस आते ही हम आपको संदेश भेजेंगे।', 'স্টকে নেই। এটি সংরক্ষণ করুন, ফিরে আসামাত্র আমরা আপনাকে বার্তা পাঠাব।'],
+  ['✓ We will tell you when it is back — tap to cancel', '✓ वापस आने पर हम आपको बताएँगे — रद्द करने के लिए दबाएँ', '✓ ফিরে এলে আমরা আপনাকে জানাব — বাতিল করতে চাপুন'],
+  ['Save for later', 'बाद के लिए सेव करें', 'পরের জন্য সংরক্ষণ করুন'],
+  ['Saved', 'सेव किया', 'সংরক্ষিত'],
+  // search
+  ['Did you mean', 'क्या आपका मतलब था', 'আপনি কি বোঝাতে চেয়েছিলেন'],
+  ['Search suggestions', 'खोज सुझाव', 'অনুসন্ধানের পরামর্শ'],
+  ['Nothing found for “{x}”. Try fewer or different words.', '“{x}” के लिए कुछ नहीं मिला। कम या अलग शब्द आज़माएँ।', '“{x}”-এর জন্য কিছু পাওয়া যায়নি। কম বা অন্য শব্দ চেষ্টা করুন।'],
+  ['Try fewer words, or the name in Hindi, Bengali or English. We forgive spelling slips.', 'कम शब्द आज़माएँ, या नाम हिंदी, बांग्ला या अंग्रेज़ी में लिखें। वर्तनी की छोटी गलतियाँ चल जाती हैं।', 'কম শব্দ চেষ্টা করুন, বা নামটি হিন্দি, বাংলা বা ইংরেজিতে লিখুন। বানানের ছোটখাটো ভুল চলবে।'],
+  // member dashboard
+  ['Dashboard', 'डैशबोर्ड', 'ড্যাশবোর্ড'],
+  ['Your team', 'आपकी टीम', 'আপনার দল'],
+  ['Active', 'सक्रिय', 'সক্রিয়'],
+  ['Directly sponsored', 'सीधे स्पॉन्सर किए', 'সরাসরি স্পনসর করা'],
+  ['Joined this month', 'इस महीने जुड़े', 'এই মাসে যোগ দিয়েছেন'],
+  ['Team volume this month', 'इस महीने टीम वॉल्यूम', 'এই মাসে দলের ভলিউম'],
+  ['Direct team on target', 'लक्ष्य पर सीधी टीम', 'লক্ষ্যে থাকা সরাসরি দল'],
+  ['Your purchases, last six months', 'आपकी खरीदारी, पिछले छह महीने', 'আপনার কেনাকাটা, গত ছয় মাস'],
+  ['Rank', 'रैंक', 'র‍্যাঙ্ক'],
+  ['You are at the top rank.', 'आप सर्वोच्च रैंक पर हैं।', 'আপনি সর্বোচ্চ র‍্যাঙ্কে আছেন।'],
+  ['Who needs a nudge', 'किसे याद दिलाने की ज़रूरत है', 'কাকে মনে করিয়ে দিতে হবে'],
+  ['People you sponsored directly who are behind this month. A reminder goes to them as a short message from you. You can remind each person once every three days.', 'आपके सीधे स्पॉन्सर किए लोग जो इस महीने पीछे हैं। उन्हें आपकी ओर से एक छोटा संदेश जाता है। आप हर व्यक्ति को तीन दिन में एक बार याद दिला सकते हैं।', 'আপনার সরাসরি স্পনসর করা যারা এই মাসে পিছিয়ে আছেন। তাঁদের কাছে আপনার পক্ষ থেকে একটি ছোট বার্তা যায়। প্রত্যেককে তিন দিনে একবার মনে করিয়ে দিতে পারেন।'],
+  ['Everyone on your direct team is on track. Nice work.', 'आपकी सीधी टीम में सब ठीक चल रहे हैं। बहुत अच्छा।', 'আপনার সরাসরি দলে সবাই ঠিক পথে আছেন। দারুণ কাজ।'],
+  ['See the full team →', 'पूरी टीम देखें →', 'পুরো দল দেখুন →'],
+  ['Close to target', 'लक्ष्य के करीब', 'লক্ষ্যের কাছাকাছি'],
+  ['No order this month', 'इस महीने कोई ऑर्डर नहीं', 'এই মাসে কোনো অর্ডার নেই'],
+  ['Has not ordered yet', 'अभी तक ऑर्डर नहीं किया', 'এখনও অর্ডার করেননি'],
+  ['Send a reminder', 'याद दिलाएँ', 'মনে করিয়ে দিন'],
+  ['Reminded', 'याद दिलाया', 'মনে করানো হয়েছে'],
+  // share kit
+  ['Send a catalogue on WhatsApp', 'WhatsApp पर कैटलॉग भेजें', 'WhatsApp-এ ক্যাটালগ পাঠান'],
+  ['One tap: our best sellers with prices and your own links.', 'एक टैप में: हमारे सबसे ज़्यादा बिकने वाले उत्पाद, कीमतों और आपके अपने लिंक के साथ।', 'এক ট্যাপে: আমাদের সবচেয়ে বেশি বিক্রি হওয়া পণ্য, দাম ও আপনার নিজের লিঙ্ক সহ।'],
+  ['Send catalogue on WhatsApp', 'WhatsApp पर कैटलॉग भेजें', 'WhatsApp-এ ক্যাটালগ পাঠান'],
+  ['Product images', 'उत्पाद की तस्वीरें', 'পণ্যের ছবি'],
+  ['Pick a product to get a branded image with your member ID and a QR code.', 'उत्पाद चुनें और अपनी मेंबर ID और QR कोड वाली ब्रांडेड तस्वीर पाएँ।', 'পণ্য বেছে নিন এবং আপনার মেম্বার আইডি ও QR কোড সহ ব্র্যান্ডেড ছবি পান।'],
+  ['Choose a product to see its image.', 'उसकी तस्वीर देखने के लिए उत्पाद चुनें।', 'ছবি দেখতে একটি পণ্য বেছে নিন।'],
+  ['WhatsApp text', 'WhatsApp संदेश', 'WhatsApp বার্তা'],
+  ['Copy text', 'संदेश कॉपी करें', 'বার্তা কপি করুন'],
+  ['Training videos', 'ट्रेनिंग वीडियो', 'ট্রেনিং ভিডিও'],
+  ['Short videos on using the site and talking about the products.', 'साइट इस्तेमाल करने और उत्पादों के बारे में बात करने पर छोटे वीडियो।', 'সাইট ব্যবহার এবং পণ্য নিয়ে কথা বলার ছোট ভিডিও।'],
+  ['Open the video', 'वीडियो खोलें', 'ভিডিও খুলুন'],
+  ['Loading products…', 'उत्पाद लोड हो रहे हैं…', 'পণ্য লোড হচ্ছে…'],
+  ['No products to share here yet.', 'यहाँ अभी शेयर करने के लिए कोई उत्पाद नहीं।', 'এখানে এখনও শেয়ার করার মতো কোনো পণ্য নেই।'],
+  // shade finder
+  ['Not sure of your shade?', 'अपने शेड के बारे में पक्का नहीं हैं?', 'আপনার শেড নিয়ে নিশ্চিত নন?'],
+  ['Take a selfie and we will pick the shades that suit your skin, ready to add to your bag.', 'एक सेल्फ़ी लें और हम आपकी त्वचा पर जँचने वाले शेड चुनेंगे, जिन्हें आप सीधे बैग में जोड़ सकते हैं।', 'একটি সেলফি তুলুন, আমরা আপনার ত্বকের সঙ্গে মানানসই শেড বেছে দেব, সরাসরি ব্যাগে যোগ করার জন্য তৈরি।'],
+  ['Try it →', 'आज़माएँ →', 'চেষ্টা করুন →'],
+  ['New · AI shade finder', 'नया · AI शेड फ़ाइंडर', 'নতুন · AI শেড ফাইন্ডার'],
+  ['Find the shade that is yours', 'अपना शेड खोजें', 'আপনার নিজের শেডটি খুঁজুন'],
+  ['Take a selfie. We read your undertone and pick foundations, lipsticks and more from our range that suit you, with a buy button on every one. Your photo is never stored.', 'एक सेल्फ़ी लें। हम आपका अंडरटोन पहचानकर हमारी रेंज से आपके लिए फ़ाउंडेशन, लिपस्टिक और बहुत कुछ चुनते हैं, हर एक पर खरीदने का बटन के साथ। आपकी फ़ोटो कभी सेव नहीं की जाती।', 'একটি সেলফি তুলুন। আমরা আপনার আন্ডারটোন বুঝে আমাদের সংগ্রহ থেকে আপনার জন্য ফাউন্ডেশন, লিপস্টিক ও আরও অনেক কিছু বেছে দিই, প্রতিটিতে কেনার বোতাম সহ। আপনার ছবি কখনও সংরক্ষণ করা হয় না।'],
+  ['Take a selfie', 'सेल्फ़ी लें', 'সেলফি তুলুন'],
+  ['Get your matches', 'अपने मैच पाएँ', 'আপনার ম্যাচ পান'],
+  ['Add to bag', 'बैग में जोड़ें', 'ব্যাগে যোগ করুন'],
+  ['Find my shade', 'मेरा शेड खोजें', 'আমার শেড খুঁজুন'],
+  ['Free for members.', 'सदस्यों के लिए मुफ़्त।', 'সদস্যদের জন্য বিনামূল্যে।'],
+  ['In your bag · add one more', 'आपके बैग में · एक और जोड़ें', 'আপনার ব্যাগে · আরও একটি যোগ করুন'],
+];

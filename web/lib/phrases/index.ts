@@ -3,6 +3,7 @@ import { UI } from './ui';
 import { MEMBER } from './member';
 import { PAGES } from './pages';
 import { MISC } from './misc';
+import { FEATURES } from './features';
 
 /**
  * Phrase lookup for the page translator (components/PageTranslator.tsx).
@@ -34,7 +35,7 @@ let templates: Template[] = [];
 function build() {
   exact = new Map();
   templates = [];
-  for (const [en, hi, bn] of [...UI, ...MEMBER, ...PAGES, ...MISC] as Phrase[]) {
+  for (const [en, hi, bn] of [...UI, ...MEMBER, ...PAGES, ...MISC, ...FEATURES] as Phrase[]) {
     const key = norm(en);
     if (/\{\w+\}/.test(key)) {
       const tokens: string[] = [];
