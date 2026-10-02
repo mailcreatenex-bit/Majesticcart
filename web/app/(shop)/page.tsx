@@ -3,15 +3,14 @@ import Image from 'next/image';
 import { faceCrop } from '@/lib/focal';
 import type { Metadata } from 'next';
 import { buildMetadata, metaDescription, SITE } from '@/lib/seo';
-import { listProducts, listCategories, listBrands, categoryCopy, categoryTree } from '@/lib/catalog';
+import { listProducts, listCategories, listBrands, categoryTree } from '@/lib/catalog';
 import { getTheme, type PlayColorKey } from '@/lib/content';
 import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
 import { BrandCarousel } from '@/components/BrandCarousel';
 import { HeroCarousel } from '@/components/HeroCarousel';
 import { PromoBanner } from '@/components/PromoBanner';
-import { CATEGORY_IMAGES } from '@/lib/categoryImages';
-import { playChipClass, playTileClass } from '@/lib/playColors';
+import { playTileClass } from '@/lib/playColors';
 
 /**
  * Home.
@@ -61,8 +60,8 @@ export default async function HomePage() {
     listProducts({ limit: 8 }),
     listCategories(),
     listBrands(),
-    // Only used for a genuine, live product count on the trust badges below —
-    // not rendered as a grid, so no image/priority concerns from fetching it.
+    // The live product count on the trust badges below, and the products on
+    // each department's shelf.
     listProducts({ limit: 500 }),
     getTheme(),
   ]);
@@ -71,6 +70,12 @@ export default async function HomePage() {
   // a false claim on a live storefront.
   const brandCount = brands.length;
   const productCount = allProducts.length;
+  const departmentShelves = categoryTree(categories)
+    .map((department) => {
+      const slugs = new Set([department.slug, ...department.children.map((c) => c.slug)]);
+      return { department, products: allProducts.filter((p) => slugs.has(p.categorySlug)) };
+    })
+    .filter((shelf) => shelf.products.length > 0);
   const hero = theme.hero;
   const heroImages = hero.imageUrls.length > 0 ? hero.imageUrls : DEFAULT_HERO_IMAGES;
   const promo = theme.promoBanner;
@@ -161,49 +166,30 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------------ categories */}
-      <section className={`${SECTION_BG[sections.categoriesBg]} px-4 py-14`}>
-        <div className="mx-auto max-w-6xl">
-        <h2 className="font-serif text-2xl text-[var(--ink)]">{sections.categoriesHeading}</h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categoryTree(categories).map((c) => {
-            const image = c.imageUrl || CATEGORY_IMAGES[c.slug];
-            return (
-              <Link
-                key={c.slug}
-                href={`/category/${c.slug}`}
-                className="group overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] transition hover:border-[var(--line-strong)] hover:shadow-lg hover:shadow-rose-900/5"
-              >
-                <div className={`relative aspect-[4/3] overflow-hidden ${playTileClass(c.slug)}`}>
-                  {image && (
-                    <Image
-                      src={image}
-                      alt=""
-                      fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      {...faceCrop(image, 4 / 3)}
-                      className={`${faceCrop(image, 4 / 3).className} transition duration-500 group-hover:scale-105`}
-                    />
-                  )}
-                  <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${playChipClass(c.slug)}`}>
-                    {c.name}
-                  </span>
-                </div>
-                <div className="p-6">
-                  <h3 className="font-serif text-lg text-[var(--ink)]">{c.name}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-                    {c.description ?? categoryCopy(c.slug).blurb}
-                  </p>
-                  <span className="mt-4 inline-block text-sm font-semibold text-[var(--accent)] group-hover:underline">
-                    Browse →
-                  </span>
-                </div>
+      {/* ------------------------------------------- products by department */}
+      {/* One shelf per department with every product in it (the department's
+          own and its sub-categories'), in the catalogue's department order;
+          a department with nothing in it is left out rather than shown empty.
+          Replaces the grid of category cards: the cards only linked somewhere,
+          this puts the products on the page. */}
+      {departmentShelves.map(({ department, products }, i) => (
+        <section
+          key={department.slug}
+          className={`${i % 2 === 0 ? SECTION_BG[sections.categoriesBg] : ''} px-4 py-12`}
+        >
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+              <h2 className="font-serif text-2xl text-[var(--ink)]">{department.name}</h2>
+              <Link href={`/category/${department.slug}`} className="text-sm font-semibold text-[var(--accent)] hover:underline">
+                View all →
               </Link>
-            );
-          })}
-        </div>
-        </div>
-      </section>
+            </div>
+            <div className="mt-6">
+              <ProductGrid products={products} row />
+            </div>
+          </div>
+        </section>
+      ))}
 
       {/* ---------------------------------------------------- trust ribbon */}
       <div className="bg-[var(--play-pink)] px-4 py-3">
