@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { SettingsService } from '../settings/settings.service';
+import { money, volume } from '../common/serialization';
 
 /**
  * "What shade am I?" — a photo in, two or three real products out.
@@ -27,6 +28,16 @@ export interface ShadeMatch {
   name: string;
   slug: string;
   reason: string;
+  /** Enough to show the product and put it in the bag from the result card, with the shop's own price. */
+  product: {
+    id: string;
+    imageUrl: string | null;
+    category: string | null;
+    price: ReturnType<typeof money>;
+    mrp: ReturnType<typeof money>;
+    businessVolume: ReturnType<typeof volume>;
+    inStock: boolean;
+  };
 }
 
 export interface ShadeFinderResult {
@@ -53,7 +64,10 @@ export class ShadeFinderService {
 
     const candidates = await this.prisma.product.findMany({
       where: { isActive: true, category: { slug: 'makeup' } },
-      select: { name: true, slug: true, description: true },
+      select: {
+        id: true, name: true, slug: true, description: true, imageUrl: true, pricePaise: true, mrpPaise: true,
+        bvCenti: true, stock: true, category: { select: { name: true } },
+      },
       take: CANDIDATE_LIMIT,
       orderBy: { sold: 'desc' },
     });
@@ -126,16 +140,25 @@ Respond with ONLY this JSON shape, no other text:
     }
 
     const summary = typeof parsed.summary === 'string' ? parsed.summary : 'Could not describe a match this time.';
-    const bySlug = new Map(candidates.map((c) => [c.name, c.slug]));
+    const byName = new Map(candidates.map((c) => [c.name, c]));
 
     const matches: ShadeMatch[] = Array.isArray(parsed.matches)
       ? parsed.matches
           // The one real guard: only a product the catalogue actually has,
           // matched by exact name, ever reaches the response.
           .filter((m): m is { name: string; reason: string } =>
-            !!m && typeof m.name === 'string' && bySlug.has(m.name) && typeof m.reason === 'string')
+            !!m && typeof m.name === 'string' && byName.has(m.name) && typeof m.reason === 'string')
           .slice(0, 3)
-          .map((m) => ({ name: m.name, slug: bySlug.get(m.name)!, reason: m.reason }))
+          .map((m) => {
+            const c = byName.get(m.name)!;
+            return {
+              name: m.name, slug: c.slug, reason: m.reason,
+              product: {
+                id: c.id, imageUrl: c.imageUrl, category: c.category?.name ?? null,
+                price: money(c.pricePaise), mrp: money(c.mrpPaise), businessVolume: volume(c.bvCenti), inStock: c.stock > 0,
+              },
+            };
+          })
       : [];
 
     return { summary, matches };

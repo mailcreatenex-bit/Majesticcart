@@ -1,3 +1,4 @@
+import { ShadeFinderPromo } from '@/components/ShadeFinderPromo';
 import Link from 'next/link';
 import Image from 'next/image';
 import { faceCrop } from '@/lib/focal';
@@ -165,6 +166,8 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      <ShadeFinderPromo variant="home" />
 
       {/* ------------------------------------------- products by department */}
       {/* One shelf per department with every product in it (the department's

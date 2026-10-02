@@ -1,8 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
+import { showMoney, type MoneyView, type VolumeView } from '@/lib/money';
+import { MEMBER_FLAG_COOKIE } from '@/lib/session-shared';
+import { useCart } from './CartProvider';
 
 /**
  * A selfie in, two or three real products out — see
@@ -17,7 +21,11 @@ import { api, ApiError } from '@/lib/api';
 
 const MAX_DIMENSION = 640;
 
-interface ShadeMatch { name: string; slug: string; reason: string }
+interface ShadeMatch {
+  name: string; slug: string; reason: string;
+  /** Absent only if the API predates it; the card then just links to the product. */
+  product?: { id: string; imageUrl: string | null; category: string | null; price: MoneyView; mrp: MoneyView; businessVolume: VolumeView; inStock: boolean };
+}
 interface ShadeResult { summary: string; matches: ShadeMatch[] }
 
 export interface ShadeFinderCopy { intro: string; privacyNote: string }
@@ -29,6 +37,10 @@ export function ShadeFinderView({ copy }: { copy: ShadeFinderCopy }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ShadeResult | null>(null);
+  const [signedIn, setSignedIn] = useState(true);
+  useEffect(() => {
+    setSignedIn(document.cookie.split('; ').some((c) => c === `${MEMBER_FLAG_COOKIE}=1`));
+  }, []);
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
@@ -74,6 +86,15 @@ export function ShadeFinderView({ copy }: { copy: ShadeFinderCopy }) {
           {copy.intro} {copy.privacyNote}
         </p>
       </div>
+
+      {!signedIn && (
+        <p className="mt-5 rounded-xl bg-[var(--notice-bg)] px-4 py-3 text-center text-sm text-[var(--body)]">
+          The shade finder is free for members.{' '}
+          <Link href="/login?next=/shade-finder" className="font-semibold text-[var(--accent)] underline">Log in</Link>
+          {' '}or{' '}
+          <Link href="/signup" className="font-semibold text-[var(--accent)] underline">register free</Link> to try it.
+        </p>
+      )}
 
       <div className="mt-6 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6">
         {!preview ? (
@@ -127,17 +148,7 @@ export function ShadeFinderView({ copy }: { copy: ShadeFinderCopy }) {
 
             {result.matches.length > 0 ? (
               <ul className="mt-4 space-y-3">
-                {result.matches.map((m) => (
-                  <li key={m.slug}>
-                    <Link
-                      href={`/product/${m.slug}`}
-                      className="block rounded-xl border border-[var(--line)] p-4 transition hover:border-[var(--gold-mid)]/50 hover:bg-[var(--surface-tint)]"
-                    >
-                      <p className="font-serif text-base text-[var(--ink)]">{m.name}</p>
-                      <p className="mt-1 text-xs text-[var(--muted)]">{m.reason}</p>
-                    </Link>
-                  </li>
-                ))}
+                {result.matches.map((m) => <MatchCard key={m.slug} m={m} />)}
               </ul>
             ) : (
               <p className="mt-3 text-xs text-[var(--muted)]">
@@ -159,7 +170,7 @@ export function ShadeFinderView({ copy }: { copy: ShadeFinderCopy }) {
 /** Downscales to at most MAX_DIMENSION on the long edge and returns JPEG base64 (no data-URL prefix). */
 function resizeToBase64(file: File): Promise<{ base64: string; mimeType: string; dataUrl: string }> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new window.Image();
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('read failed'));
     reader.onload = () => {
@@ -187,5 +198,48 @@ function CameraIcon() {
       <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
       <circle cx="12" cy="13" r="3.3" />
     </svg>
+  );
+}
+
+/** One matched product: photo, the shade-fit reason, the shop's price, and a buy button right here. */
+function MatchCard({ m }: { m: ShadeMatch }) {
+  const { add, cart } = useCart();
+  const [added, setAdded] = useState(false);
+  const p = m.product;
+  const inBag = p ? cart.lines.find((l) => l.productId === p.id) : undefined;
+
+  return (
+    <li className="flex gap-4 rounded-xl border border-[var(--line)] p-3">
+      <Link href={`/product/${m.slug}`} className="relative h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-[var(--page)]">
+        {p?.imageUrl && <Image src={p.imageUrl} alt="" fill sizes="80px" className="object-cover" />}
+      </Link>
+      <div className="min-w-0 flex-1">
+        <Link href={`/product/${m.slug}`} className="font-serif text-base text-[var(--ink)] hover:underline">{m.name}</Link>
+        <p className="mt-1 text-xs text-[var(--muted)]">{m.reason}</p>
+        {p && (
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <span className="font-semibold text-[var(--ink)]">{showMoney(p.price)}</span>
+            {p.mrp.paise > p.price.paise && <span className="text-xs text-[var(--faint)] line-through">{showMoney(p.mrp)}</span>}
+            {p.inStock ? (
+              <button
+                type="button"
+                onClick={() => {
+                  add({
+                    productId: p.id, slug: m.slug, quantity: 1,
+                    snapshot: { name: m.name, pricePaise: p.price.paise, mrpPaise: p.mrp.paise, bvCenti: p.businessVolume.centi, imageUrl: p.imageUrl ?? undefined, category: p.category ?? '' },
+                  });
+                  setAdded(true);
+                }}
+                className="rounded-lg bg-[var(--accent)] px-4 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+              >
+                {added || inBag ? `In your bag${inBag ? ` (${inBag.quantity})` : ''} · add one more` : 'Add to bag'}
+              </button>
+            ) : (
+              <span className="text-xs font-semibold text-[var(--faint)]">Out of stock</span>
+            )}
+          </div>
+        )}
+      </div>
+    </li>
   );
 }

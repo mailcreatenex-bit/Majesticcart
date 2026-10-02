@@ -10,6 +10,10 @@ import { playChipClass } from '@/lib/playColors';
 import { showMoney, showVolume, discountPercent } from '@/lib/money';
 import { AddToBag } from '@/components/AddToBag';
 import { WishButton } from '@/components/WishButton';
+import { ShadeFinderPromo } from '@/components/ShadeFinderPromo';
+
+/** Products a shade finder can help with: anything in makeup, or named like it. */
+const MAKEUP = /makeup|lip|foundation|kajal|kohl|compact|blush|concealer|primer|mascara|eye|nail|powder/i;
 import { ProductCard } from '@/components/ProductCard';
 import { ProductGallery } from '@/components/ProductGallery';
 
@@ -167,6 +171,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </p>
 
             <AddToBag product={product} />
+
+            {MAKEUP.test(`${product.category} ${product.name}`) && <ShadeFinderPromo variant="product" />}
 
             <h2 className="mt-10 font-serif text-lg text-[var(--ink)]">About this product</h2>
             <p className="mt-2 max-w-prose leading-relaxed text-[var(--body)]">{product.description}</p>
