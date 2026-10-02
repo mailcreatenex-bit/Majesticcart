@@ -64,6 +64,12 @@ export class AdminUserController {
     return this.rbac.updateAdminRole(id, body.roleId, adminId);
   }
 
+  @Post(':id/reset-2fa')
+  @HttpCode(200)
+  resetTwoFactor(@Param('id') id: string, @CurrentUser('sub') adminId: string) {
+    return this.rbac.resetTotp(id, adminId);
+  }
+
   @Post(':id/unlock')
   @HttpCode(200)
   unlock(@Param('id') id: string, @CurrentUser('sub') adminId: string) {

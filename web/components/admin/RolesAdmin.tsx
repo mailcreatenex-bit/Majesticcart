@@ -348,6 +348,20 @@ function AdminAccountRow({ admin, roles, onChanged }: { admin: AdminAccount; rol
     }
   };
 
+  const resetTwoFactor = async () => {
+    if (!window.confirm(`Clear two-factor for ${admin.email}? They will be signed out and must set it up again on their next sign-in.`)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/admin/admins/${admin.id}/reset-2fa`, { method: 'POST', body: {} });
+      await onChanged();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not reset two-factor.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <tr>
       <td className="py-2 pr-4 text-neutral-900">{admin.name}</td>
@@ -365,7 +379,13 @@ function AdminAccountRow({ admin, roles, onChanged }: { admin: AdminAccount; rol
       </td>
       <td className="py-2 pr-4 text-neutral-500">{admin.totpEnabled ? 'On' : '—'}</td>
       <td className="py-2 pr-4 text-neutral-500">{admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleDateString('en-IN') : 'Never'}</td>
-      <td className="py-2" />
+      <td className="py-2">
+        {admin.totpEnabled && (
+          <button type="button" onClick={resetTwoFactor} disabled={busy} className="text-xs font-semibold text-red-700 hover:underline disabled:text-neutral-400">
+            Reset 2FA
+          </button>
+        )}
+      </td>
     </tr>
   );
 }

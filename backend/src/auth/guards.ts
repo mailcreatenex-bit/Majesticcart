@@ -18,8 +18,15 @@ import { AccessClaims, SubjectType } from './token.service';
 export const IS_PUBLIC = 'auth:public';
 export const REQUIRED_SUBJECT = 'auth:subject';
 export const REQUIRED_PERMISSIONS = 'auth:permissions';
+export const ALLOW_WITHOUT_2FA = 'auth:allow-without-2fa';
 
 export const Public = () => SetMetadata(IS_PUBLIC, true);
+/**
+ * Routes an admin may use before they have switched two-factor on: who am I,
+ * and enrolling. Everything else in the console is refused until they have, so
+ * "every admin has 2FA" is enforced by the API rather than by a banner.
+ */
+export const AllowWithout2fa = () => SetMetadata(ALLOW_WITHOUT_2FA, true);
 export const MemberOnly = () => SetMetadata(REQUIRED_SUBJECT, 'MEMBER' as SubjectType);
 
 /** Any signed-in admin, regardless of role — for self-service routes (own login, own 2FA, "who am I"). */
@@ -77,6 +84,17 @@ export class AuthGuard implements CanActivate {
       // A member token on an admin route is a 403, not a 404: pretending the
       // route does not exist just makes support calls harder to diagnose.
       throw new ForbiddenException('You do not have access to this.');
+    }
+
+    // Two-factor is required on every admin account. Set ADMIN_REQUIRE_2FA=false only to recover from a lock-out.
+    if (
+      claims.typ === 'ADMIN' && claims.mfa !== true && process.env.ADMIN_REQUIRE_2FA !== 'false' &&
+      !this.reflector.getAllAndOverride<boolean>(ALLOW_WITHOUT_2FA, targets)
+    ) {
+      throw new ForbiddenException({
+        message: 'Turn on two-factor sign-in to use the admin console. It takes a minute under Security.',
+        code: 'TWO_FACTOR_REQUIRED',
+      });
     }
 
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(REQUIRED_PERMISSIONS, targets);

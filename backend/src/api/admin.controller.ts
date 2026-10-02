@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, BadRequestException, UseGuards } from '@nestjs/common';
 import { zodBody } from '../common/zod.pipe';
 import { money, volume, parseMoneyInput } from '../common/serialization';
-import { AdminOnly, RequirePermission, CurrentUser, Public, ClientContext } from '../auth/guards';
+import { AdminOnly, RequirePermission, CurrentUser, Public, ClientContext, AllowWithout2fa } from '../auth/guards';
 import { ThemeSettingValue, PLAY_COLORS } from '../settings/settings.service';
 import { RateLimit, RateLimitGuard } from '../common/rate-limit.guard';
 import { AuthService } from '../auth/auth.service';
@@ -151,6 +151,7 @@ export class AdminAuthController {
   }
 
   @AdminOnly()
+  @AllowWithout2fa()
   @Post('logout')
   @HttpCode(200)
   logout(@Body(zodBody(z.object({ refreshToken: z.string().min(10) }))) body: { refreshToken: string }) {
@@ -166,6 +167,7 @@ export class AdminAuthController {
    * mechanisms and neither depends on the other.
    */
   @AdminOnly()
+  @AllowWithout2fa()
   @Get('me')
   async me(@CurrentUser('sub') adminId: string) {
     const admin = await this.prisma.adminUser.findUniqueOrThrow({
@@ -180,6 +182,7 @@ export class AdminAuthController {
 
   /** Issues a fresh secret and its QR. Self-service, own account only — there is no admin-for-admin override. */
   @AdminOnly()
+  @AllowWithout2fa()
   @Post('totp/setup')
   @HttpCode(200)
   setupTotp(@CurrentUser('sub') adminId: string) {
@@ -187,6 +190,7 @@ export class AdminAuthController {
   }
 
   @AdminOnly()
+  @AllowWithout2fa()
   @Post('totp/enable')
   @HttpCode(200)
   enableTotp(

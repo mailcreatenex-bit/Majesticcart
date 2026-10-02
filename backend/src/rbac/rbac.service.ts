@@ -122,6 +122,23 @@ export class RbacService {
     return { ok: true as const };
   }
 
+  /**
+   * Clear another admin's second factor (lost or replaced phone). They sign in
+   * with their password, are limited to the enrolment screen, and set up a new
+   * authenticator. Their open sessions are ended. Never your own: that would let
+   * a stolen session remove the factor. It is recorded in the audit log.
+   */
+  async resetTotp(id: string, actorId: string) {
+    if (id === actorId) throw new ForbiddenException('You cannot reset your own two-factor. Ask another admin.');
+    await this.prisma.adminUser.update({ where: { id }, data: { totpEnabled: false, totpSecret: null, lastTotpStep: null } });
+    await this.prisma.refreshToken.updateMany({
+      where: { subjectType: 'ADMIN', subjectId: id, revokedAt: null },
+      data: { revokedAt: new Date(), revokedReason: 'Two-factor reset by another admin' },
+    });
+    await this.audit(actorId, 'admin.totp.reset', { adminId: id });
+    return { ok: true as const };
+  }
+
   private async audit(actorId: string, action: string, detail: object) {
     await this.prisma.auditLog.create({ data: { actorType: 'ADMIN', actorId, action, detail } });
   }

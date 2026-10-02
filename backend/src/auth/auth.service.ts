@@ -510,7 +510,7 @@ export class AuthService {
       data: { actorType: 'ADMIN', actorId: admin.id, action: 'admin.login', detail: { email: admin.email }, ipAddress: ctx.ipAddress, userAgent: ctx.userAgent },
     });
 
-    return this.tokens.issue({ sub: admin.id, typ: 'ADMIN', role: admin.role.name, permissions: admin.role.permissions }, ctx);
+    return this.tokens.issue({ sub: admin.id, typ: 'ADMIN', role: admin.role.name, permissions: admin.role.permissions, mfa: admin.totpEnabled }, ctx);
   }
 
   /**
@@ -521,6 +521,12 @@ export class AuthService {
    */
   async setupTotp(adminId: string): Promise<{ secret: string; otpauthUrl: string; qrUrl: string }> {
     const admin = await this.prisma.adminUser.findUniqueOrThrow({ where: { id: adminId } });
+    // Starting setup switches the second factor off until the new code is confirmed, so on an account that
+    // already has it that would let a stolen session swap the authenticator. Moving to a new phone is a
+    // reset by another admin instead.
+    if (admin.totpEnabled) {
+      throw new BadRequestException('Two-factor is already on for your account. To move it to a new phone, ask another admin to reset it.');
+    }
     const secret = generateTotpSecret();
     await this.prisma.adminUser.update({
       where: { id: adminId },
@@ -538,11 +544,16 @@ export class AuthService {
     const result = verifyTotp(secret, code, { lastAcceptedStep: admin.lastTotpStep });
     if (!result.valid) throw new BadRequestException('That code is not right. Check the time on your phone and try again.');
     await this.prisma.adminUser.update({ where: { id: adminId }, data: { totpEnabled: true, lastTotpStep: result.step } });
+    // Sessions opened before two-factor was on carry no proof of it. End them, so the next sign-in is the first with a code.
+    await this.tokens.revokeAllFor('ADMIN', adminId, 'Two-factor enabled');
     await this.prisma.auditLog.create({ data: { actorType: 'ADMIN', actorId: adminId, action: 'admin.totp.enabled', detail: {} } });
   }
 
   /** Requires the password again — turning off the second factor is exactly the action a stolen session should not be able to take alone. */
   async disableTotp(adminId: string, password: string): Promise<void> {
+    if (process.env.ADMIN_REQUIRE_2FA !== 'false') {
+      throw new BadRequestException('Two-factor is required on every admin account, so it cannot be turned off.');
+    }
     const admin = await this.prisma.adminUser.findUniqueOrThrow({ where: { id: adminId } });
     const ok = await verifyPassword(admin.passwordHash, password ?? '');
     if (!ok) throw new UnauthorizedException('That password is not right.');

@@ -57,6 +57,7 @@ const NAV: { href: string; label: string; permission: string }[] = [
   { href: '/admin/plan', label: 'Plan', permission: 'plan.manage' },
   { href: '/admin/roles', label: 'Roles & admins', permission: 'roles.manage' },
   { href: '/admin/settings', label: 'Settings', permission: 'settings.manage' },
+  { href: '/admin/security', label: 'Security', permission: '' },
   // Still no 'Reports' link: the API's ReportController (GET /reports/:key)
   // is a general ad-hoc query/aggregation tool (see reporting/catalog.ts) —
   // the old prototype/ReportBuilder.jsx was the only UI that ever called it,
@@ -127,7 +128,9 @@ export function AdminShell({
   }
 
   const allowed = !permission || admin.permissions.includes(permission);
-  const visibleNav = NAV.filter((n) => admin.permissions.includes(n.permission));
+  const visibleNav = NAV.filter((n) => !n.permission || admin.permissions.includes(n.permission));
+  // Until two-factor is on the API refuses everything but enrolment, so say so rather than show a console of errors.
+  const needsTwoFactor = !admin.totpEnabled && pathname !== '/admin/security';
 
   return (
     <AdminContext.Provider value={admin}>
@@ -183,9 +186,8 @@ export function AdminShell({
         {!admin.totpEnabled && (
           <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5">
             <p className="mx-auto max-w-6xl text-xs text-amber-900">
-              Two-factor authentication is not enabled on this account. It should be, on any account
-              that can approve payments.{' '}
-              <Link href="/admin/settings" className="font-semibold underline">Turn it on</Link>.
+              Two-factor sign-in is not set up on this account, and it is required.{' '}
+              <Link href="/admin/security" className="font-semibold underline">Set it up</Link>.
             </p>
           </div>
         )}
@@ -199,7 +201,15 @@ export function AdminShell({
           </div>
 
           <div className="mt-6">
-            {allowed ? children : (
+            {needsTwoFactor ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center">
+                <p className="text-sm font-semibold text-amber-900">Set up two-factor sign-in first</p>
+                <p className="mx-auto mt-1 max-w-md text-sm text-amber-900">
+                  It is required on every admin account. Until it is on, the rest of the console is switched off for you.
+                </p>
+                <Link href="/admin/security" className="mt-4 inline-block rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white">Set it up now</Link>
+              </div>
+            ) : allowed ? children : (
               <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center">
                 <p className="text-sm text-neutral-600">
                   Your role ({admin.role}) does not have access to this area.

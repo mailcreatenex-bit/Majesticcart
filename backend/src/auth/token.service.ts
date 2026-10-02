@@ -21,6 +21,8 @@ export interface AccessClaims {
   code?: string; // memberCode, handy in logs
   role?: string; // admin only — the role's display name
   permissions?: string[]; // admin only — see permissions.ts; this is what guards actually check
+  /** Admin only: this session belongs to an account with two-factor switched on (see AuthGuard). */
+  mfa?: boolean;
 }
 
 export interface IssuedSession {
@@ -124,7 +126,7 @@ export class TokenService {
     if (typ === 'ADMIN') {
       const admin = await this.prisma.adminUser.findUnique({ where: { id }, include: { role: true } });
       if (!admin) throw new UnauthorizedException('This account no longer exists.');
-      return { sub: admin.id, typ: 'ADMIN', role: admin.role.name, permissions: admin.role.permissions };
+      return { sub: admin.id, typ: 'ADMIN', role: admin.role.name, permissions: admin.role.permissions, mfa: admin.totpEnabled };
     }
     const member = await this.prisma.member.findUnique({ where: { id } });
     if (!member) throw new UnauthorizedException('This account no longer exists.');

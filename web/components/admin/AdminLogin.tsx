@@ -21,6 +21,7 @@ export function AdminLogin() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get('next');
+  const justEnabled = params.get('notice') === '2fa';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -62,6 +63,11 @@ export function AdminLogin() {
           Majestic Cart <span className="text-neutral-400">admin</span>
         </h1>
         <p className="mt-1 text-sm text-neutral-500">Sign in to the console.</p>
+        {justEnabled && (
+          <p role="status" className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
+            Two-factor is on. Sign in again, and enter the 6-digit code from your authenticator app.
+          </p>
+        )}
 
         <form onSubmit={submit} className="mt-6 space-y-4 rounded-xl border border-neutral-200 bg-white p-6">
           <label className="block text-sm font-medium text-neutral-800">
