@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, metaDescription } from '@/lib/seo';
-import { listProducts, listCategories, listBrands } from '@/lib/catalog';
+import { searchProducts, listCategories, listBrands } from '@/lib/catalog';
 import { FilterableProductGrid } from '@/components/FilterableProductGrid';
 
 /**
@@ -33,11 +33,13 @@ export default async function SearchPage({
   const { q } = await searchParams;
   const query = (q ?? '').trim();
 
-  const [products, categories, brands] = await Promise.all([
-    query ? listProducts({ search: query, limit: 60 }) : Promise.resolve([]),
+  const [found, categories, brands] = await Promise.all([
+    query ? searchProducts(query) : Promise.resolve({ items: [], didYouMean: null }),
     listCategories(),
     listBrands(),
   ]);
+
+  const products = found.items;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -58,13 +60,22 @@ export default async function SearchPage({
           <p className="mt-3 text-xs text-[var(--faint)]">
             {products.length} {products.length === 1 ? 'result' : 'results'}
           </p>
+          {found.didYouMean && (
+            <p className="mt-2 text-sm text-[var(--body)]">
+              Did you mean{' '}
+              <Link href={`/search?q=${encodeURIComponent(found.didYouMean)}`} className="font-semibold text-[var(--accent)] underline">
+                {found.didYouMean}
+              </Link>
+              ?
+            </p>
+          )}
           <div className="mt-4">
             {products.length > 0 ? (
               <FilterableProductGrid products={products} allCategories={categories} allBrands={brands} />
             ) : (
               <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-8 text-center">
                 <p className="font-serif text-lg text-[var(--ink)]">Nothing matched &ldquo;{query}&rdquo;</p>
-                <p className="mt-2 text-sm text-[var(--body)]">Try a shorter or more general search term.</p>
+                <p className="mt-2 text-sm text-[var(--body)]">Try fewer words, or the name in Hindi, Bengali or English. We forgive spelling slips.</p>
                 <Link href="/shop" className="mt-4 inline-block rounded-xl gold-foil px-6 py-3 font-semibold text-white">
                   Shop all products
                 </Link>

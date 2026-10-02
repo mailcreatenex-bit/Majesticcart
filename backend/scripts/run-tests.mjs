@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, existsSync } from 'node:fs';
 
 const INTEGRATION = process.argv.includes('--integration');
-const UNIT = ['auth', 'order', 'plan', 'serialization', 'reporting', 'crypto', 'invoice', 'upi', 'plan-parity', 'income-claims', 'courier'];
+const UNIT = ['auth', 'order', 'plan', 'serialization', 'reporting', 'crypto', 'invoice', 'upi', 'plan-parity', 'income-claims', 'courier', 'search'];
 const suites = INTEGRATION ? ['integration'] : UNIT;
 
 mkdirSync('dist-tests', { recursive: true });

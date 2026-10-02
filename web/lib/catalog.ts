@@ -110,6 +110,18 @@ export async function listProducts(opts: {
   return data?.items ?? [];
 }
 
+/** Search with typo and Hindi/Bengali tolerance, best match first; `didYouMean` is a corrected spelling, when there is one. */
+export async function searchProducts(q: string): Promise<{ items: CatalogProduct[]; didYouMean: string | null }> {
+  const data = await getJson<{ items: CatalogProduct[]; didYouMean: string | null }>(
+    `/catalog/search?q=${encodeURIComponent(q)}`,
+    { next: { tags: ['catalog'], revalidate: 300 } },
+  );
+  // An API that predates /catalog/search (or is down) falls back to the plain
+  // text search rather than showing "nothing matched" for everything.
+  if (!data) return { items: await listProducts({ search: q, limit: 60 }), didYouMean: null };
+  return data;
+}
+
 export async function getProduct(slug: string): Promise<CatalogProduct | null> {
   return getJson<CatalogProduct>(`/catalog/product/${encodeURIComponent(slug)}`, {
     next: { tags: [`product:${slug}`] },

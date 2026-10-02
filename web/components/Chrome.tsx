@@ -8,6 +8,7 @@ import { InstallButton } from './InstallPrompt';
 import { CartCount } from './CartProvider';
 import { MobileMenu } from './MobileMenu';
 import { MobileSearchBar } from './MobileSearchBar';
+import { DesktopSearch } from './DesktopSearch';
 import { MobileCategoryTabs } from './MobileCategoryTabs';
 import { AccountLink } from './AccountLink';
 import { CategoryNav } from './CategoryNav';
@@ -134,24 +135,7 @@ export async function Header() {
               ))}
             </ul>
           )}
-          <form action="/search" method="get" role="search" className="flex max-w-xs flex-1">
-            <label className="relative w-full">
-              <span className="sr-only">Search</span>
-              <input
-                type="search"
-                name="q"
-                placeholder="Search products, brands…"
-                className="w-full rounded-full border border-[var(--line-strong)] bg-[var(--page)] py-2 pl-4 pr-9 text-sm text-[var(--ink)] outline-none focus:border-[#B8862B]"
-              />
-              <button
-                type="submit"
-                aria-label="Search"
-                className="absolute inset-y-0 right-1 flex items-center px-2 text-[var(--muted)] hover:text-[var(--ink)]"
-              >
-                <SearchIcon />
-              </button>
-            </label>
-          </form>
+          <DesktopSearch />
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <LanguageSwitcher />
@@ -194,15 +178,6 @@ export async function Header() {
         <MobileCategoryTabs departments={tabs} />
       </div>
     </>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m21 21-4.3-4.3" />
-    </svg>
   );
 }
 

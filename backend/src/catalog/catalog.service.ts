@@ -6,6 +6,7 @@ import { rupeesToPaise, bvToCenti, formatInr, centiToBvString, Paise } from '../
 import { toCsvRow } from '../common/csv';
 import { CATEGORY_TREE, CATEGORY_TREE_KEY } from './category-tree';
 import { BRAND_SEED, BRAND_SEED_KEY } from './brand-seed';
+import { SearchIndex } from './search';
 
 /**
  * Product catalogue.
@@ -102,6 +103,58 @@ export class CatalogService implements OnModuleInit {
   private readonly log = new Logger(CatalogService.name);
 
   constructor(private readonly prisma: PrismaClient) {}
+
+  private searchIndex: { at: number; index: SearchIndex } | null = null;
+
+  /** The in-memory search index over active products, rebuilt at most once a minute. */
+  private async index(): Promise<SearchIndex> {
+    if (this.searchIndex && Date.now() - this.searchIndex.at < 60_000) return this.searchIndex.index;
+    const rows = await this.prisma.product.findMany({
+      where: { isActive: true },
+      select: {
+        id: true, name: true, sku: true, description: true, sold: true,
+        brand: { select: { name: true } },
+        category: { select: { name: true, parent: { select: { name: true } } } },
+      },
+    });
+    const index = SearchIndex.build(rows.map((r) => ({
+      id: r.id, name: r.name, sku: r.sku, description: r.description, sold: r.sold,
+      brand: r.brand?.name ?? null, category: r.category?.name ?? null, parentCategory: r.category?.parent?.name ?? null,
+    })));
+    this.searchIndex = { at: Date.now(), index };
+    return index;
+  }
+
+  /** What to show under the search box while someone is still typing. */
+  async suggest(query: string) {
+    const { ids, didYouMean } = await this.searchIds(query);
+    const top = ids.slice(0, 6);
+    const rows = top.length
+      ? await this.prisma.product.findMany({
+          where: { id: { in: top } },
+          select: {
+            id: true, name: true, slug: true, imageUrl: true, pricePaise: true, stock: true,
+            brand: { select: { name: true, slug: true } },
+            category: { select: { name: true, slug: true } },
+          },
+        })
+      : [];
+    const rank = new Map(top.map((id, i) => [id, i]));
+    rows.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
+    // Departments and brands the matches belong to, so "lip" offers "Makeup" as well as the lipsticks.
+    const categories = new Map<string, { name: string; slug: string }>();
+    const brands = new Map<string, { name: string; slug: string }>();
+    for (const r of rows) {
+      if (r.category) categories.set(r.category.slug, r.category);
+      if (r.brand) brands.set(r.brand.slug, r.brand);
+    }
+    return { rows, total: ids.length, didYouMean, categories: [...categories.values()].slice(0, 3), brands: [...brands.values()].slice(0, 3) };
+  }
+
+  /** Matching product ids best-first, and a spelling suggestion if the query looked misspelt. */
+  async searchIds(query: string) {
+    return (await this.index()).search(query);
+  }
 
   async onModuleInit(): Promise<void> {
     // Never let a category problem stop the API from starting.
@@ -258,7 +311,13 @@ export class CatalogService implements OnModuleInit {
         ...(opts.maxPrice ? { lte: rupeesToPaise(opts.maxPrice) } : {}),
       };
     }
-    if (opts.search?.trim()) {
+    // The storefront searches with typo and Hindi/Bengali tolerance; the admin
+    // console (includeInactive) keeps the plain "contains" it has always had.
+    let ranked: string[] | null = null;
+    if (opts.search?.trim() && !opts.includeInactive) {
+      ranked = (await this.searchIds(opts.search)).ids;
+      where.id = { in: ranked.slice(0, opts.sort ? 200 : 50) };
+    } else if (opts.search?.trim()) {
       where.OR = [
         { name: { contains: opts.search.trim(), mode: 'insensitive' } },
         { sku: { contains: opts.search.trim().toUpperCase() } },
@@ -285,6 +344,11 @@ export class CatalogService implements OnModuleInit {
       take: 51,
       ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
     });
+    if (ranked && !opts.sort) {
+      // Best match first, not the catalogue's own order.
+      const rank = new Map(ranked.map((id, i) => [id, i]));
+      rows.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
+    }
     const page = rows.slice(0, 50);
     return { items: page, nextCursor: rows.length > 50 ? page[page.length - 1].id : null };
   }

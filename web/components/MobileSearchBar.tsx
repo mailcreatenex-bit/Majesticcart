@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { SuggestPanel, useSuggestions } from './SearchSuggest';
 
 /**
  * The phone header's search field, in the style of Purplle's app: a large
@@ -39,6 +40,8 @@ export function MobileSearchBar({ suggestions }: { suggestions: string[] }) {
   const [canSpeak, setCanSpeak] = useState(false);
   const [listening, setListening] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [value, setValue] = useState('');
+  const suggestions_ = useSuggestions(value);
 
   useEffect(() => {
     const w = window as unknown as { SpeechRecognition?: RecognitionCtor; webkitSpeechRecognition?: RecognitionCtor };
@@ -70,6 +73,7 @@ export function MobileSearchBar({ suggestions }: { suggestions: string[] }) {
       const heard = e.results[0]?.[0]?.transcript?.trim();
       if (heard && inputRef.current) {
         inputRef.current.value = heard;
+        setValue(heard);
         formRef.current?.requestSubmit();
       }
     };
@@ -81,7 +85,14 @@ export function MobileSearchBar({ suggestions }: { suggestions: string[] }) {
   };
 
   return (
-    <form ref={formRef} action="/search" method="get" role="search" className="px-4">
+    <form
+      ref={formRef}
+      action="/search"
+      method="get"
+      role="search"
+      className="relative px-4"
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false); }}
+    >
       <div className="flex h-12 items-center rounded-2xl bg-white pl-3.5 pr-1.5 shadow-sm ring-1 ring-black/5">
         <button type="submit" aria-label="Search" className="shrink-0 text-[var(--ink)]">
           <SearchGlyph />
@@ -94,8 +105,9 @@ export function MobileSearchBar({ suggestions }: { suggestions: string[] }) {
           placeholder={placeholder}
           autoComplete="off"
           enterKeyHint="search"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
           className="mx-3 min-w-0 flex-1 bg-transparent text-[15px] text-[var(--ink)] outline-none placeholder:text-[var(--muted)] [&::-webkit-search-cancel-button]:hidden"
         />
         {canSpeak && (
@@ -113,6 +125,7 @@ export function MobileSearchBar({ suggestions }: { suggestions: string[] }) {
           </>
         )}
       </div>
+      {focused && <SuggestPanel query={value} data={suggestions_} onPick={() => setFocused(false)} className="left-4 right-4" />}
     </form>
   );
 }

@@ -64,6 +64,36 @@ export class CatalogController {
     return { items: capped.map(publicProduct), nextCursor: capped === items ? nextCursor : null };
   }
 
+  /** As-you-type suggestions: a handful of products plus departments and brands. Cheap enough to call per keystroke. */
+  @Public()
+  @Get('suggest')
+  async suggest(@Query('q') q?: string) {
+    const term = (q ?? '').trim().slice(0, 60);
+    if (term.length < 2) return { products: [], categories: [], brands: [], total: 0, didYouMean: null };
+    const r = await this.catalog.suggest(term);
+    return {
+      total: r.total,
+      didYouMean: r.didYouMean,
+      categories: r.categories,
+      brands: r.brands,
+      products: r.rows.map((p) => ({
+        name: p.name, slug: p.slug, imageUrl: p.imageUrl, price: money(p.pricePaise),
+        brand: p.brand?.name ?? null, category: p.category?.name ?? null, inStock: p.stock > 0,
+      })),
+    };
+  }
+
+  /** What the search page shows: the products, plus a corrected spelling when the query looked misspelt. */
+  @Public()
+  @Get('search')
+  async search(@Query('q') q?: string) {
+    const term = (q ?? '').trim().slice(0, 80);
+    if (!term) return { items: [], didYouMean: null };
+    const { items } = await this.catalog.list({ search: term });
+    const { didYouMean } = await this.catalog.searchIds(term);
+    return { items: items.map(publicProduct), didYouMean };
+  }
+
   @Public()
   @Get('product/:slug')
   async product(@Param('slug') slug: string) {
