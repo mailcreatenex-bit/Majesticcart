@@ -54,7 +54,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {post.coverImageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.coverImageUrl} alt="" className="mt-6 aspect-[2/1] w-full rounded-2xl object-cover" />
+          <img src={post.coverImageUrl} alt="" className="mt-6 aspect-[2/1] w-full rounded-2xl object-cover" style={{ objectPosition: '50% 25%' }} />
         )}
 
         {/* contentHtml is Markdown rendered and sanitised server-side — see

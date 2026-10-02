@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { faceCrop } from '@/lib/focal';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import {
@@ -109,7 +110,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         const image = categoryImage(slug, category.imageUrl);
         return image ? (
           <div className="relative aspect-[21/9] w-full overflow-hidden sm:aspect-[3/1]">
-            <Image src={image} alt="" fill sizes="100vw" priority className="object-cover object-[center_38%]" />
+            <Image src={image} alt="" fill sizes="100vw" priority {...faceCrop(image, 21 / 9, 3)} />
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)]/60 via-transparent to-transparent" />
           </div>
         ) : null;

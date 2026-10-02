@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { faceCrop } from '@/lib/focal';
 
 /**
  * Full-width photo banner, auto-rotating the same way HeroSlider does (pure
@@ -38,7 +39,7 @@ export function PromoBanner({
             className="promo-slide absolute inset-0"
             style={{ animationDuration: `${duration}s`, animationDelay: `${-i * 6}s` }}
           >
-            <Image src={src} alt="" fill sizes="100vw" className="object-cover" />
+            <Image src={src} alt="" fill sizes="100vw" {...faceCrop(src, 4 / 5, 16 / 9)} />
           </div>
         ))}
         {images.length > 1 && (

@@ -34,7 +34,7 @@ export default async function BlogIndexPage() {
               <Link key={p.id} href={`/blog/${p.slug}`} className="group block border-b border-[var(--line)] pb-8">
                 {p.coverImageUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.coverImageUrl} alt="" className="mb-4 aspect-[2/1] w-full rounded-2xl object-cover" />
+                  <img src={p.coverImageUrl} alt="" className="mb-4 aspect-[2/1] w-full rounded-2xl object-cover" style={{ objectPosition: '50% 25%' }} />
                 )}
                 <p className="text-xs text-[var(--faint)]">
                   {new Date(p.publishedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}

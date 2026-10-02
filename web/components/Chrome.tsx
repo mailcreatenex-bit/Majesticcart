@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { faceCrop } from '@/lib/focal';
 import { SITE } from '@/lib/seo';
 import { LEGAL_DOCUMENTS } from '@/lib/legal';
 import { getCompanyInfo } from '@/lib/content';
@@ -83,6 +84,13 @@ export async function Header() {
               <Image src="/brand/majestic-cart-logo.webp" alt="" width={512} height={512} priority className="h-10 w-10" />
             </Link>
             <div className="ml-auto flex shrink-0 items-center gap-0.5">
+              {/* The install button, beside the wallet. Icon-only on phones;
+                  it renders nothing at all once the app is installed or on a
+                  browser that cannot install, so there is never a dead button. */}
+              <InstallButton
+                variant="header"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+              />
               <Link href="/wallet" aria-label="Wallet" title="Wallet" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15">
                 <WalletIcon />
               </Link>
@@ -299,7 +307,7 @@ export async function Footer() {
   );
 }
 
-export function PageHeader({ title, lead, image, imagePosition }: { title: string; lead?: string; image?: string; imagePosition?: string }) {
+export function PageHeader({ title, lead, image }: { title: string; lead?: string; image?: string }) {
   return (
     <div className="border-b border-[var(--line)] bg-[var(--accent-soft)]">
       <div className={`mx-auto max-w-4xl px-4 py-12 ${image ? 'grid gap-8 md:max-w-6xl md:grid-cols-2 md:items-center' : ''}`}>
@@ -309,7 +317,7 @@ export function PageHeader({ title, lead, image, imagePosition }: { title: strin
         </div>
         {image && (
           <div className="relative aspect-[16/10] overflow-hidden rounded-2xl shadow-lg">
-            <Image src={image} alt="" fill sizes="(max-width: 768px) 100vw, 50vw" className={`object-cover ${imagePosition ?? ''}`} />
+            <Image src={image} alt="" fill sizes="(max-width: 768px) 100vw, 50vw" {...faceCrop(image, 16 / 10)} />
           </div>
         )}
       </div>

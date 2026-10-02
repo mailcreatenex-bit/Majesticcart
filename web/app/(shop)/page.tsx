@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { faceCrop } from '@/lib/focal';
 import type { Metadata } from 'next';
 import { buildMetadata, metaDescription, SITE } from '@/lib/seo';
 import { listProducts, listCategories, listBrands, categoryCopy, categoryTree } from '@/lib/catalog';
@@ -180,7 +181,8 @@ export default async function HomePage() {
                       alt=""
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      className="object-cover object-top transition duration-500 group-hover:scale-105"
+                      {...faceCrop(image, 4 / 3)}
+                      className={`${faceCrop(image, 4 / 3).className} transition duration-500 group-hover:scale-105`}
                     />
                   )}
                   <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${playChipClass(c.slug)}`}>
@@ -242,10 +244,10 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 py-14 sm:grid-cols-2 sm:items-center">
           <div className="order-2 flex gap-4 sm:order-1">
             <div className="relative mt-8 aspect-[3/4] w-1/2 overflow-hidden rounded-2xl shadow-lg">
-              <Image src={theme.aboutUs.images[0]} alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+              <Image src={theme.aboutUs.images[0]} alt="" fill sizes="(max-width: 640px) 50vw, 25vw" {...faceCrop(theme.aboutUs.images[0], 3 / 4)} />
             </div>
             <div className="relative aspect-[3/4] w-1/2 overflow-hidden rounded-2xl shadow-lg">
-              <Image src={theme.aboutUs.images[1]} alt="" fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+              <Image src={theme.aboutUs.images[1]} alt="" fill sizes="(max-width: 640px) 50vw, 25vw" {...faceCrop(theme.aboutUs.images[1], 3 / 4)} />
             </div>
           </div>
           <div className="order-1 max-w-xl sm:order-2">
@@ -286,7 +288,8 @@ export default async function HomePage() {
                   alt=""
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-cover object-top transition duration-500 group-hover:scale-105"
+                  {...faceCrop(c.image, 4 / 3)}
+                  className={`${faceCrop(c.image, 4 / 3).className} transition duration-500 group-hover:scale-105`}
                 />
               </div>
               <div className="p-6">

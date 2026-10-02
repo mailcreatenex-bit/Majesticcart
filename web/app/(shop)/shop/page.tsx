@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { faceCrop } from '@/lib/focal';
 import type { Metadata } from 'next';
 import { buildMetadata, pageTitle, metaDescription, breadcrumbJsonLd } from '@/lib/seo';
 import { listProducts, listCategories, listBrands, categoryTree } from '@/lib/catalog';
@@ -47,7 +48,7 @@ export default async function ShopPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="relative aspect-[21/9] w-full overflow-hidden sm:aspect-[3/1]">
-        <Image src="/home/shop-banner.jpg" alt="" fill sizes="100vw" priority className="object-cover object-top" />
+        <Image src="/home/shop-banner.jpg" alt="" fill sizes="100vw" priority {...faceCrop('/home/shop-banner.jpg', 21 / 9, 3)} />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)]/60 via-transparent to-transparent" />
       </div>
 
@@ -76,7 +77,8 @@ export default async function ShopPage() {
                         alt=""
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover object-[center_30%] transition duration-500 group-hover:scale-105"
+                        {...faceCrop(image, 16 / 9)}
+                        className={`${faceCrop(image, 16 / 9).className} transition duration-500 group-hover:scale-105`}
                       />
                       <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${playChipClass(d.slug)}`}>
                         {d.name}

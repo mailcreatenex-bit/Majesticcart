@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { faceCrop } from '@/lib/focal';
 
 /**
  * Full-bleed banner carousel for the homepage hero — the Purplle-style
@@ -26,11 +27,15 @@ export function HeroCarousel({ images, fallback }: { images: string[]; fallback:
     // Purplle's app. From sm up it is the full-bleed strip it always was.
     <div className="px-3 pt-3 sm:p-0">
     <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl shadow-md sm:rounded-none sm:shadow-none">
-      {slides.map((src, i) => (
-        <div key={src} className="absolute inset-0 transition-opacity duration-700" style={{ opacity: i === index ? 1 : 0 }}>
-          <Image src={src} alt="" fill priority={i === 0} sizes="100vw" className="object-cover" />
-        </div>
-      ))}
+      {slides.map((src, i) => {
+        // Tall portraits cropped into a 16:9 strip: frame the face, not the middle.
+        const crop = faceCrop(src, 16 / 9);
+        return (
+          <div key={src} className="absolute inset-0 transition-opacity duration-700" style={{ opacity: i === index ? 1 : 0 }}>
+            <Image src={src} alt="" fill priority={i === 0} sizes="100vw" className={crop.className} style={crop.style} />
+          </div>
+        );
+      })}
 
       {slides.length > 1 && (
         <>
