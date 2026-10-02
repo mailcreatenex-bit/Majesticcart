@@ -1,5 +1,6 @@
 'use client';
 
+import { track } from '@/lib/track';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   readCart, writeCart, addLine, setQuantity, removeLine, clearCart, totals,
@@ -59,7 +60,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     cart,
     totals: totals(cart),
     ready,
-    add: (line) => commit(addLine(cart, line)),
+    add: (line) => { commit(addLine(cart, line)); track('add_to_bag', { slug: line.slug }); },
     setQty: (productId, quantity) => commit(setQuantity(cart, productId, quantity)),
     remove: (productId) => commit(removeLine(cart, productId)),
     clear: () => commit(clearCart()),

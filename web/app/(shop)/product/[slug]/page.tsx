@@ -10,6 +10,7 @@ import { playChipClass } from '@/lib/playColors';
 import { showMoney, showVolume, discountPercent } from '@/lib/money';
 import { AddToBag } from '@/components/AddToBag';
 import { WishButton } from '@/components/WishButton';
+import { TrackView } from '@/components/TrackView';
 import { ShadeFinderPromo } from '@/components/ShadeFinderPromo';
 
 /** Products a shade finder can help with: anything in makeup, or named like it. */
@@ -150,6 +151,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               )}
             </div>
             {/* Exactly one h1 per page, and it is the product name. */}
+            <TrackView type="view_product" slug={product.slug} />
             <div className="mt-1 flex items-start justify-between gap-3">
               <h1 className="font-serif text-3xl leading-tight text-[var(--ink)]">{product.name}</h1>
               <WishButton slug={product.slug} name={product.name} className="h-10 w-10 shrink-0 border border-[var(--line)] bg-[var(--surface)]" />

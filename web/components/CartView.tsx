@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { track } from '@/lib/track';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from './CartProvider';
@@ -18,6 +20,8 @@ interface CartCopy { emptyState: string; pricingNote: string }
 
 export function CartView({ copy }: { copy: CartCopy }) {
   const { cart, totals, ready, setQty, remove } = useCart();
+  const hasLines = cart.lines.length > 0;
+  useEffect(() => { if (ready && hasLines) track('view_cart'); }, [ready, hasLines]);
 
   // `ready` guards this: without it the empty-bag message flashes on every load
   // for someone who has a full bag, which reads as the bag having been lost.

@@ -1,5 +1,7 @@
 'use client';
 
+import { track } from '@/lib/track';
+import { MEMBER_FLAG_COOKIE } from '@/lib/session-shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -96,6 +98,14 @@ export function CheckoutView({ copy }: { copy: CheckoutCopy }) {
   const attemptKey = useRef<string>('');
   if (!attemptKey.current) attemptKey.current = newRequestId();
 
+  // Funnel tracking: reaching checkout, and each reason it stalls, once per visit.
+  const tracked = useRef<Set<string>>(new Set());
+  const trackOnce = useCallback((key: string, fn: () => void) => {
+    if (tracked.current.has(key)) return;
+    tracked.current.add(key);
+    fn();
+  }, []);
+
   /* ------------------------------------------------------------- load */
 
   useEffect(() => {
@@ -160,6 +170,15 @@ export function CheckoutView({ copy }: { copy: CheckoutCopy }) {
     return () => { clearTimeout(timer); controller.abort(); };
   }, [requestQuote]);
 
+  useEffect(() => {
+    if (!ready || cart.lines.length === 0) return;
+    trackOnce('begin', () => track('begin_checkout'));
+    // A guest is sent on to log in: that is a place people drop out, so it is worth seeing.
+    if (!document.cookie.split('; ').some((c) => c === `${MEMBER_FLAG_COOKIE}=1`)) {
+      trackOnce('login', () => track('checkout_blocked', { reason: 'login_required' }));
+    }
+  }, [ready, cart.lines.length, trackOnce]);
+
   /* ------------------------------------------------------------ gating */
 
   const shoppingPaise = dashboard?.wallets.shopping.paise ?? 0;
@@ -182,6 +201,12 @@ export function CheckoutView({ copy }: { copy: CheckoutCopy }) {
     payablePaise: quote?.total.paise,
     hasAddress,
   });
+
+  useEffect(() => {
+    if (!block) return;
+    const reason = block.kind === 'insufficient' ? 'wallet_short' : block.kind === 'address' ? 'address_missing' : null;
+    if (reason) trackOnce(reason, () => track('checkout_blocked', { reason }));
+  }, [block, trackOnce]);
 
   /* ------------------------------------------------------------- place */
 
@@ -206,9 +231,11 @@ export function CheckoutView({ copy }: { copy: CheckoutCopy }) {
 
       // Cleared only after the server has confirmed. Clearing optimistically
       // and then failing would lose the bag and leave nothing to retry with.
+      track('order_placed');
       clear();
       router.push(`/orders/${order.id}?placed=1`);
     } catch (err) {
+      track('checkout_blocked', { reason: 'order_error' });
       if (err instanceof ApiError) {
         setError(err.message);
         if (err.fields) setFieldErrors(err.fields);

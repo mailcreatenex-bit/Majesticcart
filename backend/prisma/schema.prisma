@@ -310,6 +310,22 @@ model WishlistItem {
   @@index([alertWhenBack, productId])
 }
 
+// One anonymous storefront event (see analytics/analytics.service.ts): a random
+// per-tab session id, what happened, and at most a product slug or a reason.
+// No IP, cookie or account is stored. Deleted after 120 days.
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  sid       String
+  type      String
+  slug      String?
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+  @@index([sid])
+}
+
 // ------------------------------------------------------------------- content
 
 // Editorial content, separate from the catalogue: a blog post never blocks an

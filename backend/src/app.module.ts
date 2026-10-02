@@ -13,6 +13,8 @@ import { LedgerService } from './ledger/ledger.service';
 import { CommissionService } from './commission/commission.service';
 import { CommissionProcessor } from './commission/commission.processor';
 import { OrderService } from './order/order.service';
+import { AnalyticsService } from './analytics/analytics.service';
+import { AnalyticsController, AdminAnalyticsController } from './api/analytics.controller';
 import { TeamDashboardService } from './member/team-dashboard.service';
 import { WishlistController } from './api/wishlist.controller';
 import { WishlistService } from './catalog/wishlist.service';
@@ -231,6 +233,13 @@ export class WalletOpsModule {}
 export class AdminModule {}
 
 @Module({
+  controllers: [AnalyticsController, AdminAnalyticsController],
+  providers: [AnalyticsService],
+  exports: [AnalyticsService],
+})
+export class AnalyticsModule {}
+
+@Module({
   imports: [
     PrismaModule,
     BullModule.forRootAsync({
@@ -264,6 +273,7 @@ export class AdminModule {}
     RbacModule,
     BlogModule,
     PagesModule,
+    AnalyticsModule,
   ],
   providers: [
     // Global: a new route is protected and BigInt-safe by default. Opting out
