@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { initEncryption } from './common/crypto';
@@ -34,7 +35,9 @@ async function bootstrap() {
   // first member saves a bank account means a 500 and a support call.
   initEncryption();
 
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  // The default 100 KB is too small for a month of bank statement rows; 4 MB is plenty and still bounded.
+  app.useBodyParser('json', { limit: '4mb' });
 
   // Without this, req.ip is the load balancer and every fraud signal, rate
   // limit and audit entry records the proxy instead of the member.

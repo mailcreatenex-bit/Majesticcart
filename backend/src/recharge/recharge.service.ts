@@ -4,6 +4,8 @@ import { LedgerService, idempotencyKey } from '../ledger/ledger.service';
 import { parsePlan } from '../plan/plan.config';
 import { commissionOn, formatInr, Paise } from '../common/money';
 import { upiQrSvg, upiAppLinks } from './upi-qr';
+import { matchStatement, type Verdict } from './statement';
+import { money } from '../common/serialization';
 
 /**
  * Manual UPI recharge.
@@ -129,6 +131,76 @@ export class RechargeService {
       links: upiAppLinks(payee),
       qrUrl: `data:image/svg+xml;base64,${Buffer.from(await upiQrSvg(payee)).toString('base64')}`,
     };
+  }
+
+  /**
+   * Check pending requests against an uploaded bank statement, and (with `apply`)
+   * approve exactly those the statement confirms: same UTR, same amount, nothing
+   * flagged. Matching is redone here against what is pending right now, so nothing the
+   * browser sends decides what is approved. Each approval goes through `approve()`, so the
+   * ledger and its once-per-UTR protection apply as usual.
+   */
+  async reviewStatement(args: { csv: string; apply: boolean; adminId: string }) {
+    const pending = await this.prisma.recharge.findMany({
+      where: { status: 'PENDING' },
+      orderBy: { createdAt: 'asc' },
+      take: 2000,
+      select: { id: true, utr: true, claimedPaise: true, flags: true, member: { select: { name: true, memberCode: true } } },
+    });
+    const report = matchStatement(args.csv, pending.map((p) => ({ id: p.id, utr: p.utr, claimedPaise: p.claimedPaise, flags: p.flags })));
+    const who = new Map(pending.map((p) => [p.id, p.member]));
+
+    const approved: string[] = [];
+    const failed: { id: string; reason: string }[] = [];
+    if (args.apply && report.understood) {
+      for (const r of report.results.filter((x) => x.verdict === 'MATCHED')) {
+        try {
+          await this.approve(r.id, { adminId: args.adminId, creditedPaise: r.claimedPaise, note: 'Matched to the bank statement' });
+          approved.push(r.id);
+        } catch (e) {
+          failed.push({ id: r.id, reason: e instanceof Error ? e.message : 'Could not approve.' });
+        }
+      }
+      await this.prisma.auditLog.create({
+        data: { actorType: 'ADMIN', actorId: args.adminId, action: 'recharge.statement_approve', detail: { approved: approved.length, failed: failed.length, rows: report.rowsRead } },
+      });
+    }
+
+    const counts: Record<Verdict, number> = { MATCHED: 0, AMOUNT_DIFFERS: 0, NOT_A_CREDIT: 0, NOT_FOUND: 0, SEEN_TWICE: 0, FLAGGED: 0 };
+    for (const r of report.results) counts[r.verdict] += 1;
+    return {
+      understood: report.understood,
+      rowsRead: report.rowsRead,
+      applied: args.apply && report.understood,
+      counts,
+      approvedIds: approved,
+      failed,
+      items: report.results.map((r) => ({
+        id: r.id, utr: r.utr, verdict: r.verdict, member: who.get(r.id) ?? null,
+        claimed: money(r.claimedPaise), bank: r.bankPaise !== null ? money(r.bankPaise) : null,
+      })),
+    };
+  }
+
+  /** Approve several pending requests at the amount each claimed. Anything carrying a fraud flag is skipped. */
+  async bulkApprove(ids: string[], adminId: string) {
+    const rows = await this.prisma.recharge.findMany({
+      where: { id: { in: ids }, status: 'PENDING' },
+      select: { id: true, claimedPaise: true, flags: true },
+    });
+    const approved: string[] = [];
+    const skipped: { id: string; reason: string }[] = [];
+    for (const r of rows) {
+      if (r.flags.length > 0) { skipped.push({ id: r.id, reason: 'It carries a security flag. Review it on its own.' }); continue; }
+      try {
+        await this.approve(r.id, { adminId, creditedPaise: r.claimedPaise, note: 'Approved with a batch' });
+        approved.push(r.id);
+      } catch (e) {
+        skipped.push({ id: r.id, reason: e instanceof Error ? e.message : 'Could not approve.' });
+      }
+    }
+    await this.prisma.auditLog.create({ data: { actorType: 'ADMIN', actorId: adminId, action: 'recharge.bulk_approve', detail: { approved: approved.length, skipped: skipped.length } } });
+    return { approved, skipped };
   }
 
   async submit(input: SubmitRechargeInput) {

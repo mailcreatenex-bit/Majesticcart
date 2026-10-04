@@ -79,6 +79,26 @@ export class AdminRechargeController {
     return { url: await this.storage.signedReadUrl(r.screenshotKey, 600), expiresInSeconds: 600 };
   }
 
+  /** Upload a bank statement (CSV text): shows which pending requests it confirms, and with `apply` approves those. */
+  @Post('statement')
+  @HttpCode(200)
+  statement(
+    @CurrentUser('sub') adminId: string,
+    @Body(zodBody(z.object({ csv: z.string().min(20).max(4_000_000), apply: z.boolean().default(false) }))) body: { csv: string; apply: boolean },
+  ) {
+    return this.recharges.reviewStatement({ csv: body.csv, apply: body.apply, adminId });
+  }
+
+  /** Approve a batch at their claimed amounts; flagged ones are skipped. */
+  @Post('bulk-approve')
+  @HttpCode(200)
+  bulkApprove(
+    @CurrentUser('sub') adminId: string,
+    @Body(zodBody(z.object({ ids: z.array(z.string().min(1)).min(1).max(100) }))) body: { ids: string[] },
+  ) {
+    return this.recharges.bulkApprove(body.ids, adminId);
+  }
+
   @Post(':id/approve')
   @HttpCode(200)
   approve(

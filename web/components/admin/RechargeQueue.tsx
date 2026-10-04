@@ -98,6 +98,9 @@ function Queue() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [batchBusy, setBatchBusy] = useState(false);
+  const [batchNote, setBatchNote] = useState<string | null>(null);
 
   const load = useCallback(async (s: Status | 'ALL', after: string | null) => {
     const qs = new URLSearchParams({ status: s });
@@ -130,7 +133,33 @@ function Queue() {
    * Reloading would reorder everything underneath the operator's cursor mid-
    * review, which on a long queue means losing your place after every decision.
    */
-  const settle = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
+  const settle = (id: string) => {
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
+  };
+
+  const reload = async () => {
+    setSelected(new Set());
+    try { await load(status, null); } catch { /* the list keeps what it had */ }
+  };
+
+  const approveBatch = async () => {
+    if (selected.size === 0 || batchBusy) return;
+    if (!window.confirm(`Approve ${selected.size} payment${selected.size === 1 ? '' : 's'} at the amount each member claimed? Only do this for ones you have matched to the bank statement.`)) return;
+    setBatchBusy(true);
+    setBatchNote(null);
+    try {
+      const r = await api<{ approved: string[]; skipped: { id: string; reason: string }[] }>('/admin/recharges/bulk-approve', { method: 'POST', body: { ids: [...selected] } });
+      setBatchNote(`Approved ${r.approved.length}.${r.skipped.length ? ` ${r.skipped.length} skipped: ${r.skipped[0].reason}` : ''}`);
+      await reload();
+    } catch (err) {
+      setBatchNote(err instanceof ApiError ? err.message : 'Could not approve the batch.');
+    } finally {
+      setBatchBusy(false);
+    }
+  };
+
+  const toggle = (id: string, on: boolean) => setSelected((prev) => { const n = new Set(prev); if (on) n.add(id); else n.delete(id); return n; });
 
   return (
     <div className="space-y-4">
@@ -149,7 +178,22 @@ function Queue() {
         ))}
       </div>
 
+      {status === 'PENDING' && <StatementPanel onApplied={reload} />}
+
       {error && <AdminError message={error} />}
+
+      {selected.size > 0 && (
+        <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-300 bg-white px-4 py-3 shadow">
+          <p className="text-sm text-neutral-800">{selected.size} selected</p>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setSelected(new Set())} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-semibold text-neutral-700">Clear</button>
+            <button type="button" onClick={approveBatch} disabled={batchBusy} className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-semibold text-white disabled:bg-neutral-300">
+              {batchBusy ? 'Approving…' : 'Approve selected at claimed amounts'}
+            </button>
+          </div>
+        </div>
+      )}
+      {batchNote && <p role="status" className="rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-800">{batchNote}</p>}
 
       {loading ? (
         <TableSkeleton rows={4} />
@@ -162,7 +206,7 @@ function Queue() {
       ) : (
         <ul className="space-y-3">
           {rows.map((r) => (
-            <RechargeCard key={r.id} row={r} onSettled={() => settle(r.id)} />
+            <RechargeCard key={r.id} row={r} onSettled={() => settle(r.id)} batch={r.status === 'PENDING' && r.flags.length === 0 ? { checked: selected.has(r.id), onChange: (v) => toggle(r.id, v) } : undefined} />
           ))}
         </ul>
       )}
@@ -182,7 +226,7 @@ function Queue() {
 
 /* ----------------------------------------------------------------- card */
 
-function RechargeCard({ row, onSettled }: { row: RechargeRow; onSettled: () => void }) {
+function RechargeCard({ row, onSettled, batch }: { row: RechargeRow; onSettled: () => void; batch?: { checked: boolean; onChange: (v: boolean) => void } }) {
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [mode, setMode] = useState<'idle' | 'rejecting'>('idle');
@@ -233,6 +277,12 @@ function RechargeCard({ row, onSettled }: { row: RechargeRow; onSettled: () => v
 
   return (
     <li className={`rounded-xl border bg-white ${severe && !decided ? 'border-red-300' : 'border-neutral-200'}`}>
+      {batch && (
+        <label className="flex items-center gap-2 border-b border-neutral-100 px-4 py-2 text-xs text-neutral-600">
+          <input type="checkbox" checked={batch.checked} onChange={(e) => batch.onChange(e.target.checked)} className="h-4 w-4" />
+          Select for batch approval
+        </label>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-neutral-100 p-4">
         <div className="min-w-0">
           <p className="font-semibold text-neutral-900">
@@ -449,5 +499,131 @@ function Screenshot({ rechargeId }: { rechargeId: string }) {
         This link expires in ten minutes. Reload the page to get another.
       </figcaption>
     </figure>
+  );
+}
+
+
+/* ------------------------------------------------------ bank statement */
+
+type Verdict = 'MATCHED' | 'AMOUNT_DIFFERS' | 'NOT_A_CREDIT' | 'NOT_FOUND' | 'SEEN_TWICE' | 'FLAGGED';
+interface StatementItem { id: string; utr: string; verdict: Verdict; member: { name: string; memberCode: string } | null; claimed: MoneyView; bank: MoneyView | null }
+interface StatementReview {
+  understood: boolean; rowsRead: number; applied: boolean;
+  counts: Record<Verdict, number>; approvedIds: string[]; failed: { id: string; reason: string }[]; items: StatementItem[];
+}
+
+const VERDICT_COPY: Record<Verdict, string> = {
+  MATCHED: 'Matched: same UTR and amount',
+  AMOUNT_DIFFERS: 'The bank shows a different amount',
+  NOT_A_CREDIT: 'The UTR is there but not as money received',
+  NOT_FOUND: 'Not in this statement',
+  SEEN_TWICE: 'The UTR appears more than once',
+  FLAGGED: 'Carries a security flag, review it yourself',
+};
+
+/**
+ * Upload the bank's statement (CSV); every pending request whose UTR and exact amount appear as
+ * money received is offered for approval in one click. Everything else stays in the list for a
+ * person, with the reason. The server re-checks at the moment of approval, so what is approved is
+ * decided there, not by this page.
+ */
+function StatementPanel({ onApplied }: { onApplied: () => Promise<void> }) {
+  const [review, setReview] = useState<StatementReview | null>(null);
+  const [csv, setCsv] = useState<string | null>(null);
+  const [fileName, setFileName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+
+  const run = async (text: string, apply: boolean) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api<StatementReview>('/admin/recharges/statement', { method: 'POST', body: { csv: text, apply } });
+      if (apply) {
+        setDone(`Approved ${r.approvedIds.length} payment${r.approvedIds.length === 1 ? '' : 's'}.${r.failed.length ? ` ${r.failed.length} could not be approved: ${r.failed[0].reason}` : ''}`);
+        setReview(null);
+        setCsv(null);
+        await onApplied();
+      } else {
+        setReview(r);
+        setDone(null);
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not read that statement.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    setFileName(file.name);
+    setReview(null);
+    setDone(null);
+    if (file.size > 3_500_000) { setError('That file is too large. Download one month at a time.'); return; }
+    const text = await file.text();
+    setCsv(text);
+    await run(text, false);
+  };
+
+  const matched = review?.counts.MATCHED ?? 0;
+
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-white p-4">
+      <h2 className="text-sm font-semibold text-neutral-900">Match a bank statement</h2>
+      <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+        Download your bank statement as a CSV (one month is enough) and upload it. Payments whose UTR and amount are in the
+        statement as money received are offered for approval in one click; everything else stays here for you.
+      </p>
+      <input
+        type="file"
+        accept=".csv,text/csv,text/plain"
+        onChange={(e) => void onFile(e.target.files?.[0])}
+        className="mt-3 block w-full max-w-md text-sm text-neutral-700 file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+      />
+      {busy && <p className="mt-3 text-sm text-neutral-500">Reading {fileName}…</p>}
+      {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {done && <p role="status" className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">{done}</p>}
+
+      {review && !review.understood && (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          That does not look like a bank statement CSV: no column for money received was found. Nothing was matched. Try downloading it as CSV or Excel-to-CSV from your bank.
+        </p>
+      )}
+
+      {review?.understood && (
+        <div className="mt-4">
+          <p className="text-sm text-neutral-800">
+            Read {review.rowsRead.toLocaleString('en-IN')} rows. <strong>{matched}</strong> of {review.items.length} pending payments match.
+          </p>
+          <ul className="mt-2 divide-y divide-neutral-100 text-sm">
+            {review.items.map((i) => (
+              <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5">
+                <span className="min-w-0">
+                  <span className={i.verdict === 'MATCHED' ? 'text-green-700' : 'text-neutral-800'}>{i.member?.name ?? 'Member'}</span>
+                  <span className="ml-2 font-mono text-xs text-neutral-500">{i.utr}</span>
+                </span>
+                <span className="text-right text-xs">
+                  <span className="tabular-nums text-neutral-700">{showMoney(i.claimed)}</span>
+                  {i.bank && i.verdict === 'AMOUNT_DIFFERS' && <span className="ml-2 tabular-nums text-red-700">bank: {showMoney(i.bank)}</span>}
+                  <span className={`ml-2 ${i.verdict === 'MATCHED' ? 'font-semibold text-green-700' : 'text-neutral-500'}`}>{VERDICT_COPY[i.verdict]}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          {matched > 0 && csv && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => { if (window.confirm(`Approve the ${matched} matched payment${matched === 1 ? '' : 's'}? Each is credited at the amount shown.`)) void run(csv, true); }}
+              className="mt-3 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-neutral-300"
+            >
+              Approve the {matched} matched
+            </button>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
