@@ -1,0 +1,25 @@
+name: Deploy API
+
+# Render cannot see this repository, so it never hears about a push by itself. This tells it,
+# using the service's Deploy Hook. To switch it on, add the hook's address as a repository
+# secret named RENDER_DEPLOY_HOOK (GitHub: Settings > Secrets and variables > Actions; Render:
+# the service's Settings > Deploy Hook). Until that secret exists this does nothing.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask Render to deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK is not set, so the API was not deployed. See the comment at the top of this file."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" > /dev/null
+          echo "Render deploy requested for ${GITHUB_SHA::7}."

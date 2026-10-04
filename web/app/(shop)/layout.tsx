@@ -6,6 +6,7 @@ import { InstallPromptPopup } from '@/components/InstallPrompt';
 import { CartProvider } from '@/components/CartProvider';
 import { WishlistProvider } from '@/components/WishlistProvider';
 import { VisitBeacon } from '@/components/TrackView';
+import { ErrorReporter } from '@/components/ErrorReporter';
 import { SITE, organizationJsonLd } from '@/lib/seo';
 import { getTheme, getCompanyInfo } from '@/lib/content';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
@@ -113,6 +114,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             hydration mismatch on every load. */}
         <MobileSplash />
         <VisitBeacon />
+        <ErrorReporter />
         <PwaRegister />
         {/* Appears after 30 seconds of visible browsing, never to someone who
             already installed it or said no recently. */}

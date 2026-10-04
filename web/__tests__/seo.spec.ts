@@ -381,7 +381,10 @@ test('every route in the app is classified, none left to default', () => {
   // A page that is neither public nor private is one nobody decided about.
   const PUBLIC = new Set([
     '/', '/shop', '/about', '/contact', '/faq', '/join', '/signup', '/login',
-    '/forgot-password', '/category/[slug]', '/product/[slug]', '/legal/[slug]',
+    '/forgot-password', '/reset-password', '/category/[slug]', '/product/[slug]', '/legal/[slug]',
+    '/brand/[slug]', '/blog', '/blog/[slug]', '/shade-finder',
+    // A member's storefront and a short product link: reachable by anyone who is sent one.
+    '/mc/[code]', '/p/[slug]',
     '/offline',
   ]);
 
@@ -448,44 +451,33 @@ test('the sitemap never lists a private route', () => {
  * worse than no map: it either shows a FINANCE user a plan editor that 403s on
  * save, or hides the recharge queue from someone who can in fact use it.
  */
-test('the admin nav offers exactly the roles the API accepts', () => {
+test('every admin nav entry asks for the same permission the API route requires', () => {
   const shell = readFileSync(join(process.cwd(), 'components', 'admin', 'AdminShell.tsx'), 'utf8');
-  const controller = readFileSync(
-    join(process.cwd(), '..', 'backend', 'src', 'api', 'admin.controller.ts'),
-    'utf8',
-  );
 
-  // Pull `@AdminOnly('A', 'B') @Controller('admin/x')` pairs off the API. A
-  // bare @AdminOnly() means any signed-in admin.
-  const serverRoles = new Map<string, string[]>();
-  const re = /@AdminOnly\(([^)]*)\)\s*@Controller\('([^']+)'\)/g;
-  for (const [, roleList, route] of controller.matchAll(re)) {
-    const roles = [...roleList.matchAll(/'([A-Z]+)'/g)].map((m) => m[1]);
-    serverRoles.set(`/${route}`, roles.length ? roles : ['ADMIN', 'FINANCE', 'SUPPORT']);
+  // Every `@RequirePermission('a', 'b') ... @Controller('admin/x')` in the API's controllers.
+  const apiDir = join(process.cwd(), '..', 'backend', 'src', 'api');
+  const serverPermissions = new Map<string, string[]>();
+  for (const file of readdirSync(apiDir).filter((f) => f.endsWith('.ts'))) {
+    const src = readFileSync(join(apiDir, file), 'utf8');
+    for (const [, perms, route] of src.matchAll(/@RequirePermission\(([^)]*)\)\s*@Controller\('([^']+)'\)/g)) {
+      serverPermissions.set(`/${route}`, [...perms.matchAll(/'([^']+)'/g)].map((m) => m[1]));
+    }
   }
-  assert.ok(serverRoles.size > 0, 'found no @AdminOnly controllers to compare against');
+  assert.ok(serverPermissions.size > 0, 'found no @RequirePermission controllers to compare against');
 
   // And the console's own NAV table.
   const navBlock = /const NAV:[^=]*=\s*\[([\s\S]*?)\n\];/.exec(shell);
   assert.ok(navBlock, 'could not find the NAV table in AdminShell');
+  const nav = [...navBlock![1].matchAll(/\{\s*href:\s*'([^']+)'[^}]*permission:\s*'([^']*)'/g)].map((m) => ({ href: m[1], permission: m[2] }));
+  assert.ok(nav.length > 0, 'parsed no nav entries');
 
-  const navRoles = new Map<string, string[]>();
-  for (const [, href, roleList] of navBlock![1].matchAll(
-    /\{\s*href:\s*'([^']+)'[^}]*roles:\s*\[([^\]]*)\]/g,
-  )) {
-    navRoles.set(href, [...roleList.matchAll(/'([A-Z]+)'/g)].map((m) => m[1]));
-  }
-  assert.ok(navRoles.size > 0, 'parsed no nav entries');
-
-  for (const [href, offered] of navRoles) {
-    // '/admin' maps to the dashboard controller; the rest map by their segment.
-    const apiRoute = href === '/admin' ? '/admin/dashboard' : href.replace('/admin/', '/admin/');
-    const server = serverRoles.get(apiRoute) ?? serverRoles.get(`${apiRoute}es`) ?? null;
-    if (!server) continue; // a nav entry with no single controller behind it
-
-    assert.deepEqual(
-      [...offered].sort(), [...server].sort(),
-      `${href} is offered to ${offered.join('/')} but the API accepts ${server.join('/')}`,
+  for (const { href, permission } of nav) {
+    if (!permission) continue; // offered to every admin, e.g. Security
+    const needs = serverPermissions.get(href.replace('/admin/', '/admin/'));
+    if (!needs) continue; // a nav entry with no single controller behind it (or whose route is named differently)
+    assert.ok(
+      needs.includes(permission),
+      `${href} is shown to admins with "${permission}" but the API requires ${needs.join(' and ')}`,
     );
   }
 });

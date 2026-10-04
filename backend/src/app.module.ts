@@ -1,5 +1,5 @@
 import { Module, Global, OnModuleInit } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { BullModule, InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -13,6 +13,9 @@ import { LedgerService } from './ledger/ledger.service';
 import { CommissionService } from './commission/commission.service';
 import { CommissionProcessor } from './commission/commission.processor';
 import { OrderService } from './order/order.service';
+import { ErrorService } from './monitoring/error.service';
+import { ErrorCaptureFilter } from './monitoring/error.filter';
+import { HealthController, ClientErrorController, AdminErrorsController } from './api/monitoring.controller';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { AdminIntegrationsController, DeliveryController } from './api/integrations.controller';
 import { AnalyticsService } from './analytics/analytics.service';
@@ -236,7 +239,9 @@ export class AdminModule {}
 
 @Module({
   imports: [AuthModule],
-  controllers: [AdminIntegrationsController, DeliveryController],
+  controllers: [AdminIntegrationsController, DeliveryController, HealthController, ClientErrorController, AdminErrorsController],
+  providers: [ErrorService],
+  exports: [ErrorService],
 })
 export class IntegrationsAdminModule {}
 
@@ -291,6 +296,8 @@ export class AnalyticsModule {}
     // holding member funds.
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_INTERCEPTOR, useClass: BigIntSerializerInterceptor },
+    // Records server errors for the admin's Errors page; every response is unchanged.
+    { provide: APP_FILTER, useClass: ErrorCaptureFilter },
   ],
 })
 export class AppModule {}

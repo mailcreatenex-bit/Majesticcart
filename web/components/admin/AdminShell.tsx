@@ -45,6 +45,7 @@ const NAV: { href: string; label: string; permission: string }[] = [
   { href: '/admin/withdrawals', label: 'Withdrawals', permission: 'finance.withdrawals' },
   { href: '/admin/mobile-recharges', label: 'Mobile recharges', permission: 'finance.mobile_recharges' },
   { href: '/admin/security-alerts', label: 'Security alerts', permission: 'security.view' },
+  { href: '/admin/errors', label: 'Errors', permission: 'security.view' },
   { href: '/admin/catalog', label: 'Catalogue', permission: 'catalog.manage' },
   { href: '/admin/coupons', label: 'Coupons', permission: 'coupons.manage' },
   { href: '/admin/analytics', label: 'Analytics', permission: 'reports.view' },

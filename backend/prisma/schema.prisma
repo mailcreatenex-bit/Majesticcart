@@ -326,6 +326,24 @@ model AnalyticsEvent {
   @@index([sid])
 }
 
+// A kind of error the site hit, grouped by fingerprint so a bug that fires a thousand times is one row with a
+// count (see monitoring/error.service.ts). Holds no member, IP or request body.
+model AppError {
+  id          String   @id @default(cuid())
+  fingerprint String   @unique
+  source      String // "api" or "web"
+  message     String
+  detail      String? // a shortened stack trace
+  path        String?
+  status      Int?
+  count       Int      @default(1)
+  resolved    Boolean  @default(false)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@index([resolved, lastSeenAt])
+}
+
 // ------------------------------------------------------------------- content
 
 // Editorial content, separate from the catalogue: a blog post never blocks an

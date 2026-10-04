@@ -1,0 +1,19 @@
+name: Uptime check
+
+# Every 10 minutes: asks the API and the website if they are up. This both keeps the free
+# Render server awake (it sleeps after about 15 idle minutes) and, when either one answers
+# with an error, fails the run, so GitHub emails the repository owner. To change the
+# addresses, edit them below or set repository variables API_URL and SITE_URL.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: API
+        run: curl -fsS --retry 3 --retry-delay 20 --max-time 60 "${{ vars.API_URL || 'https://majestic-cart-api.onrender.com' }}/api/health"
+      - name: Website
+        run: curl -fsS --retry 2 --retry-delay 10 --max-time 30 -o /dev/null "${{ vars.SITE_URL || 'https://web-beta-blush-85.vercel.app' }}/"
