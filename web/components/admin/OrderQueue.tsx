@@ -132,6 +132,17 @@ function Queue() {
 
       {error && <AdminError message={error} />}
 
+      {!loading && rows.length > 0 && (
+        <a
+          href={`/admin/orders/print?ids=${rows.slice(0, 50).map((r) => r.id).join(',')}`}
+          target="_blank"
+          rel="noopener"
+          className="inline-block rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+        >
+          Print labels for the {Math.min(rows.length, 50)} shown
+        </a>
+      )}
+
       {loading ? (
         <TableSkeleton rows={4} />
       ) : rows.length === 0 ? (
@@ -362,6 +373,15 @@ function OrderCard({ order, onUpdate }: { order: AdminOrder; onUpdate: (n: Parti
 
           {/* Only after delivery, and only for ADMIN — the server enforces the
               role too, so this is about not offering a button that 403s. */}
+          <a
+            href={`/admin/orders/print?ids=${order.id}`}
+            target="_blank"
+            rel="noopener"
+            className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+          >
+            Print label
+          </a>
+
           {order.status === 'DELIVERED' && admin.role === 'ADMIN' && (
             <button
               type="button"

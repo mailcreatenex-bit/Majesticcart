@@ -296,6 +296,38 @@ export class AdminOrderController {
     };
   }
 
+  /** What is printed on a shipping label and packing slip, for up to 50 orders at once. */
+  @Get('labels')
+  async labels(@Query('ids') ids = '') {
+    const list = ids.split(',').map((x) => x.trim()).filter(Boolean).slice(0, 50);
+    if (list.length === 0) return { items: [] };
+    const rows = await this.prisma.order.findMany({
+      where: { id: { in: list } },
+      include: {
+        member: { select: { memberCode: true } },
+        items: { select: { nameSnapshot: true, quantity: true } },
+      },
+    });
+    // In the order asked for, not the database's.
+    const byId = new Map(rows.map((o: any) => [o.id, o]));
+    return {
+      items: list.flatMap((id) => {
+        const o: any = byId.get(id);
+        if (!o) return [];
+        return [{
+          id: o.id,
+          orderNo: o.orderNo,
+          memberCode: o.member.memberCode,
+          placedAt: o.createdAt,
+          shipping: { name: o.shipName, phone: o.shipPhone, line: o.shipLine, city: o.shipCity, state: o.shipState, pincode: o.shipPincode },
+          items: o.items.map((i: any) => ({ name: i.nameSnapshot, quantity: i.quantity })),
+          courier: courierLabel(o.courier),
+          trackingNo: o.trackingNo,
+        }];
+      }),
+    };
+  }
+
   @Post(':id/status')
   @HttpCode(200)
   transition(
