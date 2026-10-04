@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useWishlist } from './WishlistProvider';
 
 /**
  * The phone tab bar pinned to the bottom of the screen, in the pattern of
@@ -24,6 +25,7 @@ const TABS = [
 
 export function MobileBottomNav() {
   const pathname = usePathname() ?? '/';
+  const { count } = useWishlist();
   if (pathname.startsWith('/checkout') || pathname.startsWith('/product')) return null;
 
   return (
@@ -42,7 +44,12 @@ export function MobileBottomNav() {
                 aria-current={active ? 'page' : undefined}
                 className={`relative flex flex-col items-center gap-1 pb-2 pt-2.5 text-[11px] font-semibold transition-colors ${active ? 'text-[var(--accent)]' : 'text-[var(--muted)]'}`}
               >
-                <Icon filled={active} />
+                <span className="relative">
+                  <Icon filled={active} />
+                  {t.href === '/wishlist' && count > 0 && (
+                    <span className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white">{count}</span>
+                  )}
+                </span>
                 {t.label}
               </Link>
             </li>
