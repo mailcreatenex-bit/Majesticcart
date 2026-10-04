@@ -80,6 +80,9 @@ export const FEATURES: Phrase[] = [
   ['Your invite link', 'आपका आमंत्रण लिंक', 'আপনার আমন্ত্রণ লিঙ্ক'],
   ['Copy link', 'लिंक कॉपी करें', 'লিঙ্ক কপি করুন'],
   ['Invite someone to create an account', 'किसी को खाता बनाने के लिए आमंत्रित करें', 'কাউকে অ্যাকাউন্ট খুলতে আমন্ত্রণ জানান'],
+  // phone notifications
+  ['Notifications on this phone', 'इस फ़ोन पर नोटिफ़िकेशन', 'এই ফোনে নোটিফিকেশন'],
+  ['Order, wallet and back-in-stock updates appear on this phone, free, even when the site is closed.', 'ऑर्डर, वॉलेट और स्टॉक में वापसी की अपडेट इस फ़ोन पर मुफ़्त दिखती हैं, साइट बंद होने पर भी।', 'অর্ডার, ওয়ালেট ও স্টকে ফেরার আপডেট এই ফোনে বিনামূল্যে দেখা যায়, সাইট বন্ধ থাকলেও।'],
   // shade finder
   ['Not sure of your shade?', 'अपने शेड के बारे में पक्का नहीं हैं?', 'আপনার শেড নিয়ে নিশ্চিত নন?'],
   ['Take a selfie and we will pick the shades that suit your skin, ready to add to your bag.', 'एक सेल्फ़ी लें और हम आपकी त्वचा पर जँचने वाले शेड चुनेंगे, जिन्हें आप सीधे बैग में जोड़ सकते हैं।', 'একটি সেলফি তুলুন, আমরা আপনার ত্বকের সঙ্গে মানানসই শেড বেছে দেব, সরাসরি ব্যাগে যোগ করার জন্য তৈরি।'],

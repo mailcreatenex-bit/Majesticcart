@@ -17,7 +17,7 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL_CACHE = `mc-shell-${VERSION}`;
 const PAGE_CACHE = `mc-pages-${VERSION}`;
 const ASSET_CACHE = `mc-assets-${VERSION}`;
@@ -146,4 +146,33 @@ async function networkFirstPage(request) {
 /** Lets a new deploy take over without the user closing every tab. */
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+/* ------------------------------------------------- phone notifications (web push)
+ * The server sends { title, body, url }. Showing it is required once a push arrives, and a
+ * tap opens the page it is about in the app if it is open, or a new window if not. */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { /* a push with no usable body still gets a notice */ }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Majestic Cart', {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/favicon-32.png',
+      data: { url: typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/account' },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/account';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      for (const w of windows) {
+        if ('focus' in w) { w.navigate(url).catch(() => undefined); return w.focus(); }
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
 });

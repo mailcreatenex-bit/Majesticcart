@@ -11,14 +11,14 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, existsSync } from 'node:fs';
 
 const INTEGRATION = process.argv.includes('--integration');
-const UNIT = ['auth', 'order', 'plan', 'serialization', 'reporting', 'crypto', 'invoice', 'upi', 'plan-parity', 'income-claims', 'courier', 'search', 'team-dashboard', 'analytics', 'admin-2fa', 'wishlist', 'integrations', 'errors', 'statement'];
+const UNIT = ['auth', 'order', 'plan', 'serialization', 'reporting', 'crypto', 'invoice', 'upi', 'plan-parity', 'income-claims', 'courier', 'search', 'team-dashboard', 'analytics', 'admin-2fa', 'wishlist', 'integrations', 'errors', 'statement', 'push'];
 const suites = INTEGRATION ? ['integration'] : UNIT;
 
 mkdirSync('dist-tests', { recursive: true });
 
 const externals = [
   'node:test', 'node:assert', 'node:crypto', '@nestjs/common', '@nestjs/core',
-  '@nestjs/bullmq', '@nestjs/jwt', 'bullmq', 'argon2', 'rxjs', 'zod', 'pg', 'express', 'qrcode',
+  '@nestjs/bullmq', '@nestjs/jwt', 'bullmq', 'argon2', 'rxjs', 'zod', 'pg', 'express', 'qrcode', 'web-push',
 ].flatMap((m) => ['--external:' + m]);
 
 for (const name of suites) {

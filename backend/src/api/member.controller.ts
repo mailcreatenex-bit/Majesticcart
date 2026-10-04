@@ -17,6 +17,7 @@ import { ShadeFinderService } from '../shade-finder/shade-finder.service';
 import { StorageService } from '../media/storage.service';
 import { MemberViewService } from '../member/view.service';
 import { TeamDashboardService } from '../member/team-dashboard.service';
+import { PushService } from '../notifications/push.service';
 import { ProfileService } from '../member/profile.service';
 
 /**
@@ -463,7 +464,51 @@ export class MemberViewController {
     private readonly profile: ProfileService,
     private readonly storage: StorageService,
     private readonly teamDash: TeamDashboardService,
+    private readonly push: PushService,
   ) {}
+
+  /* ---------------------------------------------------- phone notifications */
+
+  /** The key the browser needs to ask for notification permission. Public by design. */
+  @Get('push/key')
+  async pushKey(@CurrentUser('sub') memberId: string) {
+    return { publicKey: await this.push.publicKey(), enabled: (await this.push.count(memberId)) > 0 };
+  }
+
+  @Post('push/subscribe')
+  @HttpCode(200)
+  async pushSubscribe(
+    @CurrentUser('sub') memberId: string,
+    @Body(zodBody(z.object({
+      endpoint: z.string().url().max(600).startsWith('https://'),
+      keys: z.object({ p256dh: z.string().min(10).max(200), auth: z.string().min(10).max(100) }),
+    }))) body: { endpoint: string; keys: { p256dh: string; auth: string } },
+    @Req() req: { headers: Record<string, string | string[] | undefined> },
+  ) {
+    const ua = req.headers['user-agent'];
+    await this.push.subscribe(memberId, body, Array.isArray(ua) ? ua[0] : ua);
+    return { ok: true as const };
+  }
+
+  @Post('push/unsubscribe')
+  @HttpCode(200)
+  async pushUnsubscribe(
+    @CurrentUser('sub') memberId: string,
+    @Body(zodBody(z.object({ endpoint: z.string().url().max(600) }))) body: { endpoint: string },
+  ) {
+    await this.push.unsubscribe(memberId, body.endpoint);
+    return { ok: true as const };
+  }
+
+  /** Sends a test notification to the member's own devices, so they can see it works. */
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ points: 5, windowSeconds: 600, keyPrefix: 'push-test' })
+  @Post('push/test')
+  @HttpCode(200)
+  async pushTest(@CurrentUser('sub') memberId: string) {
+    const n = await this.push.sendToMember(memberId, { title: 'Majestic Cart', body: 'Notifications are on for this phone.', url: '/account' });
+    return { delivered: n };
+  }
 
   /** Team size, this month against target, rank progress and who needs a nudge. Volume only: no income figures. */
   @Get('team-dashboard')

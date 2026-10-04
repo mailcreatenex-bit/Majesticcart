@@ -57,6 +57,7 @@ function Overview({ data, reload, copy }: { data: MemberSummary; reload: () => v
       </div>
 
       <MessagesToggle initial={data.member.notifyExternal ?? true} />
+      <PushToggle />
 
       {/* Anything waiting on someone else, in one place. */}
       {(data.pending.recharges > 0 || data.pending.withdrawals > 0) && (
@@ -307,4 +308,98 @@ function MessagesToggle({ initial }: { initial: boolean }) {
       </button>
     </section>
   );
+}
+
+/**
+ * Notifications on this phone, through the installed app. Free for the store (no per-message
+ * charge), and the member chooses per device: the browser's own permission prompt appears
+ * only when they turn this on. Hidden where the browser cannot do it (some in-app browsers,
+ * and iPhones until the site is added to the Home Screen).
+ */
+function PushToggle() {
+  const [support, setSupport] = useState<'checking' | 'yes' | 'no'>('checking');
+  const [on, setOn] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    const ok = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    setSupport(ok ? 'yes' : 'no');
+    if (!ok) return;
+    navigator.serviceWorker.ready
+      .then((reg) => reg.pushManager.getSubscription())
+      .then((sub) => setOn(!!sub && Notification.permission === 'granted'))
+      .catch(() => undefined);
+  }, []);
+
+  if (support !== 'yes') {
+    return support === 'no' ? (
+      <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
+        <h2 className="font-serif text-lg text-[var(--ink)]">Notifications on this phone</h2>
+        <p className="mt-1 text-xs text-[var(--muted)]">This browser cannot show them. On an iPhone, add the site to your Home Screen first, then open it from there.</p>
+      </section>
+    ) : null;
+  }
+
+  const turnOn = async () => {
+    setNote(null);
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') { setNote('Notifications are blocked for this site. Allow them in your browser settings, then try again.'); return; }
+    const { publicKey } = await api<{ publicKey: string }>('/me/push/key');
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
+    const json = sub.toJSON();
+    await api('/me/push/subscribe', { method: 'POST', body: { endpoint: json.endpoint, keys: json.keys } });
+    setOn(true);
+    await api('/me/push/test', { method: 'POST', body: {} }).catch(() => undefined);
+    setNote('On. You should see a test notification now.');
+  };
+
+  const turnOff = async () => {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await api('/me/push/unsubscribe', { method: 'POST', body: { endpoint: sub.endpoint } }).catch(() => undefined);
+      await sub.unsubscribe();
+    }
+    setOn(false);
+    setNote(null);
+  };
+
+  const flip = async () => {
+    setBusy(true);
+    try { await (on ? turnOff() : turnOn()); }
+    catch (err) { setNote(err instanceof ApiError ? err.message : 'Could not change that. Try again.'); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
+      <div className="min-w-0">
+        <h2 className="font-serif text-lg text-[var(--ink)]">Notifications on this phone</h2>
+        <p className="mt-1 text-xs text-[var(--muted)]">Order, wallet and back-in-stock updates appear on this phone, free, even when the site is closed.</p>
+        {note && <p role="status" className="mt-1 text-xs text-[var(--body)]">{note}</p>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label="Notifications on this phone"
+        disabled={busy}
+        onClick={flip}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition ${on ? 'bg-[var(--ink)]' : 'bg-[var(--line-strong)]'} disabled:opacity-60`}
+      >
+        <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
+      </button>
+    </section>
+  );
+}
+
+/** The browser wants the server key as bytes; it is sent as URL-safe base64 text. */
+function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
+  const padded = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(padded);
+  const out = new Uint8Array(new ArrayBuffer(raw.length));
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
 }
