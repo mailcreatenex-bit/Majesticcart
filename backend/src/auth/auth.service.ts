@@ -307,7 +307,7 @@ export class AuthService {
             data: {
               memberId: sponsor.id,
               title: 'New member in your team',
-              body: `${name} (${memberCode}) joined with your sponsor ID.`,
+              body: `${name} (${memberCode}) joined with your Referral ID.`,
               kind: 'TEAM',
             },
           });
@@ -340,8 +340,8 @@ export class AuthService {
   private async resolveSponsor(tx: Prisma.TransactionClient, sponsorCode: string) {
     const code = sponsorCode.trim().toUpperCase();
     const sponsor = await tx.member.findUnique({ where: { memberCode: code } });
-    if (!sponsor) throw new BadRequestException(`Sponsor ID ${code} doesn't exist. Check it with whoever invited you.`);
-    if (sponsor.status !== 'ACTIVE') throw new BadRequestException('That sponsor account is on hold. Use a different sponsor ID.');
+    if (!sponsor) throw new BadRequestException(`Referral ID ${code} doesn't exist. Check it with whoever invited you.`);
+    if (sponsor.status !== 'ACTIVE') throw new BadRequestException('That member account is on hold. Use a different Referral ID.');
     return sponsor;
   }
 

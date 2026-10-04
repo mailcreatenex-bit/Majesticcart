@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { effectiveReferralId, REF_COOKIE } from '@/lib/referral';
 import { backendUrl, forwardedHeaders, sessionCookieOptions, isIssuedTokens, COOKIES, ACCESS_TOKEN_MAX_AGE_SECONDS, REFRESH_TOKEN_MAX_AGE_SECONDS, MEMBER_FLAG_COOKIE, memberFlagOptions } from '@/lib/backend';
 
 /**
@@ -14,7 +15,8 @@ export async function POST(req: NextRequest) {
     phone: String(form.get('phone') ?? '').trim(),
     email: String(form.get('email') ?? '').trim() || undefined,
     password: String(form.get('password') ?? ''),
-    sponsorCode: String(form.get('sponsorCode') ?? '').trim() || undefined,
+    // A Referral ID from an invite link wins over whatever the form says, so it cannot be changed.
+    sponsorCode: effectiveReferralId(req.cookies.get(REF_COOKIE)?.value, String(form.get('sponsorCode') ?? '')),
   };
 
   const signupUrl = new URL('/signup', req.url);
@@ -46,7 +48,10 @@ export async function POST(req: NextRequest) {
     if (payload.phone) signupUrl.searchParams.set('phone', payload.phone);
     if (payload.email) signupUrl.searchParams.set('email', payload.email);
     if (payload.sponsorCode) signupUrl.searchParams.set('sponsorCode', payload.sponsorCode);
-    return NextResponse.redirect(signupUrl, 303);
+    const back = NextResponse.redirect(signupUrl, 303);
+    // If the invite link's ID was refused (no such member, or on hold), drop it so the visitor can enter a working one.
+    if (/referral id|sponsor/i.test(message ?? '') && req.cookies.get(REF_COOKIE)) back.cookies.delete(REF_COOKIE);
+    return back;
   }
 
   // New members land on the ID card, where the first thing to do is add a photo.

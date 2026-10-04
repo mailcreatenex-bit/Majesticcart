@@ -5,6 +5,7 @@ import { buildMetadata, pageTitle } from '@/lib/seo';
 import { REF_COOKIE, normaliseRefCode } from '@/lib/referral';
 import { AuthShell, AuthIntro, Field, inputClass, primaryButtonClass } from '@/components/AuthShell';
 import { getTheme } from '@/lib/content';
+import { getStorefrontMember } from '@/lib/catalog';
 
 export const metadata: Metadata = buildMetadata({
   title: pageTitle('Join free'),
@@ -25,7 +26,13 @@ export default async function SignupPage({
   // retyping their name and phone — `sponsorCode` here is what they actually
   // typed, which wins over the cookie if the two differ.
   const [{ error, name, phone, email, sponsorCode }, theme] = await Promise.all([searchParams, getTheme()]);
-  const sponsorFieldValue = sponsorCode ?? sponsor ?? '';
+
+  // Arrived by a member's invite link: the Referral ID is theirs and cannot be changed (the sign-up
+  // route enforces it too, so editing the page does nothing). A link to a member who does not exist
+  // is not locked, so the visitor is not stuck with an ID that can never work.
+  const inviter = sponsor ? await getStorefrontMember(sponsor) : null;
+  const locked = !!(sponsor && inviter);
+  const sponsorFieldValue = locked ? sponsor! : (sponsorCode ?? '');
 
   return (
     <>
@@ -59,11 +66,27 @@ export default async function SignupPage({
         </Field>
 
         <Field
-          label="Sponsor ID"
+          label="Referral ID"
           htmlFor="sponsorCode"
-          hint={sponsor ? `Filled in from the link you followed. You will join ${sponsor}'s team.` : 'Ask whoever invited you for their sponsor ID.'}
+          hint={
+            locked
+              ? `You were invited by ${inviter!.firstName}. This Referral ID is filled in from the invite link and cannot be changed.`
+              : sponsor
+                ? 'That invite link did not match a member. Enter the Referral ID of whoever invited you.'
+                : 'Ask whoever invited you for their Referral ID, or open the invite link they sent you.'
+          }
         >
-          <input id="sponsorCode" name="sponsorCode" required defaultValue={sponsorFieldValue} placeholder="MC100002" autoCapitalize="characters" className={inputClass} />
+          <input
+            id="sponsorCode"
+            name="sponsorCode"
+            required
+            readOnly={locked}
+            aria-readonly={locked}
+            defaultValue={sponsorFieldValue}
+            placeholder="MC100002"
+            autoCapitalize="characters"
+            className={`${inputClass} ${locked ? 'cursor-not-allowed bg-[var(--surface-tint)] font-mono font-semibold tracking-wide text-[var(--ink)]' : ''}`}
+          />
         </Field>
 
         <button type="submit" className={primaryButtonClass}>Create free account</button>

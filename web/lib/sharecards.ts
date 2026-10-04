@@ -90,7 +90,7 @@ ${blocks.join('\n')}
 }
 
 /** WhatsApp-ready messages. The link is put on its own line so it previews well. */
-export function shareMessages(d: { name: string; code: string; link: string }): { id: string; title: string; text: string }[] {
+export function shareMessages(d: { name: string; code: string; link: string; /** The create-account link carrying the member's Referral ID. */ signup?: string }): { id: string; title: string; text: string }[] {
   const first = d.name.split(' ')[0];
   return [
     {
@@ -100,8 +100,8 @@ export function shareMessages(d: { name: string; code: string; link: string }): 
     },
     {
       id: 'member',
-      title: 'Invite someone to register',
-      text: `Registering at Majestic Cart is free. You can sign up with my member ID ${d.code} and shop the range:\n${d.link}\n\n- ${first}`,
+      title: 'Invite someone to create an account',
+      text: `Registering at Majestic Cart is free. Open this link to create your account. My Referral ID ${d.code} is filled in for you:\n${d.signup ?? d.link}\n\n- ${first}`,
     },
     {
       id: 'status',

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MemberShell, type MemberSummary } from './MemberShell';
 import { buildShareSvg, shareMessages, whatsappUrl, SHARE_SIZE, type ShareKind } from '@/lib/sharecards';
-import { buildReferralLink } from '@/lib/referral';
+import { buildReferralLink, signupLink } from '@/lib/referral';
 import { ShareKit, type TrainingVideo } from './ShareKit';
 
 /**
@@ -68,7 +68,13 @@ function Share({ data, videos }: { data: MemberSummary; videos: TrainingVideo[] 
     return () => { cancelled = true; };
   }, [link]);
 
-  const messages = useMemo(() => (link ? shareMessages({ name: data.member.name, code: data.member.code, link }) : []), [link, data.member.name, data.member.code]);
+  const signup = useMemo(() => {
+    if (!origin) return '';
+    try { return signupLink(data.member.code, origin); } catch { return ''; }
+  }, [origin, data.member.code]);
+
+  const messages = useMemo(() => (link ? shareMessages({ name: data.member.name, code: data.member.code, link, signup: signup || undefined }) : []), [link, signup, data.member.name, data.member.code]);
+  const inviteText = signup ? `Create your free Majestic Cart account with my Referral ID ${data.member.code}. It is filled in for you:\n${signup}` : '';
   const svg = useMemo(
     () => (link ? buildShareSvg(kind, { name: data.member.name, code: data.member.code, link, logo, qrSvg }) : ''),
     [link, kind, data.member.name, data.member.code, logo, qrSvg],
@@ -132,6 +138,47 @@ function Share({ data, videos }: { data: MemberSummary; videos: TrainingVideo[] 
     <>
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-6">
+        {/* The invite link: opens the create-account page with this member's Referral ID
+            already in the box and locked, so whoever joins from it joins this member's team. */}
+        {signup && (
+          <section className="rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent-soft)] p-5">
+            <h2 className="font-serif text-xl text-[var(--ink)]">Your invite link</h2>
+            <p className="mt-1 text-sm text-[var(--body)]">
+              Send this to anyone you want to join. When they open it and create an account, your Referral ID{' '}
+              <strong className="font-mono">{data.member.code}</strong> is filled in for them and they cannot change it.
+            </p>
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-[var(--surface)] px-3 py-2.5">
+              <code className="min-w-0 flex-1 truncate text-sm text-[var(--ink)]">{signup.replace(/^https?:\/\//, '')}</code>
+              <button
+                type="button"
+                onClick={() => copy('invite-link', signup)}
+                className="shrink-0 rounded-lg border border-[var(--line-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--accent)] hover:bg-[var(--surface-tint)]"
+              >
+                {copied === 'invite-link' ? 'Copied' : 'Copy link'}
+              </button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a
+                href={whatsappUrl(inviteText)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl bg-[#1F9D55] px-4 py-2 text-sm font-semibold text-white hover:bg-[#188046]"
+              >
+                Send on WhatsApp
+              </a>
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
+                <button
+                  type="button"
+                  onClick={() => { void navigator.share({ title: 'Join Majestic Cart', text: inviteText }).catch(() => undefined); }}
+                  className="rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-tint)]"
+                >
+                  Share…
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
         <section>
           <h2 className="font-serif text-xl text-[var(--ink)]">WhatsApp messages</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">Ready to send. Each one carries your storefront link.</p>

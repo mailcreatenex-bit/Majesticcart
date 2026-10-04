@@ -342,7 +342,7 @@ const DEFAULT_ABOUT_PAGE: ThemeSettingValue['aboutPage'] = {
 const DEFAULT_JOIN_PAGE: ThemeSettingValue['joinPage'] = {
   lead: 'Sell products you use yourself. Registering is free. Your first order has a minimum value, and a small monthly purchase keeps your income withdrawable.',
   steps: [
-    { title: 'Sign up with a sponsor ID', body: 'Someone already selling shares their member ID with you. You sign up with it, verify your mobile number, and you are a member. It takes about two minutes and registering costs nothing.' },
+    { title: 'Sign up with a referral ID', body: 'Someone already selling sends you their invite link, or shares their Referral ID. You sign up with it, verify your mobile number, and you are a member. It takes about two minutes and registering costs nothing.' },
     { title: 'Add money to your shopping wallet', body: 'Orders are paid from a shopping wallet, not a card. You transfer by UPI to the account shown on the recharge page, upload the payment reference, and the amount is credited once our team has checked it against the bank statement.' },
     { title: 'Order products and sell them', body: 'You buy at member price and sell to your own customers. Every product carries a business volume, shown on its page before you buy.' },
     { title: 'Build a team, if you want to', body: 'You can sponsor other sellers. Sponsors earn a direct income when someone they sponsored makes a first product purchase, and further income on the products their team buys. Nothing is paid just for signing someone up.' },

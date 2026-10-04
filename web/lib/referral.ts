@@ -1,7 +1,7 @@
 /**
  * Referral links.
  *
- * Every member shares product links carrying their sponsor ID:
+ * Every member shares product links carrying their Referral ID:
  *
  *   /product/rose-gold-body-lotion?ref=MC100002
  *
@@ -141,6 +141,26 @@ export function buildReferralLink(path: string, memberCode: string, origin: stri
   const url = new URL(absoluteUrl(path, origin));
   url.searchParams.set(REF_PARAM, code);
   return url.toString();
+}
+
+/**
+ * The Referral ID a new account must be created with.
+ *
+ * Someone who arrives by a member's invite link has that member's ID in the
+ * referral cookie, and it is fixed: whatever the form posts is ignored, so
+ * it cannot be swapped for another member's by editing the page. Someone who
+ * arrives with no link (told an ID by phone, say) has no cookie and types one.
+ */
+export function effectiveReferralId(cookieValue: string | null | undefined, posted: string | null | undefined): string | undefined {
+  const fromLink = normaliseRefCode(cookieValue);
+  if (fromLink) return fromLink;
+  const typed = (posted ?? '').trim();
+  return typed || undefined;
+}
+
+/** The link a member sends to invite someone: opens the create-account page with the member's Referral ID already in it. */
+export function signupLink(memberCode: string, origin: string): string {
+  return buildReferralLink('/signup', memberCode, origin);
 }
 
 export const refCookieOptions = {

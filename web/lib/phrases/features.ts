@@ -76,6 +76,10 @@ export const FEATURES: Phrase[] = [
   ['Scan this with any UPI app on your phone, or copy the ID below.', 'इसे अपने फ़ोन के किसी भी UPI ऐप से स्कैन करें, या नीचे दिया ID कॉपी करें।', 'এটি আপনার ফোনের যেকোনো UPI অ্যাপ দিয়ে স্ক্যান করুন, বা নিচের ID কপি করুন।'],
   ['Done paying? Enter the reference from your UPI app.', 'भुगतान हो गया? अपने UPI ऐप से रेफ़रेंस नंबर दर्ज करें।', 'পেমেন্ট হয়ে গেছে? আপনার UPI অ্যাপ থেকে রেফারেন্স নম্বর লিখুন।'],
   ['After you pay, enter the reference from your UPI app so we can match it.', 'भुगतान के बाद अपने UPI ऐप से रेफ़रेंस नंबर दर्ज करें ताकि हम उसे मिला सकें।', 'পেমেন্টের পর আপনার UPI অ্যাপ থেকে রেফারেন্স নম্বর লিখুন, যাতে আমরা মিলিয়ে নিতে পারি।'],
+  // invite link
+  ['Your invite link', 'आपका आमंत्रण लिंक', 'আপনার আমন্ত্রণ লিঙ্ক'],
+  ['Copy link', 'लिंक कॉपी करें', 'লিঙ্ক কপি করুন'],
+  ['Invite someone to create an account', 'किसी को खाता बनाने के लिए आमंत्रित करें', 'কাউকে অ্যাকাউন্ট খুলতে আমন্ত্রণ জানান'],
   // shade finder
   ['Not sure of your shade?', 'अपने शेड के बारे में पक्का नहीं हैं?', 'আপনার শেড নিয়ে নিশ্চিত নন?'],
   ['Take a selfie and we will pick the shades that suit your skin, ready to add to your bag.', 'एक सेल्फ़ी लें और हम आपकी त्वचा पर जँचने वाले शेड चुनेंगे, जिन्हें आप सीधे बैग में जोड़ सकते हैं।', 'একটি সেলফি তুলুন, আমরা আপনার ত্বকের সঙ্গে মানানসই শেড বেছে দেব, সরাসরি ব্যাগে যোগ করার জন্য তৈরি।'],

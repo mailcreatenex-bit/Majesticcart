@@ -57,3 +57,12 @@ test('video links are told apart without loading anything', () => {
   assert.equal(videoEmbed('http://youtu.be/dQw4w9WgXcQ').kind, 'link', 'plain http is never embedded');
   assert.equal(videoEmbed('not a url').kind, 'link');
 });
+
+test('the invite message carries the create-account link with the Referral ID, not just the storefront', () => {
+  const signup = 'https://example.com/signup?ref=MC100005';
+  const msgs = shareMessages({ ...d, signup });
+  const invite = msgs.find((m) => m.id === 'member')!;
+  assert.ok(invite.text.includes(signup));
+  assert.ok(invite.text.includes('Referral ID MC100005'));
+  assert.deepEqual(findIncomeClaims(invite.text), []);
+});
