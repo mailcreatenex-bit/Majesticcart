@@ -29,3 +29,16 @@ test('a malformed code in the link is discarded, never stored', () => {
   assert.equal(normaliseRefCode('<script>'), null);
   assert.equal(canonicalise('/signup', new URLSearchParams('ref=bad')).ref, null);
 });
+
+test('the admin label page keeps its order ids, and the sign-in notice survives', () => {
+  const labels = canonicalise('/admin/orders/print', new URLSearchParams('ids=a,b'));
+  assert.equal(labels.shouldRedirect, false);
+  assert.equal(labels.path, '/admin/orders/print?ids=a%2Cb');
+  assert.equal(canonicalise('/admin/login', new URLSearchParams('notice=2fa')).shouldRedirect, false);
+});
+
+test('tracking parameters are still stripped', () => {
+  const r = canonicalise('/shop', new URLSearchParams('utm_source=x&fbclid=y'));
+  assert.equal(r.path, '/shop');
+  assert.equal(r.shouldRedirect, true);
+});

@@ -71,6 +71,8 @@ export const NON_CANONICAL_PARAMS = new Set([
 export const CANONICAL_PARAMS = new Set([
   'page', 'sort', 'category', 'q', 'next', 'error', 'identifier',
   'name', 'phone', 'email', 'sponsorCode',
+  // Admin pages: the order ids to print labels for, and the notice shown after turning two-factor on.
+  'ids', 'notice',
 ]);
 
 export interface CanonicalResult {

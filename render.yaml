@@ -74,6 +74,12 @@ services:
         sync: false
       - key: OUTBOUND_NOTIFICATIONS
         value: "true"
+      # ---- Optional extras. Most integrations (delivery company, SMS, WhatsApp, email, alert address)
+      #      are entered by an admin under Integrations in the console, not here.
+      - key: ALERT_EMAIL
+        sync: false
+      - key: PUSH_CONTACT
+        sync: false
       # ---- Admin sign-in: two-factor is required on every admin account.
       #      Set to "false" only to recover from a lock-out, then set it back.
       - key: ADMIN_REQUIRE_2FA
