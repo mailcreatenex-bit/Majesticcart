@@ -14,6 +14,7 @@ import { CommissionService } from './commission/commission.service';
 import { CommissionProcessor } from './commission/commission.processor';
 import { OrderService } from './order/order.service';
 import { PushService } from './notifications/push.service';
+import { CartReminderService } from './order/cart-reminder.service';
 import { ErrorService } from './monitoring/error.service';
 import { ErrorCaptureFilter } from './monitoring/error.filter';
 import { HealthController, ClientErrorController, AdminErrorsController } from './api/monitoring.controller';
@@ -155,7 +156,7 @@ export class SettingsModule {}
 @Module({
   imports: [SettingsModule, MediaModule],
   controllers: [MemberViewController, ShadeFinderController],
-  providers: [ProfileService, MemberViewService, ShadeFinderService, TeamDashboardService, PushService],
+  providers: [ProfileService, MemberViewService, ShadeFinderService, TeamDashboardService, PushService, CartReminderService],
   exports: [ProfileService, MemberViewService, PushService],
 })
 export class MemberModule {}

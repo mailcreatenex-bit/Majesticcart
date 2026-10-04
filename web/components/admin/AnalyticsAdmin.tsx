@@ -129,7 +129,7 @@ function Analytics() {
               {r.topSellers.length === 0 ? (
                 <p className="text-sm text-neutral-500">No orders in this period.</p>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="w-full min-w-[18rem] text-sm">
                   <thead><tr className="text-left text-xs text-neutral-500"><th className="pb-1 font-medium">Product</th><th className="pb-1 text-right font-medium">Units</th><th className="pb-1 text-right font-medium">Value</th></tr></thead>
                   <tbody className="divide-y divide-neutral-100">
                     {r.topSellers.map((t) => (
@@ -140,7 +140,7 @@ function Analytics() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </Panel>
           </div>
@@ -149,7 +149,7 @@ function Analytics() {
             {r.mostViewed.length === 0 ? (
               <p className="text-sm text-neutral-500">No product views recorded yet.</p>
             ) : (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="w-full min-w-[22rem] text-sm">
                 <thead><tr className="text-left text-xs text-neutral-500"><th className="pb-1 font-medium">Product</th><th className="pb-1 text-right font-medium">Viewed</th><th className="pb-1 text-right font-medium">Added to bag</th><th className="pb-1 text-right font-medium">Add rate</th></tr></thead>
                 <tbody className="divide-y divide-neutral-100">
                   {r.mostViewed.map((p) => (
@@ -161,7 +161,7 @@ function Analytics() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             )}
             <p className="mt-2 text-xs text-neutral-500">Counted in sessions, not clicks. A low add rate on a much-viewed product (shown in red) usually means price, photos or description are putting people off.</p>
           </Panel>

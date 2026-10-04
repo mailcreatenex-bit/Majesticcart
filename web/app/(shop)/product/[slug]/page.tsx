@@ -11,6 +11,7 @@ import { showMoney, showVolume, discountPercent } from '@/lib/money';
 import { AddToBag } from '@/components/AddToBag';
 import { WishButton } from '@/components/WishButton';
 import { TrackView } from '@/components/TrackView';
+import { PincodeCheck } from '@/components/PincodeCheck';
 import { ShadeFinderPromo } from '@/components/ShadeFinderPromo';
 
 /** Products a shade finder can help with: anything in makeup, or named like it. */
@@ -173,6 +174,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </p>
 
             <AddToBag product={product} />
+
+            <PincodeCheck />
 
             {MAKEUP.test(`${product.category} ${product.name}`) && <ShadeFinderPromo variant="product" />}
 

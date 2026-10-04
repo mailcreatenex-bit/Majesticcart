@@ -111,6 +111,7 @@ model Member {
 
   wishlist WishlistItem[]
   pushSubscriptions PushSubscription[]
+  cartSnapshot CartSnapshot?
 }
 
 model DeviceLink {
@@ -357,6 +358,19 @@ model PushSubscription {
   createdAt  DateTime @default(now())
 
   @@index([memberId])
+}
+
+// What a signed-in member has in their bag, kept only so a forgotten bag can be mentioned once
+// (order/cart-reminder.service.ts). Product and quantity only; replaced each time it changes.
+model CartSnapshot {
+  memberId   String    @id
+  member     Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  items      Json
+  count      Int
+  updatedAt  DateTime  @default(now())
+  remindedAt DateTime?
+
+  @@index([updatedAt])
 }
 
 // ------------------------------------------------------------------- content

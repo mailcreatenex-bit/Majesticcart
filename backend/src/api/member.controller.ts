@@ -18,6 +18,7 @@ import { StorageService } from '../media/storage.service';
 import { MemberViewService } from '../member/view.service';
 import { TeamDashboardService } from '../member/team-dashboard.service';
 import { PushService } from '../notifications/push.service';
+import { CartReminderService } from '../order/cart-reminder.service';
 import { ProfileService } from '../member/profile.service';
 
 /**
@@ -465,7 +466,21 @@ export class MemberViewController {
     private readonly storage: StorageService,
     private readonly teamDash: TeamDashboardService,
     private readonly push: PushService,
+    private readonly cartReminders: CartReminderService,
   ) {}
+
+  /** The browser tells the server what is in the signed-in member's bag (product and quantity), so a forgotten bag can be mentioned once. */
+  @Put('cart')
+  @HttpCode(200)
+  async saveCart(
+    @CurrentUser('sub') memberId: string,
+    @Body(zodBody(z.object({
+      items: z.array(z.object({ slug: z.string().max(120).regex(/^[a-z0-9-]+$/), qty: z.number().int().min(0).max(99) })).max(50),
+    }))) body: { items: { slug: string; qty: number }[] },
+  ) {
+    await this.cartReminders.save(memberId, body.items);
+    return { ok: true as const };
+  }
 
   /* ---------------------------------------------------- phone notifications */
 

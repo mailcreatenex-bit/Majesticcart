@@ -1,6 +1,8 @@
 'use client';
 
 import { track } from '@/lib/track';
+import { api } from '@/lib/api';
+import { MEMBER_FLAG_COOKIE } from '@/lib/session-shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   readCart, writeCart, addLine, setQuantity, removeLine, clearCart, totals,
@@ -49,6 +51,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
   }, []);
+
+  // For a signed-in member, a few seconds after the bag stops changing, tell the server what is in it
+  // (product and quantity) so a forgotten bag can be mentioned once. Never blocks, never redirects.
+  useEffect(() => {
+    if (!ready || !document.cookie.split('; ').some((c) => c === `${MEMBER_FLAG_COOKIE}=1`)) return;
+    const t = setTimeout(() => {
+      void api('/me/cart', {
+        method: 'PUT',
+        body: { items: cart.lines.map((l) => ({ slug: l.slug, qty: l.quantity })) },
+        skipAuthRedirect: true,
+      }).catch(() => undefined);
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [cart, ready]);
 
   /** Every mutation goes through here, so nothing can change state without persisting. */
   const commit = useCallback((next: Cart) => {

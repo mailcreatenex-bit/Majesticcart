@@ -83,6 +83,10 @@ export const FEATURES: Phrase[] = [
   // phone notifications
   ['Notifications on this phone', 'इस फ़ोन पर नोटिफ़िकेशन', 'এই ফোনে নোটিফিকেশন'],
   ['Order, wallet and back-in-stock updates appear on this phone, free, even when the site is closed.', 'ऑर्डर, वॉलेट और स्टॉक में वापसी की अपडेट इस फ़ोन पर मुफ़्त दिखती हैं, साइट बंद होने पर भी।', 'অর্ডার, ওয়ালেট ও স্টকে ফেরার আপডেট এই ফোনে বিনামূল্যে দেখা যায়, সাইট বন্ধ থাকলেও।'],
+  // delivery
+  ['Delivery', 'डिलीवरी', 'ডেলিভারি'],
+  ['Enter your pincode', 'अपना पिनकोड दर्ज करें', 'আপনার পিনকোড লিখুন'],
+  ['Check', 'जाँचें', 'যাচাই করুন'],
   // shade finder
   ['Not sure of your shade?', 'अपने शेड के बारे में पक्का नहीं हैं?', 'আপনার শেড নিয়ে নিশ্চিত নন?'],
   ['Take a selfie and we will pick the shades that suit your skin, ready to add to your bag.', 'एक सेल्फ़ी लें और हम आपकी त्वचा पर जँचने वाले शेड चुनेंगे, जिन्हें आप सीधे बैग में जोड़ सकते हैं।', 'একটি সেলফি তুলুন, আমরা আপনার ত্বকের সঙ্গে মানানসই শেড বেছে দেব, সরাসরি ব্যাগে যোগ করার জন্য তৈরি।'],

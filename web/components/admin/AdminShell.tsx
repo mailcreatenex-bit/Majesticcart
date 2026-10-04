@@ -141,7 +141,7 @@ export function AdminShell({
           at the shop. */}
       <div className="min-h-screen bg-[#F7F7F8]">
         <header className="border-b border-neutral-200 bg-white">
-          <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+          <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:gap-6">
             <Link href="/admin" className="text-sm font-semibold tracking-tight text-neutral-900">
               Majestic Cart <span className="text-neutral-400">admin</span>
             </Link>
@@ -165,7 +165,7 @@ export function AdminShell({
             </nav>
 
             <div className="ml-auto flex items-center gap-3 text-xs">
-              <span className="text-neutral-500">
+              <span className="hidden text-neutral-500 sm:inline">
                 {admin.name} · <span className="font-semibold text-neutral-700">{admin.role}</span>
               </span>
               <SignOut />
@@ -176,7 +176,12 @@ export function AdminShell({
               where an admin will be when a member is waiting on them. */}
           <nav aria-label="Admin" className="flex gap-0.5 overflow-x-auto border-t border-neutral-200 px-4 py-2 md:hidden">
             {visibleNav.map((n) => (
-              <Link key={n.href} href={n.href} className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm text-neutral-600">
+              <Link
+                key={n.href}
+                href={n.href}
+                aria-current={(n.href === '/admin' ? pathname === '/admin' : pathname.startsWith(n.href)) ? 'page' : undefined}
+                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm ${(n.href === '/admin' ? pathname === '/admin' : pathname.startsWith(n.href)) ? 'bg-neutral-900 text-white' : 'text-neutral-600'}`}
+              >
                 {n.label}
               </Link>
             ))}
