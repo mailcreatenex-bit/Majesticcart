@@ -44,7 +44,7 @@ export const SignupSchema = z.object({
   phone,
   email: z.string().trim().min(1, 'Enter your email address').email('Enter a valid email'),
   password: z.string().min(8, 'Use at least 8 characters').max(128),
-  sponsorCode: z.string().trim().toUpperCase().min(1, 'Enter the sponsor ID you were given').regex(/^MC\d{4,12}$/, 'Check the sponsor ID'),
+  sponsorCode: z.string().trim().toUpperCase().min(1, 'Enter the Referral ID you were given').regex(/^MC\d{4,12}$/, 'Check the Referral ID'),
   otpCode: z.string().regex(/^\d{6}$/).optional(),
 });
 

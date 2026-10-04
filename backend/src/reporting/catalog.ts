@@ -201,7 +201,7 @@ export const MEMBERS: Dataset = {
     lastLoginAt: { key: 'lastLoginAt', label: 'Last login', sql: `m."lastLoginAt"`, type: 'date', bucketable: true },
     state: { key: 'state', label: 'State', sql: `m.state`, type: 'string' },
     city: { key: 'city', label: 'City', sql: `m.city`, type: 'string' },
-    sponsorCode: { key: 'sponsorCode', label: 'Sponsor ID', sql: `sp."memberCode"`, type: 'string' },
+    sponsorCode: { key: 'sponsorCode', label: 'Referral ID', sql: `sp."memberCode"`, type: 'string' },
     ...MEMBER_DIMS('m'),
   },
   measures: {
