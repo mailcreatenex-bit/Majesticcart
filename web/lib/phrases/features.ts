@@ -64,6 +64,18 @@ export const FEATURES: Phrase[] = [
   ['Open the video', 'वीडियो खोलें', 'ভিডিও খুলুন'],
   ['Loading products…', 'उत्पाद लोड हो रहे हैं…', 'পণ্য লোড হচ্ছে…'],
   ['No products to share here yet.', 'यहाँ अभी शेयर करने के लिए कोई उत्पाद नहीं।', 'এখানে এখনও শেয়ার করার মতো কোনো পণ্য নেই।'],
+  // add money
+  ['1. How much?', '1. कितना?', '১. কত টাকা?'],
+  ['2. Pay by UPI', '2. UPI से भुगतान करें', '২. UPI-তে পেমেন্ট করুন'],
+  ['3. Enter the UTR', '3. UTR दर्ज करें', '৩. UTR লিখুন'],
+  ['Other UPI app', 'दूसरा UPI ऐप', 'অন্য UPI অ্যাপ'],
+  ['Tap your app. The amount and a note are filled in for you.', 'अपना ऐप दबाएँ। रकम और नोट पहले से भरे हुए हैं।', 'আপনার অ্যাপে চাপুন। টাকার পরিমাণ ও নোট আগে থেকেই ভরা আছে।'],
+  ['Enter an amount above to get one-tap buttons for your UPI app.', 'अपने UPI ऐप के लिए एक-टैप बटन पाने के लिए ऊपर रकम दर्ज करें।', 'আপনার UPI অ্যাপের জন্য এক-ট্যাপ বোতাম পেতে উপরে টাকার পরিমাণ লিখুন।'],
+  ['If your app does not open or declines the payment, use the QR or the UPI ID below instead. Some apps limit pre-filled payments.', 'अगर आपका ऐप नहीं खुलता या भुगतान अस्वीकार करता है, तो नीचे दिया QR या UPI ID इस्तेमाल करें। कुछ ऐप पहले से भरे भुगतान सीमित कर देते हैं।', 'আপনার অ্যাপ না খুললে বা পেমেন্ট ফিরিয়ে দিলে নিচের QR বা UPI ID ব্যবহার করুন। কিছু অ্যাপ আগে থেকে ভরা পেমেন্টে সীমা রাখে।'],
+  ['Or scan this with another phone, or copy the ID below.', 'या इसे दूसरे फ़ोन से स्कैन करें, या नीचे दिया ID कॉपी करें।', 'অথবা এটি অন্য ফোন থেকে স্ক্যান করুন, বা নিচের ID কপি করুন।'],
+  ['Scan this with any UPI app on your phone, or copy the ID below.', 'इसे अपने फ़ोन के किसी भी UPI ऐप से स्कैन करें, या नीचे दिया ID कॉपी करें।', 'এটি আপনার ফোনের যেকোনো UPI অ্যাপ দিয়ে স্ক্যান করুন, বা নিচের ID কপি করুন।'],
+  ['Done paying? Enter the reference from your UPI app.', 'भुगतान हो गया? अपने UPI ऐप से रेफ़रेंस नंबर दर्ज करें।', 'পেমেন্ট হয়ে গেছে? আপনার UPI অ্যাপ থেকে রেফারেন্স নম্বর লিখুন।'],
+  ['After you pay, enter the reference from your UPI app so we can match it.', 'भुगतान के बाद अपने UPI ऐप से रेफ़रेंस नंबर दर्ज करें ताकि हम उसे मिला सकें।', 'পেমেন্টের পর আপনার UPI অ্যাপ থেকে রেফারেন্স নম্বর লিখুন, যাতে আমরা মিলিয়ে নিতে পারি।'],
   // shade finder
   ['Not sure of your shade?', 'अपने शेड के बारे में पक्का नहीं हैं?', 'আপনার শেড নিয়ে নিশ্চিত নন?'],
   ['Take a selfie and we will pick the shades that suit your skin, ready to add to your bag.', 'एक सेल्फ़ी लें और हम आपकी त्वचा पर जँचने वाले शेड चुनेंगे, जिन्हें आप सीधे बैग में जोड़ सकते हैं।', 'একটি সেলফি তুলুন, আমরা আপনার ত্বকের সঙ্গে মানানসই শেড বেছে দেব, সরাসরি ব্যাগে যোগ করার জন্য তৈরি।'],

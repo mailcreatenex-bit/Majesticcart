@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, BadRequestException, NotFoundException, UseGuards } from '@nestjs/common';
 import { zodBody } from '../common/zod.pipe';
 import { money, volume, parseMoneyInput } from '../common/serialization';
 import { AdminOnly, RequirePermission, CurrentUser, Public, ClientContext, AllowWithout2fa } from '../auth/guards';
@@ -59,7 +59,7 @@ export class AdminRechargeController {
     const page = rows.slice(0, 50);
     return {
       items: page.map((r: any) => ({
-        id: r.id, status: r.status, utr: r.utr, flags: r.flags,
+        id: r.id, status: r.status, utr: r.utr, flags: r.flags, hasScreenshot: !!r.screenshotKey,
         claimed: money(r.claimedPaise), credited: r.creditedPaise ? money(r.creditedPaise) : null,
         member: r.member, createdAt: r.createdAt, reviewedAt: r.reviewedAt, note: r.reviewNote,
       })),
@@ -75,6 +75,7 @@ export class AdminRechargeController {
   @Get(':id/screenshot')
   async screenshot(@Param('id') id: string) {
     const r = await this.prisma.recharge.findUniqueOrThrow({ where: { id }, select: { screenshotKey: true } });
+    if (!r.screenshotKey) throw new NotFoundException('The member did not attach a screenshot. Match the UTR against the bank statement.');
     return { url: await this.storage.signedReadUrl(r.screenshotKey, 600), expiresInSeconds: 600 };
   }
 

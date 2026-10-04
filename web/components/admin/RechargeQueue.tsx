@@ -41,6 +41,8 @@ interface RechargeRow {
   status: Status;
   utr: string;
   flags: string[];
+  /** False when the member paid and sent only the UTR. */
+  hasScreenshot?: boolean;
   claimed: MoneyView;
   credited: MoneyView | null;
   member: { memberCode: string; name: string; phone: string; rankIndex: number };
@@ -275,7 +277,13 @@ function RechargeCard({ row, onSettled }: { row: RechargeRow; onSettled: () => v
         </div>
       ) : (
         <div className="p-4">
-          <Screenshot rechargeId={row.id} />
+          {row.hasScreenshot === false ? (
+            <p className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+              No screenshot attached. Match the UTR <span className="font-mono font-semibold">{row.utr}</span> against the bank statement.
+            </p>
+          ) : (
+            <Screenshot rechargeId={row.id} />
+          )}
 
           {mode === 'idle' ? (
             <>

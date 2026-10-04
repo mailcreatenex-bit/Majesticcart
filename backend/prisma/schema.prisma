@@ -799,7 +799,9 @@ model Recharge {
   claimedPaise     BigInt
   creditedPaise    BigInt?
   utr              String
-  screenshotKey    String // S3/R2 object key, not the image itself
+  // S3/R2 object key, not the image itself. Optional: the UTR is what is matched against the bank
+  // statement, so a screenshot is a convenience, not a requirement.
+  screenshotKey    String?
   screenshotSha256 String? // catches a screenshot reused across accounts
 
   status       RechargeStatus @default(PENDING)

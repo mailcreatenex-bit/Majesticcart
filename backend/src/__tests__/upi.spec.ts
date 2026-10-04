@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { upiIntentUri, upiQrSvg } from '../recharge/upi-qr';
+import { upiIntentUri, upiQrSvg, upiAppLinks } from '../recharge/upi-qr';
 
 /**
  * The UPI intent URI.
@@ -64,4 +64,31 @@ test('a payee name with reserved characters survives the round trip', () => {
   const name = 'Shah & Co. (India)';
   const uri = upiIntentUri({ vpa: 'store@hdfcbank', name });
   assert.equal(new URLSearchParams(uri.slice('upi://pay?'.length)).get('pn'), name);
+});
+
+test('every app link carries the same payee, amount and note as the standard intent', () => {
+  const payee = { vpa: 'store@hdfcbank', name: 'Majestic Cart', amountRupees: '500.00', note: 'Wallet MC100005' };
+  const links = upiAppLinks(payee);
+  const query = (u: string) => new URLSearchParams(u.slice(u.indexOf('?') + 1));
+  const expected = [...query(links.upi).entries()];
+  for (const [name, link] of Object.entries(links)) {
+    assert.deepEqual([...query(link).entries()], expected, name);
+  }
+  const q = query(links.upi);
+  assert.equal(q.get('pa'), 'store@hdfcbank');
+  assert.equal(q.get('am'), '500.00');
+  assert.equal(q.get('tn'), 'Wallet MC100005');
+});
+
+test('each app opens through its own scheme', () => {
+  const links = upiAppLinks({ vpa: 'store@hdfcbank', name: 'Majestic Cart', amountRupees: '100.00' });
+  assert.ok(links.upi.startsWith('upi://pay?'));
+  assert.ok(links.gpayAndroid.startsWith('tez://upi/pay?'));
+  assert.ok(links.gpayIos.startsWith('gpay://upi/pay?'));
+  assert.ok(links.phonepe.startsWith('phonepe://pay?'));
+  assert.ok(links.paytm.startsWith('paytmmp://pay?'));
+});
+
+test('an invalid UPI ID cannot produce app links either', () => {
+  assert.throws(() => upiAppLinks({ vpa: 'not a vpa', name: 'X' }));
 });

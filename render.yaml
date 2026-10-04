@@ -5,6 +5,8 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
+    # Deploy on every push to the connected branch, so the API cannot fall behind the site again.
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
@@ -30,8 +32,53 @@ services:
         sync: false
       - key: FIELD_ENCRYPTION_KEY_VERSION
         value: "1"
+      # ---- File storage (recharge screenshots, profile photos, product images).
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_PUBLIC_URL_BASE
+        sync: false
+      - key: S3_FORCE_PATH_STYLE
+        value: "true"
+      # ---- Messages to members. Nothing is sent until a real provider is set:
+      #      SMS needs SMS_PROVIDER other than "console"; WhatsApp needs both
+      #      WHATSAPP_ENDPOINT and WHATSAPP_TOKEN; email needs EMAIL_PROVIDER=resend.
       - key: SMS_PROVIDER
         value: console
+      - key: SMS_SENDER_ID
+        sync: false
+      - key: SMS_ENDPOINT
+        sync: false
+      - key: SMS_API_KEY
+        sync: false
+      - key: SMS_OTP_TEMPLATE_ID
+        sync: false
+      - key: WHATSAPP_ENDPOINT
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_TEMPLATE
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: console
+      - key: EMAIL_FROM
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: OUTBOUND_NOTIFICATIONS
+        value: "true"
+      # ---- Admin sign-in: two-factor is required on every admin account.
+      #      Set to "false" only to recover from a lock-out, then set it back.
+      - key: ADMIN_REQUIRE_2FA
+        value: "true"
+      # ---- Couriers (all optional; see backend/.env.example).
       - key: DELHIVERY_API_TOKEN
         sync: false
       - key: SHIPROCKET_EMAIL

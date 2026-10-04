@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -11,23 +11,26 @@ import { MemberShell, StatusPill, EmptyState } from './MemberShell';
 /**
  * Wallet recharge.
  *
- * This is the only way money enters the platform, and it is deliberately not
- * automatic: the member pays by UPI to the account on screen, submits the UTR
- * and a screenshot, and an admin verifies it against the bank statement before
- * a single paisa is credited.
+ * Money enters the platform by a UPI payment that a person verifies; it is
+ * deliberately not automatic (there is no payment gateway). The member:
  *
- * Everything on this screen follows from that being manual:
+ *   1. says how much;
+ *   2. pays: on a phone, one tap opens GPay / PhonePe / Paytm (or any UPI app)
+ *      with the amount and a note carrying their member ID already filled in;
+ *      the QR and the UPI ID to copy are always there as the fallback, and are
+ *      what a desktop visitor uses;
+ *   3. enters the UTR from their UPI app. A screenshot is optional.
+ *
+ * Everything follows from the check being manual:
  *
  *   • **Nothing pretends to be instant.** The button says "Submit for
  *     approval", not "Add money". A member who expects an instant credit and
- *     does not get one assumes the money is gone, and in an MLM that becomes an
- *     accusation within the hour.
+ *     does not get one assumes the money is gone.
  *   • **The UTR is the key.** It is what the admin matches against the bank
- *     statement, and the backend enforces one approved credit per UTR. So the
- *     form explains where to find it rather than labelling it and hoping.
- *   • **Pending requests are shown first**, above the form. The commonest
- *     support question here is "where is my money" and the answer is usually
- *     "still pending" — which the member can see for themselves.
+ *     statement, and the backend enforces one approved credit per UTR. The form
+ *     explains where to find it rather than labelling it and hoping.
+ *   • **Pending requests are shown first**, above the form: the commonest
+ *     support question is "where is my money".
  */
 
 interface PayInfo {
@@ -38,6 +41,13 @@ interface PayInfo {
   minPaise: number;
   maxPaise: number;
   note: string | null;
+}
+
+interface PayLink {
+  amount: string;
+  note: string;
+  links: { upi: string; gpayAndroid: string; gpayIos: string; phonepe: string; paytm: string };
+  qrUrl: string;
 }
 
 interface RechargeRequest {
@@ -92,6 +102,12 @@ function RechargeForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
 
+  // One-tap app links for the chosen amount.
+  const [link, setLink] = useState<PayLink | null>(null);
+  const [launched, setLaunched] = useState(false);
+  const [device, setDevice] = useState<'ios' | 'android' | 'other'>('other');
+  const utrRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -114,13 +130,41 @@ function RechargeForm({
 
   const pending = requests.filter((r) => r.status === 'PENDING');
 
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    setDevice(/iPhone|iPad|iPod/i.test(ua) ? 'ios' : /Android/i.test(ua) ? 'android' : 'other');
+  }, []);
+
+  // Coming back from the UPI app, take the member straight to the UTR box.
+  useEffect(() => {
+    if (!launched) return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        utrRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        utrRef.current?.focus();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [launched]);
+
   const amountPaise = useMemo(() => parseRupeeInput(amount), [amount]);
 
-  const valid =
-    amountPaise > 0 &&
-    (!pay || (amountPaise >= pay.minPaise && amountPaise <= pay.maxPaise)) &&
-    /^[A-Z0-9]{12,22}$/.test(utr.trim().toUpperCase()) &&
-    !!screenshot;
+  const amountOk = amountPaise > 0 && (!pay || (amountPaise >= pay.minPaise && amountPaise <= pay.maxPaise));
+
+  // Ask the server for links and a QR carrying this amount, a moment after typing stops.
+  useEffect(() => {
+    if (!amountOk || !pay) { setLink(null); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      api<PayLink>(`/wallet/pay-link?amount=${(amountPaise / 100).toFixed(2)}`)
+        .then((r) => { if (!cancelled) setLink(r); })
+        .catch(() => { if (!cancelled) setLink(null); });
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [amountOk, amountPaise, pay]);
+
+  const valid = amountOk && /^[A-Z0-9]{12,22}$/.test(utr.trim().toUpperCase());
 
   const submit = async () => {
     if (!valid || submitting) return;
@@ -129,27 +173,30 @@ function RechargeForm({
     setFieldErrors({});
 
     try {
-      // The image goes straight to object storage on a one-time ticket. A 4 MB
-      // screenshot through the API process is memory pressure for no benefit,
-      // and members on patchy data would upload it twice.
-      const ticket = await api<{ uploadUrl: string; objectKey: string }>(
-        '/wallet/upload-ticket',
-        {
-          method: 'POST',
-          body: { purpose: 'recharge-screenshot', contentType: screenshot!.type, contentLength: screenshot!.size },
-        },
-      );
-
-      const put = await fetch(ticket.uploadUrl, {
-        method: 'PUT',
-        body: screenshot,
-        headers: { 'Content-Type': screenshot!.type },
-      });
-      if (!put.ok) throw new ApiError('The screenshot could not be uploaded. Try again.', put.status);
+      // A screenshot is optional. When there is one it goes straight to object
+      // storage on a one-time ticket: a 4 MB image through the API process is
+      // memory pressure for no benefit, and members on patchy data would upload twice.
+      let screenshotKey: string | undefined;
+      if (screenshot) {
+        const ticket = await api<{ uploadUrl: string; objectKey: string }>(
+          '/wallet/upload-ticket',
+          {
+            method: 'POST',
+            body: { purpose: 'recharge-screenshot', contentType: screenshot.type, contentLength: screenshot.size },
+          },
+        );
+        const put = await fetch(ticket.uploadUrl, {
+          method: 'PUT',
+          body: screenshot,
+          headers: { 'Content-Type': screenshot.type },
+        });
+        if (!put.ok) throw new ApiError('The screenshot could not be uploaded. Try again, or submit without it.', put.status);
+        screenshotKey = ticket.objectKey;
+      }
 
       await api('/wallet/recharge', {
         method: 'POST',
-        body: { amount: (amountPaise / 100).toFixed(2), utr: utr.trim().toUpperCase(), screenshotKey: ticket.objectKey },
+        body: { amount: (amountPaise / 100).toFixed(2), utr: utr.trim().toUpperCase(), ...(screenshotKey ? { screenshotKey } : {}) },
         // No client key: the UTR is the dedupe key: one bank payment, one credit.
       });
 
@@ -221,53 +268,12 @@ function RechargeForm({
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* ------------------------------------------------------ pay to */}
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6">
-          <h2 className="font-serif text-xl text-[var(--ink)]">1. Pay by UPI</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            Scan this with any UPI app, or copy the ID below.
-          </p>
-
-          {pay ? (
-            <>
-              <div className="mx-auto mt-5 w-fit rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
-                {/* Rendered by the server, not generated here: a QR built in the
-                    browser from a client-held string is a QR an extension or a
-                    tampered bundle could repoint at another account. */}
-                <Image src={pay.qrUrl} alt={`UPI QR code for ${pay.payeeName}`} width={220} height={220} unoptimized />
-              </div>
-
-              <div className="mt-4 rounded-xl bg-[var(--page)] px-4 py-3">
-                <p className="text-[11px] uppercase tracking-wider text-[var(--faint)]">UPI ID</p>
-                <div className="mt-1 flex items-center justify-between gap-3">
-                  <code className="text-sm font-semibold text-[var(--ink)]">{pay.upiId}</code>
-                  <CopyButton value={pay.upiId} />
-                </div>
-                <p className="mt-2 text-xs text-[var(--muted)]">{pay.payeeName}</p>
-              </div>
-
-              <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
-                Pay between {formatRupees(pay.minPaise)} and {formatRupees(pay.maxPaise)} in one
-                transfer. {pay.note}
-              </p>
-            </>
-          ) : (
-            <p className="mt-5 text-sm text-[#C0392B]">
-              Payment details are unavailable right now. Please try again shortly.
-            </p>
-          )}
-        </section>
-
-        {/* ------------------------------------------------------- claim */}
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6">
-          <h2 className="font-serif text-xl text-[var(--ink)]">2. Tell us about it</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            So we can match your payment to your account.
-          </p>
-
-          <div className="mt-5 space-y-4">
-            <label className="block text-sm font-medium text-[var(--ink)]">
-              Amount paid
+        <div className="space-y-6">
+          {/* -------------------------------------------------- 1. amount */}
+          <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6">
+            <h2 className="font-serif text-xl text-[var(--ink)]">1. How much?</h2>
+            <label className="mt-4 block text-sm font-medium text-[var(--ink)]">
+              Amount
               <div className="mt-1.5 flex items-center rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] pl-4">
                 <span className="text-[var(--muted)]">₹</span>
                 <input
@@ -280,19 +286,109 @@ function RechargeForm({
                 />
               </div>
             </label>
-            {fieldErrors.amount && <p className="text-xs text-[#C0392B]">{fieldErrors.amount}</p>}
+            {fieldErrors.amount && <p className="mt-1 text-xs text-[#C0392B]">{fieldErrors.amount}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[500, 1000, 2000, 5000]
+                .filter((n) => !pay || (n * 100 >= pay.minPaise && n * 100 <= pay.maxPaise))
+                .map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setAmount(String(n))}
+                    className={`rounded-full border px-4 py-1.5 text-sm ${amount === String(n) ? 'border-[var(--ink)] bg-[var(--ink)] font-semibold text-[var(--gold-pale)]' : 'border-[var(--line-strong)] text-[var(--body)] hover:bg-[var(--surface-tint)]'}`}
+                  >
+                    ₹{n.toLocaleString('en-IN')}
+                  </button>
+                ))}
+            </div>
             {suggestedRupees && amount === suggestedRupees && (
-              <p className="-mt-2 text-xs text-[var(--muted)]">
-                Pre-filled with what your bag needs. You can add more.
+              <p className="mt-2 text-xs text-[var(--muted)]">Pre-filled with what your bag needs. You can add more.</p>
+            )}
+            {pay && (
+              <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
+                Between {formatRupees(pay.minPaise)} and {formatRupees(pay.maxPaise)} in one payment. {pay.note}
               </p>
             )}
+          </section>
 
+          {/* ----------------------------------------------------- 2. pay */}
+          <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6">
+            <h2 className="font-serif text-xl text-[var(--ink)]">2. Pay by UPI</h2>
+
+            {pay ? (
+              <>
+                {/* One-tap buttons: only where a UPI app can answer them. They
+                    carry the amount from step 1 and a note with the member ID,
+                    which also shows on the bank statement. */}
+                {device !== 'other' && (
+                  <div className="mt-4">
+                    {link ? (
+                      <>
+                        <p className="text-sm text-[var(--muted)]">Tap your app. The amount and a note are filled in for you.</p>
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          <UpiButton href={device === 'ios' ? link.links.gpayIos : link.links.gpayAndroid} label="Google Pay" onGo={() => setLaunched(true)} />
+                          <UpiButton href={link.links.phonepe} label="PhonePe" onGo={() => setLaunched(true)} />
+                          <UpiButton href={link.links.paytm} label="Paytm" onGo={() => setLaunched(true)} />
+                          <UpiButton href={link.links.upi} label="Other UPI app" onGo={() => setLaunched(true)} />
+                        </div>
+                        <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">
+                          If your app does not open or declines the payment, use the QR or the UPI ID below instead. Some apps limit pre-filled payments.
+                        </p>
+                      </>
+                    ) : (
+                      <p className="rounded-xl bg-[var(--page)] px-4 py-3 text-sm text-[var(--muted)]">
+                        Enter an amount above to get one-tap buttons for your UPI app.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <p className="mt-5 text-sm text-[var(--muted)]">
+                  {device !== 'other' ? 'Or scan this with another phone, or copy the ID below.' : 'Scan this with any UPI app on your phone, or copy the ID below.'}
+                </p>
+                <div className="mx-auto mt-3 w-fit rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
+                  {/* Rendered by the server, not generated here: a QR built in the
+                      browser from a client-held string is a QR an extension or a
+                      tampered bundle could repoint at another account. With an
+                      amount it is the one for that amount. */}
+                  <Image src={link?.qrUrl ?? pay.qrUrl} alt={`UPI QR code for ${pay.payeeName}`} width={200} height={200} unoptimized />
+                </div>
+                {link && <p className="mt-2 text-center text-xs text-[var(--muted)]">QR for ₹{link.amount}</p>}
+
+                <div className="mt-4 rounded-xl bg-[var(--page)] px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-wider text-[var(--faint)]">UPI ID</p>
+                  <div className="mt-1 flex items-center justify-between gap-3">
+                    <code className="text-sm font-semibold text-[var(--ink)]">{pay.upiId}</code>
+                    <CopyButton value={pay.upiId} />
+                  </div>
+                  <p className="mt-2 text-xs text-[var(--muted)]">{pay.payeeName}</p>
+                </div>
+              </>
+            ) : (
+              <p className="mt-5 text-sm text-[#C0392B]">
+                Payment details are unavailable right now. Please try again shortly.
+              </p>
+            )}
+          </section>
+        </div>
+
+        {/* ----------------------------------------------------- 3. UTR */}
+        <section className="h-fit rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6">
+          <h2 className="font-serif text-xl text-[var(--ink)]">3. Enter the UTR</h2>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            {launched ? 'Done paying? Enter the reference from your UPI app.' : 'After you pay, enter the reference from your UPI app so we can match it.'}
+          </p>
+
+          <div className="mt-5 space-y-4">
             <label className="block text-sm font-medium text-[var(--ink)]">
               UTR / reference number
               <input
+                ref={utrRef}
                 value={utr}
                 onChange={(e) => setUtr(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 22))}
                 placeholder="e.g. 412345678901"
+                inputMode="text"
+                autoCapitalize="characters"
                 aria-invalid={!!fieldErrors.utr}
                 className="mt-1.5 w-full rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-4 py-3 font-mono text-[var(--ink)] focus:border-[var(--accent)] focus:outline-none"
               />
@@ -305,7 +401,7 @@ function RechargeForm({
             </p>
 
             <label className="block text-sm font-medium text-[var(--ink)]">
-              Payment screenshot
+              Payment screenshot <span className="font-normal text-[var(--faint)]">(optional)</span>
               <input
                 type="file"
                 accept="image/*"
@@ -317,6 +413,9 @@ function RechargeForm({
               <p className="-mt-2 text-xs text-[var(--muted)]">
                 {screenshot.name} · {(screenshot.size / 1024).toFixed(0)} KB
               </p>
+            )}
+            {!amountOk && utr && (
+              <p className="text-xs text-[var(--muted)]">Enter the amount you paid in step 1.</p>
             )}
 
             {error && (
@@ -396,6 +495,18 @@ function RechargeForm({
         </div>
       </section>
     </div>
+  );
+}
+
+function UpiButton({ href, label, onGo }: { href: string; label: string; onGo: () => void }) {
+  return (
+    <a
+      href={href}
+      onClick={onGo}
+      className="flex items-center justify-center rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-3 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:bg-[var(--surface-tint)] active:scale-[0.98]"
+    >
+      {label}
+    </a>
   );
 }
 

@@ -3,7 +3,7 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { LedgerService, idempotencyKey } from '../ledger/ledger.service';
 import { parsePlan } from '../plan/plan.config';
 import { commissionOn, formatInr, Paise } from '../common/money';
-import { upiQrSvg } from './upi-qr';
+import { upiQrSvg, upiAppLinks } from './upi-qr';
 
 /**
  * Manual UPI recharge.
@@ -28,8 +28,9 @@ export interface SubmitRechargeInput {
   memberId: string;
   claimedPaise: Paise;
   utr: string;
-  screenshotKey: string;
-  screenshotSha256: string;
+  /** Optional: the UTR is what gets matched to the bank statement. */
+  screenshotKey?: string;
+  screenshotSha256?: string;
   deviceId?: string;
 }
 
@@ -94,6 +95,42 @@ export class RechargeService {
     };
   }
 
+  /**
+   * One-tap UPI links and a QR for a chosen amount.
+   *
+   * Built here, not in the browser, for the same reason as the QR above: this is
+   * where the money goes. The note carries the member's ID, so their payment is
+   * recognisable on the bank statement when it is matched. Nothing here moves
+   * money or confirms a payment: there is still no callback from the bank, so the
+   * member submits the UTR afterwards and a person approves it.
+   *
+   * Some UPI apps limit or refuse a pre-filled amount to a personal UPI ID.
+   * Everything on the screen therefore still works the old way too: the open QR
+   * and the UPI ID to copy.
+   */
+  async payLink(memberId: string, amountRupees: string) {
+    if (!/^\d{1,8}(\.\d{1,2})?$/.test(amountRupees)) throw new BadRequestException('Enter a valid amount.');
+    const info = await this.payInfo();
+    const paise = BigInt(Math.round(Number(amountRupees) * 100));
+    if (paise < BigInt(info.minPaise)) throw new BadRequestException(`Minimum is ${formatInr(BigInt(info.minPaise))}.`);
+    if (paise > BigInt(info.maxPaise)) throw new BadRequestException(`Maximum per payment is ${formatInr(BigInt(info.maxPaise))}.`);
+
+    const member = await this.prisma.member.findUniqueOrThrow({ where: { id: memberId }, select: { memberCode: true } });
+    const payee = {
+      vpa: info.upiId,
+      name: info.payeeName,
+      amountRupees: (Number(paise) / 100).toFixed(2),
+      // Short and plain: some apps reject long or symbol-heavy notes.
+      note: `Wallet ${member.memberCode}`,
+    };
+    return {
+      amount: payee.amountRupees,
+      note: payee.note,
+      links: upiAppLinks(payee),
+      qrUrl: `data:image/svg+xml;base64,${Buffer.from(await upiQrSvg(payee)).toString('base64')}`,
+    };
+  }
+
   async submit(input: SubmitRechargeInput) {
     const utr = input.utr.trim().toUpperCase().replace(/\s+/g, '');
     if (!UTR_RE.test(utr)) {
@@ -126,8 +163,8 @@ export class RechargeService {
         memberId: member.id,
         claimedPaise: input.claimedPaise,
         utr,
-        screenshotKey: input.screenshotKey,
-        screenshotSha256: input.screenshotSha256,
+        screenshotKey: input.screenshotKey ?? null,
+        screenshotSha256: input.screenshotSha256 ?? null,
         flags,
         status: 'PENDING',
       },

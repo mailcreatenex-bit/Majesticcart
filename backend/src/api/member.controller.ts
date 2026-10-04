@@ -100,7 +100,8 @@ export const QuoteSchema = z.object({
 export const RechargeSchema = z.object({
   amount: money9,
   utr: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{12,22}$/, 'Enter the UTR exactly as shown in your UPI app'),
-  screenshotKey: z.string().min(4, 'Upload the payment screenshot'),
+  // Optional: a screenshot helps the team but the UTR is what is matched to the bank statement.
+  screenshotKey: z.string().min(4).optional(),
 });
 
 export const WithdrawSchema = z.object({ amount: money9 });
@@ -339,6 +340,12 @@ export class WalletController {
     return this.recharges.payInfo();
   }
 
+  /** One-tap UPI app links and a QR for the amount the member chose. See RechargeService.payLink. */
+  @Get('pay-link')
+  payLink(@CurrentUser('sub') memberId: string, @Query('amount') amount = '') {
+    return this.recharges.payLink(memberId, amount.trim());
+  }
+
   @Post('recharge')
   async recharge(
     @CurrentUser('sub') memberId: string,
@@ -348,7 +355,7 @@ export class WalletController {
     // Hash what actually landed in the bucket, not a value the client sent.
     // This is the check that catches one screenshot used by two accounts, so
     // it cannot be based on anything the client controls.
-    const screenshotSha256 = await this.storage.hashObject(body.screenshotKey);
+    const screenshotSha256 = body.screenshotKey ? await this.storage.hashObject(body.screenshotKey) : undefined;
     const req = await this.recharges.submit({
       memberId,
       claimedPaise: parseMoneyInput(body.amount, 'amount'),

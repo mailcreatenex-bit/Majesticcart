@@ -47,6 +47,32 @@ export function upiIntentUri(payee: UpiPayee): string {
 }
 
 /**
+ * One-tap links for the common UPI apps, all carrying the same payee, amount and
+ * note. `upi://pay` is the standard and, on Android, lets the phone offer every
+ * installed UPI app; the others open one app directly (Google Pay's scheme differs
+ * between Android and iOS, so both are given).
+ */
+export interface UpiAppLinks {
+  upi: string;
+  gpayAndroid: string;
+  gpayIos: string;
+  phonepe: string;
+  paytm: string;
+}
+
+export function upiAppLinks(payee: UpiPayee): UpiAppLinks {
+  const standard = upiIntentUri(payee);
+  const query = standard.slice('upi://pay?'.length);
+  return {
+    upi: standard,
+    gpayAndroid: `tez://upi/pay?${query}`,
+    gpayIos: `gpay://upi/pay?${query}`,
+    phonepe: `phonepe://pay?${query}`,
+    paytm: `paytmmp://pay?${query}`,
+  };
+}
+
+/**
  * The intent URI as an SVG QR code.
  *
  * SVG rather than PNG: it is a fraction of the bytes, it stays sharp when a
