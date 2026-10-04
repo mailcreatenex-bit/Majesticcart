@@ -167,8 +167,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <ShadeFinderPromo variant="home" />
-
       {/* ------------------------------------------- products by department */}
       {/* One shelf per department with every product in it (the department's
           own and its sub-categories'), in the catalogue's department order;
@@ -353,6 +351,9 @@ export default async function HomePage() {
           password or OTP.
         </div>
       </section>
+
+      {/* Last on the page, just above the footer. */}
+      <ShadeFinderPromo variant="home" />
     </>
   );
 }
