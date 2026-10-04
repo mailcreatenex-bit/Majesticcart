@@ -2,14 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCart } from './CartProvider';
 
 /**
  * The phone tab bar pinned to the bottom of the screen, in the pattern of
- * shopping apps like Purplle's: a handful of large icon-over-label targets
- * within thumb reach. Only destinations this site really has — home, the
- * full catalogue, wallet, bag and account — rather than tabs for pages we
- * do not offer.
+ * shopping apps like Purplle's: a few large icon-over-label targets within
+ * thumb reach. Wallet, bag and account are already in the header band, so they
+ * are not repeated here; the bar carries what the header does not: home, the
+ * catalogue, the wishlist and the AI shade finder.
  *
  * Hidden from xl up, where the desktop header carries all of this; on
  * checkout, where a second row of navigation under the pay button invites a
@@ -19,14 +18,12 @@ import { useCart } from './CartProvider';
 const TABS = [
   { href: '/', label: 'Home', icon: HomeIcon, match: (p: string) => p === '/' },
   { href: '/shop', label: 'Shop', icon: GridIcon, match: (p: string) => p === '/shop' || p.startsWith('/category') || p.startsWith('/brand') || p.startsWith('/product') },
-  { href: '/wallet', label: 'Wallet', icon: WalletIcon, match: (p: string) => p.startsWith('/wallet') || p.startsWith('/recharge') },
-  { href: '/cart', label: 'Bag', icon: BagIcon, match: (p: string) => p.startsWith('/cart') },
-  { href: '/account', label: 'Account', icon: UserIcon, match: (p: string) => p.startsWith('/account') || p.startsWith('/login') || p.startsWith('/signup') },
+  { href: '/wishlist', label: 'Wishlist', icon: HeartIcon, match: (p: string) => p.startsWith('/wishlist') },
+  { href: '/shade-finder', label: 'Shade Finder', icon: SparkleIcon, match: (p: string) => p.startsWith('/shade-finder') },
 ] as const;
 
 export function MobileBottomNav() {
   const pathname = usePathname() ?? '/';
-  const { totals, ready } = useCart();
   if (pathname.startsWith('/checkout') || pathname.startsWith('/product')) return null;
 
   return (
@@ -34,7 +31,7 @@ export function MobileBottomNav() {
       aria-label="Quick navigation"
       className="fixed inset-x-0 bottom-0 z-40 rounded-t-2xl border-t border-[var(--line)] bg-[var(--surface)] pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_-12px_rgba(0,0,0,0.25)] xl:hidden"
     >
-      <ul className="mx-auto grid max-w-lg grid-cols-5">
+      <ul className="mx-auto grid max-w-lg grid-cols-4">
         {TABS.map((t) => {
           const active = t.match(pathname);
           const Icon = t.icon;
@@ -45,14 +42,7 @@ export function MobileBottomNav() {
                 aria-current={active ? 'page' : undefined}
                 className={`relative flex flex-col items-center gap-1 pb-2 pt-2.5 text-[11px] font-semibold transition-colors ${active ? 'text-[var(--accent)]' : 'text-[var(--muted)]'}`}
               >
-                <span className="relative">
-                  <Icon filled={active} />
-                  {t.href === '/cart' && ready && totals.itemCount > 0 && (
-                    <span className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold text-white">
-                      {totals.itemCount}
-                    </span>
-                  )}
-                </span>
+                <Icon filled={active} />
                 {t.label}
               </Link>
             </li>
@@ -83,27 +73,18 @@ function GridIcon({ filled }: IconProps) {
     </svg>
   );
 }
-function WalletIcon({ filled }: IconProps) {
+function HeartIcon({ filled }: IconProps) {
   return (
     <svg {...base} fill={filled ? 'currentColor' : 'none'}>
-      <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h13A1.5 1.5 0 0 1 19 7.5V9H4.5A1.5 1.5 0 0 1 3 7.5zM3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H4.5" />
-      <circle cx="16.5" cy="14.5" r="1.2" fill={filled ? 'var(--surface)' : 'currentColor'} stroke="none" />
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
     </svg>
   );
 }
-function BagIcon({ filled }: IconProps) {
+function SparkleIcon({ filled }: IconProps) {
   return (
     <svg {...base} fill={filled ? 'currentColor' : 'none'}>
-      <path d="M5 8h14l-1 12H6z" />
-      <path d="M9 8V6a3 3 0 0 1 6 0v2" fill="none" />
-    </svg>
-  );
-}
-function UserIcon({ filled }: IconProps) {
-  return (
-    <svg {...base} fill={filled ? 'currentColor' : 'none'}>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21a8 8 0 0 1 16 0z" />
+      <path d="M11 3.5 13 9l5.5 2-5.5 2-2 5.5L9 13l-5.5-2L9 9z" />
+      <path d="M18.5 3v4M16.5 5h4M18.5 16.5v4M16.5 18.5h4" />
     </svg>
   );
 }
