@@ -254,13 +254,6 @@ export async function Footer() {
           <div className="mt-6">
             <InstallButton />
           </div>
-
-          <h2 className="mt-6 text-sm font-semibold text-[var(--ink)]"><T k="footer.grievance" /></h2>
-          <address className="mt-3 space-y-1 text-sm not-italic text-[var(--muted)]">
-            <div>{ENTITY.grievanceOfficer.name}</div>
-            <div><a href={`mailto:${ENTITY.grievanceOfficer.email}`} className="hover:text-[var(--ink)]">{ENTITY.grievanceOfficer.email}</a></div>
-            <div className="text-xs">Acknowledged within 48 hours</div>
-          </address>
         </div>
       </div>
 

@@ -11,7 +11,6 @@ import { ProductGrid } from '@/components/ProductCard';
 import { BrandCarousel } from '@/components/BrandCarousel';
 import { HeroCarousel } from '@/components/HeroCarousel';
 import { PromoBanner } from '@/components/PromoBanner';
-import { playTileClass } from '@/lib/playColors';
 
 /**
  * Home.
@@ -251,40 +250,6 @@ export default async function HomePage() {
       </section>
 
       <MandalaRule />
-
-      {/* ----------------------------------------------------- explore */}
-      <section className={`${SECTION_BG[sections.exploreBg]} px-4 py-14`}>
-        <div className="mx-auto max-w-6xl">
-        <h2 className="text-center font-serif text-2xl text-[var(--ink)]">{sections.exploreHeading}</h2>
-        <p className="mx-auto mt-2 max-w-xl text-center text-sm text-[var(--muted)]">{sections.exploreSubtitle}</p>
-        {/* Six small round tiles, three to a row. The AI shade finder has its own band at
-            the foot of the page, so it is not repeated here (its tile stays in the theme
-            data, index 1, so admin edits to the others still line up). */}
-        <div className="mx-auto mt-8 grid max-w-2xl grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-8">
-          {/* Only the words and photo of each tile are theme-editable — the
-              href points at a real app route, so it stays fixed in code
-              rather than something an admin could mistype into a dead link. */}
-          {([['/shop', 0], ['/wallet', 2], ['/join', 3], ['/network', 4], ['/account', 5], ['/faq', 6]] as const).map(([href, i]) => {
-            const c = theme.exploreTiles[i];
-            return (
-            <Link key={href} href={href} className="group flex flex-col items-center text-center">
-              <div className={`relative aspect-square w-full max-w-[7.5rem] overflow-hidden rounded-full border-2 border-[var(--surface)] shadow-md shadow-rose-900/10 ring-1 ring-[var(--line)] transition group-hover:shadow-lg sm:max-w-[9rem] ${playTileClass(c.title)}`}>
-                <Image
-                  src={c.image ?? ''}
-                  alt=""
-                  fill
-                  sizes="(max-width: 640px) 120px, 144px"
-                  {...faceCrop(c.image, 1)}
-                  className={`${faceCrop(c.image, 1).className} transition duration-500 group-hover:scale-110`}
-                />
-              </div>
-              <h3 className="mt-3 text-sm font-semibold leading-snug text-[var(--ink)] group-hover:text-[var(--accent)] sm:text-base">{c.title}</h3>
-            </Link>
-            );
-          })}
-        </div>
-        </div>
-      </section>
 
       {/* ----------------------------------------------------------- trust */}
       <section className="bg-[#111111]">
