@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 /**
  * Email.
@@ -28,20 +29,23 @@ export class ConsoleEmailService implements EmailSender {
   }
 }
 
+/** Reads the email settings each time, like DynamicSmsService; prints to the log when none are set. */
 @Injectable()
-export class ResendEmailService implements EmailSender {
+export class DynamicEmailService implements EmailSender {
   private readonly log = new Logger('Email');
-  private readonly apiKey = process.env.RESEND_API_KEY ?? '';
-  private readonly from = process.env.EMAIL_FROM ?? 'Majestic Cart <onboarding@resend.dev>';
+  private readonly fallback = new ConsoleEmailService();
+
+  constructor(private readonly integrations: IntegrationsService) {}
 
   async send(to: string, subject: string, text: string): Promise<void> {
-    if (!this.apiKey) {
-      throw new Error('RESEND_API_KEY must be set when EMAIL_PROVIDER is not "console"');
-    }
+    const { email } = await this.integrations.resolve();
+    if (!email.enabled) return this.fallback.send(to, subject);
+
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },
-      body: JSON.stringify({ from: this.from, to, subject, text }),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${email.apiKey}` },
+      body: JSON.stringify({ from: email.from, to, subject, text }),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
       // Log the failure without the body: it carries the OTP.
@@ -53,7 +57,4 @@ export class ResendEmailService implements EmailSender {
 
 export const EMAIL_SENDER = Symbol('EMAIL_SENDER');
 
-export const emailProvider = {
-  provide: EMAIL_SENDER,
-  useClass: (process.env.EMAIL_PROVIDER ?? 'console') === 'console' ? ConsoleEmailService : ResendEmailService,
-};
+export const emailProvider = { provide: EMAIL_SENDER, useClass: DynamicEmailService };

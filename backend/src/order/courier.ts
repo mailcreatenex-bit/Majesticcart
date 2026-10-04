@@ -1,15 +1,14 @@
 /**
  * Couriers.
  *
- * Three ways a parcel can be tracked, all optional and all env-gated so the
- * store works on day one with nothing configured:
+ * Three ways a parcel can be tracked, all optional (the keys are entered by an admin
+ * under Integrations in the console) so the store works on day one with nothing configured:
  *
  *   • Manual — the admin picks a courier and types the AWB / tracking number.
  *     The member gets a tracking link built from the courier's public page.
- *   • Live scans — if DELHIVERY_API_TOKEN or SHIPROCKET_EMAIL + SHIPROCKET_PASSWORD
- *     are set, the member's tracking page also shows the courier's own scan
+ *   • Live scans — if a Delhivery token or a Shiprocket email and password are set, the member's tracking page also shows the courier's own scan
  *     history (fetched on demand and cached briefly).
- *   • Webhook — the courier calls POST /webhooks/courier with COURIER_WEBHOOK_SECRET
+ *   • Webhook — the courier calls POST /webhooks/courier with the webhook secret
  *     and a delivered status moves the order to DELIVERED on its own.
  *
  * The live-scan calls follow each courier's published tracking API. They fail
@@ -61,10 +60,17 @@ export function isDeliveredStatus(status: string | null | undefined): boolean {
   return /^\s*delivered\b/i.test(status ?? '');
 }
 
+/** The courier keys, as entered under Integrations (see integrations/integrations.service.ts). */
+export interface CourierCreds {
+  delhiveryToken: string;
+  shiprocketEmail: string;
+  shiprocketPassword: string;
+}
+
 const CACHE_MS = 10 * 60 * 1000;
 const cache = new Map<string, { at: number; value: LiveTracking | null }>();
 
-let shiprocketToken: { token: string; at: number } | null = null;
+let shiprocketToken: { token: string; at: number; who: string } | null = null;
 
 async function getJson(url: string, headers: Record<string, string>): Promise<any> {
   const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
@@ -72,8 +78,8 @@ async function getJson(url: string, headers: Record<string, string>): Promise<an
   return res.json();
 }
 
-async function delhivery(awb: string): Promise<LiveTracking | null> {
-  const token = process.env.DELHIVERY_API_TOKEN;
+async function delhivery(awb: string, creds: CourierCreds): Promise<LiveTracking | null> {
+  const token = creds.delhiveryToken;
   if (!token) return null;
   const data = await getJson(
     `https://track.delhivery.com/api/v1/packages/json/?waybill=${encodeURIComponent(awb)}`,
@@ -94,12 +100,12 @@ async function delhivery(awb: string): Promise<LiveTracking | null> {
   return { status: shipment.Status?.Status ?? null, scans };
 }
 
-async function shiprocketAuth(): Promise<string | null> {
-  const email = process.env.SHIPROCKET_EMAIL;
-  const password = process.env.SHIPROCKET_PASSWORD;
+async function shiprocketAuth(creds: CourierCreds): Promise<string | null> {
+  const email = creds.shiprocketEmail;
+  const password = creds.shiprocketPassword;
   if (!email || !password) return null;
   // Shiprocket tokens last days; refresh well inside that.
-  if (shiprocketToken && Date.now() - shiprocketToken.at < 24 * 3600 * 1000) return shiprocketToken.token;
+  if (shiprocketToken && shiprocketToken.who === email && Date.now() - shiprocketToken.at < 24 * 3600 * 1000) return shiprocketToken.token;
   const res = await fetch('https://apiv2.shiprocket.in/v1/external/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -109,12 +115,12 @@ async function shiprocketAuth(): Promise<string | null> {
   if (!res.ok) throw new Error(`status ${res.status}`);
   const body = (await res.json()) as { token?: string };
   if (!body.token) return null;
-  shiprocketToken = { token: body.token, at: Date.now() };
+  shiprocketToken = { token: body.token, at: Date.now(), who: email };
   return body.token;
 }
 
-async function shiprocket(awb: string): Promise<LiveTracking | null> {
-  const token = await shiprocketAuth();
+async function shiprocket(awb: string, creds: CourierCreds): Promise<LiveTracking | null> {
+  const token = await shiprocketAuth(creds);
   if (!token) return null;
   const data = await getJson(
     `https://apiv2.shiprocket.in/v1/external/courier/track/awb/${encodeURIComponent(awb)}`,
@@ -130,15 +136,15 @@ async function shiprocket(awb: string): Promise<LiveTracking | null> {
 }
 
 /** The courier's own scan history, or null when none is configured / reachable. Cached for ten minutes. */
-export async function liveTracking(courier: string | null, awb: string | null): Promise<LiveTracking | null> {
+export async function liveTracking(courier: string | null, awb: string | null, creds: CourierCreds): Promise<LiveTracking | null> {
   if (!courier || !awb) return null;
   const key = `${courier}:${awb}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
   let value: LiveTracking | null = null;
   try {
-    if (courier === 'delhivery') value = await delhivery(awb);
-    else if (courier === 'shiprocket') value = await shiprocket(awb);
+    if (courier === 'delhivery') value = await delhivery(awb, creds);
+    else if (courier === 'shiprocket') value = await shiprocket(awb, creds);
   } catch {
     value = null;
   }
@@ -155,4 +161,50 @@ export function parseWebhook(body: any): { awb: string; status: string } | null 
   if (typeof awb !== 'string' && typeof awb !== 'number') return null;
   if (typeof status !== 'string') return null;
   return { awb: String(awb).trim(), status: status.trim() };
+}
+
+/** Whether a pincode is one the courier delivers to (prepaid), or null when no courier is set up to ask. */
+const pinCache = new Map<string, { at: number; value: boolean | null }>();
+export async function pincodeServiceable(pincode: string, creds: CourierCreds): Promise<boolean | null> {
+  if (!creds.delhiveryToken) return null;
+  const hit = pinCache.get(pincode);
+  if (hit && Date.now() - hit.at < 6 * 3600 * 1000) return hit.value;
+  let value: boolean | null = null;
+  try {
+    const data = await getJson(
+      `https://track.delhivery.com/c/api/pin-codes/json/?filter_codes=${encodeURIComponent(pincode)}`,
+      { Authorization: `Token ${creds.delhiveryToken}` },
+    );
+    const rows: any[] = data?.delivery_codes ?? [];
+    value = rows.length > 0 && rows.some((r) => String(r?.postal_code?.pre_paid ?? 'Y').toUpperCase() !== 'N');
+  } catch {
+    value = null;
+  }
+  pinCache.set(pincode, { at: Date.now(), value });
+  if (pinCache.size > 2000) pinCache.delete(pinCache.keys().next().value as string);
+  return value;
+}
+
+/** For the console's "Test connection" button: says in plain words whether each configured courier accepted its keys. */
+export async function testCourierKeys(creds: CourierCreds): Promise<{ courier: string; ok: boolean; message: string }[]> {
+  const out: { courier: string; ok: boolean; message: string }[] = [];
+  if (creds.delhiveryToken) {
+    try {
+      await getJson('https://track.delhivery.com/c/api/pin-codes/json/?filter_codes=110001', { Authorization: `Token ${creds.delhiveryToken}` });
+      out.push({ courier: 'Delhivery', ok: true, message: 'Delhivery accepted the token.' });
+    } catch (e) {
+      out.push({ courier: 'Delhivery', ok: false, message: `Delhivery did not accept the token (${e instanceof Error ? e.message : 'error'}).` });
+    }
+  }
+  if (creds.shiprocketEmail && creds.shiprocketPassword) {
+    try {
+      shiprocketToken = null;
+      const t = await shiprocketAuth(creds);
+      out.push(t ? { courier: 'Shiprocket', ok: true, message: 'Shiprocket accepted the email and password.' } : { courier: 'Shiprocket', ok: false, message: 'Shiprocket did not return a login.' });
+    } catch (e) {
+      out.push({ courier: 'Shiprocket', ok: false, message: `Shiprocket did not accept the login (${e instanceof Error ? e.message : 'error'}).` });
+    }
+  }
+  if (out.length === 0) out.push({ courier: 'None', ok: false, message: 'No delivery company keys are saved yet.' });
+  return out;
 }

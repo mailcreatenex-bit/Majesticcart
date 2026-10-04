@@ -5,6 +5,7 @@ import { isoPeriod } from '../common/period';
 import { downlinePrefix } from './genealogy';
 import { parsePlan, type PlanConfig } from '../plan/plan.config';
 import { courierLabel, trackingUrl, liveTracking } from '../order/courier';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 /**
  * Read models for the member app.
@@ -38,7 +39,7 @@ const clampPage = (n: unknown): number => {
 
 @Injectable()
 export class MemberViewService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient, private readonly integrations: IntegrationsService) {}
 
   /* ------------------------------------------------------------ dashboard */
 
@@ -455,7 +456,7 @@ export class MemberViewService {
       select: { id: true, courier: true, trackingNo: true, status: true },
     });
     if (!o) throw new NotFoundException('Order not found');
-    const live = await liveTracking(o.courier, o.trackingNo);
+    const live = await liveTracking(o.courier, o.trackingNo, (await this.integrations.resolve()).courier);
     // Keep our own copy of the courier's latest word, so the order list and the
     // admin queue show it without calling the courier.
     if (live?.status && o.status === 'SHIPPED') {

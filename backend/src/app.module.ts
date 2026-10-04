@@ -13,6 +13,8 @@ import { LedgerService } from './ledger/ledger.service';
 import { CommissionService } from './commission/commission.service';
 import { CommissionProcessor } from './commission/commission.processor';
 import { OrderService } from './order/order.service';
+import { IntegrationsModule } from './integrations/integrations.module';
+import { AdminIntegrationsController, DeliveryController } from './api/integrations.controller';
 import { AnalyticsService } from './analytics/analytics.service';
 import { AnalyticsController, AdminAnalyticsController } from './api/analytics.controller';
 import { TeamDashboardService } from './member/team-dashboard.service';
@@ -233,6 +235,12 @@ export class WalletOpsModule {}
 export class AdminModule {}
 
 @Module({
+  imports: [AuthModule],
+  controllers: [AdminIntegrationsController, DeliveryController],
+})
+export class IntegrationsAdminModule {}
+
+@Module({
   controllers: [AnalyticsController, AdminAnalyticsController],
   providers: [AnalyticsService],
   exports: [AnalyticsService],
@@ -274,6 +282,8 @@ export class AnalyticsModule {}
     BlogModule,
     PagesModule,
     AnalyticsModule,
+    IntegrationsModule,
+    IntegrationsAdminModule,
   ],
   providers: [
     // Global: a new route is protected and BigInt-safe by default. Opting out

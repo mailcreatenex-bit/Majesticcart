@@ -57,6 +57,7 @@ const NAV: { href: string; label: string; permission: string }[] = [
   { href: '/admin/plan', label: 'Plan', permission: 'plan.manage' },
   { href: '/admin/roles', label: 'Roles & admins', permission: 'roles.manage' },
   { href: '/admin/settings', label: 'Settings', permission: 'settings.manage' },
+  { href: '/admin/integrations', label: 'Integrations', permission: 'settings.manage' },
   { href: '/admin/security', label: 'Security', permission: '' },
   // Still no 'Reports' link: the API's ReportController (GET /reports/:key)
   // is a general ad-hoc query/aggregation tool (see reporting/catalog.ts) —

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 /**
  * SMS.
@@ -24,27 +25,33 @@ export class ConsoleSmsService implements SmsSender {
   }
 }
 
+/**
+ * The SMS sender the app uses: reads the provider settings each time (an admin can
+ * change them in the console without a restart) and falls back to printing in the log
+ * when no provider is set up. See integrations/integrations.service.ts.
+ */
 @Injectable()
-export class HttpSmsService implements SmsSender {
+export class DynamicSmsService implements SmsSender {
   private readonly log = new Logger('SMS');
-  private readonly apiKey = process.env.SMS_API_KEY ?? '';
-  private readonly senderId = process.env.SMS_SENDER_ID ?? '';
-  private readonly endpoint = process.env.SMS_ENDPOINT ?? '';
+  private readonly fallback = new ConsoleSmsService();
+
+  constructor(private readonly integrations: IntegrationsService) {}
 
   async send(phone: string, message: string, templateId?: string): Promise<void> {
-    if (!this.apiKey || !this.endpoint) {
-      throw new Error('SMS_API_KEY and SMS_ENDPOINT must be set when SMS_PROVIDER is not "console"');
-    }
-    const res = await fetch(this.endpoint, {
+    const { sms } = await this.integrations.resolve();
+    if (!sms.enabled) return this.fallback.send(phone, message);
+
+    const res = await fetch(sms.endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sms.apiKey}` },
       body: JSON.stringify({
         to: `91${phone}`,
-        sender: this.senderId,
+        sender: sms.senderId,
         message,
         // DLT template id. Indian carriers drop transactional SMS without one.
-        template_id: templateId ?? process.env.SMS_OTP_TEMPLATE_ID,
+        template_id: templateId ?? sms.templateId,
       }),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
       // Log the failure without the body: it carries the OTP.
@@ -56,7 +63,4 @@ export class HttpSmsService implements SmsSender {
 
 export const SMS_SENDER = Symbol('SMS_SENDER');
 
-export const smsProvider = {
-  provide: SMS_SENDER,
-  useClass: (process.env.SMS_PROVIDER ?? 'console') === 'console' ? ConsoleSmsService : HttpSmsService,
-};
+export const smsProvider = { provide: SMS_SENDER, useClass: DynamicSmsService };

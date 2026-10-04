@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { SMS_SENDER, type SmsSender } from './sms.service';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 /**
  * Sends the in-app notifications a member should also hear about outside the app:
@@ -38,14 +39,8 @@ export class OutboundNotifier implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaClient,
     @Inject(SMS_SENDER) private readonly sms: SmsSender,
+    private readonly integrations: IntegrationsService,
   ) {}
-
-  private get smsEnabled(): boolean {
-    return (process.env.SMS_PROVIDER ?? 'console') !== 'console';
-  }
-  private get whatsappEnabled(): boolean {
-    return !!process.env.WHATSAPP_ENDPOINT && !!process.env.WHATSAPP_TOKEN;
-  }
 
   onModuleInit(): void {
     if (process.env.OUTBOUND_NOTIFICATIONS === 'false') return;
@@ -63,7 +58,10 @@ export class OutboundNotifier implements OnModuleInit, OnModuleDestroy {
   async tick(): Promise<number> {
     // With no provider there is nothing to relay; leave the rows alone so switching one on later
     // still only reaches genuinely recent events.
-    if (!this.smsEnabled && !this.whatsappEnabled) return 0;
+    const cfg = await this.integrations.resolve();
+    const smsEnabled = cfg.sms.enabled;
+    const whatsappEnabled = cfg.whatsapp.enabled;
+    if (!smsEnabled && !whatsappEnabled) return 0;
     if (this.running) return 0;
     this.running = true;
     let sent = 0;
@@ -85,8 +83,8 @@ export class OutboundNotifier implements OnModuleInit, OnModuleDestroy {
         if (claimed.count !== 1) continue;
         const text = `Majestic Cart: ${n.title}. ${n.body}`.slice(0, 300);
         const errors: string[] = [];
-        if (this.smsEnabled) await this.sms.send(n.member.phone, text).catch((e) => errors.push(`sms: ${e instanceof Error ? e.message : e}`));
-        if (this.whatsappEnabled) await this.whatsapp(n.member.phone, text).catch((e) => errors.push(`whatsapp: ${e instanceof Error ? e.message : e}`));
+        if (smsEnabled) await this.sms.send(n.member.phone, text).catch((e) => errors.push(`sms: ${e instanceof Error ? e.message : e}`));
+        if (whatsappEnabled) await this.integrations.sendWhatsapp(n.member.phone, text).catch((e) => errors.push(`whatsapp: ${e instanceof Error ? e.message : e}`));
         if (errors.length) {
           await this.prisma.notification.update({ where: { id: n.id }, data: { outboundError: errors.join('; ').slice(0, 300) } });
         } else {
@@ -99,15 +97,5 @@ export class OutboundNotifier implements OnModuleInit, OnModuleDestroy {
       this.running = false;
     }
     return sent;
-  }
-
-  /** WhatsApp Business through whichever gateway the client uses: a JSON POST with a bearer token. */
-  private async whatsapp(phone: string, text: string): Promise<void> {
-    const res = await fetch(process.env.WHATSAPP_ENDPOINT as string, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}` },
-      body: JSON.stringify({ to: `91${phone}`, type: 'text', text: { body: text }, template: process.env.WHATSAPP_TEMPLATE || undefined }),
-    });
-    if (!res.ok) throw new Error(`status ${res.status}`);
   }
 }
