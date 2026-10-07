@@ -1,4 +1,3 @@
-import { ShadeFinderPromo } from '@/components/ShadeFinderPromo';
 import Link from 'next/link';
 import Image from 'next/image';
 import { faceCrop } from '@/lib/focal';
@@ -10,7 +9,6 @@ import { MandalaRule } from '@/components/MandalaRule';
 import { ProductGrid } from '@/components/ProductCard';
 import { BrandCarousel } from '@/components/BrandCarousel';
 import { HeroCarousel } from '@/components/HeroCarousel';
-import { PromoBanner } from '@/components/PromoBanner';
 
 /**
  * Home.
@@ -41,8 +39,6 @@ const DEFAULT_HERO_IMAGES = [
   '/home/skin-1.jpg', '/home/skin-2.jpg', '/home/skin-3.jpg', '/home/skin-4.jpg',
   '/home/hero-6.jpg', '/home/hero-7.jpg',
 ];
-const DEFAULT_PROMO_IMAGES = ['/home/editorial-8.jpg', '/home/editorial-9.jpg'];
-const DEFAULT_PROMO_HEADING = 'Skin care, makeup and more — picked from brands already on your shelf.';
 
 /** One of the site's playful accent colours (globals.css) per background class, for the admin-editable homepage section colours. */
 const SECTION_BG: Record<PlayColorKey, string> = {
@@ -78,8 +74,6 @@ export default async function HomePage() {
     .filter((shelf) => shelf.products.length > 0);
   const hero = theme.hero;
   const heroImages = hero.imageUrls.length > 0 ? hero.imageUrls : DEFAULT_HERO_IMAGES;
-  const promo = theme.promoBanner;
-  const promoImages = promo.images.length > 0 ? promo.images : DEFAULT_PROMO_IMAGES;
   const promoStripImages = theme.promoStrip.images;
   const sections = theme.homeSections;
 
@@ -200,16 +194,6 @@ export default async function HomePage() {
 
       <MandalaRule />
 
-      {/* ------------------------------------------------------ banner */}
-      {promo.enabled && (
-        <PromoBanner
-          images={promoImages}
-          heading={promo.heading || DEFAULT_PROMO_HEADING}
-          ctaLabel={promo.ctaLabel || 'Shop the range'}
-          ctaHref={promo.ctaHref || '/shop'}
-        />
-      )}
-
       {/* -------------------------------------------------------- featured */}
       <section className={`${SECTION_BG[sections.featuredBg]} px-4 py-16`}>
         <div className="mx-auto max-w-6xl">
@@ -309,9 +293,6 @@ export default async function HomePage() {
           password or OTP.
         </div>
       </section>
-
-      {/* Last on the page, just above the footer. */}
-      <ShadeFinderPromo variant="home" />
     </>
   );
 }
